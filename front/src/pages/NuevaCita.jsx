@@ -1,16 +1,64 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
-import { FaCalendarAlt, FaClock, FaUserMd } from "react-icons/fa";
+import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from "react-icons/fa";
 
-function formatearFecha(fechaISO) {
+function formatearFechaLarga(fechaISO) {
+  const fecha = new Date(`${fechaISO}T00:00:00`);
+  return fecha.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function formatearFechaCorta(fechaISO) {
   const fecha = new Date(`${fechaISO}T00:00:00`);
   return fecha.toLocaleDateString("es-CO", {
     weekday: "short",
     day: "numeric",
     month: "short",
   });
+}
+
+function formatearHora(horaStr) {
+  // "08:00:00" -> "8:00 a. m."
+  const [h, m] = horaStr.split(":");
+  const fecha = new Date();
+  fecha.setHours(Number(h), Number(m), 0, 0);
+  return fecha.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
+}
+
+/**
+ * Agrupa las franjas planas que devuelve el backend en una estructura
+ * de 3 niveles (especialista -> fecha -> horas) para que el usuario
+ * elija paso a paso en vez de ver todas las combinaciones a la vez.
+ */
+function agruparPorEspecialista(disponibilidad) {
+  const especialistas = new Map();
+
+  for (const slot of disponibilidad) {
+    if (!especialistas.has(slot.id_usuario)) {
+      especialistas.set(slot.id_usuario, {
+        id_usuario: slot.id_usuario,
+        nombre: `${slot.especialista_nombre} ${slot.especialista_apellidos}`,
+        especializacion: slot.especializacion,
+        totalSlots: 0,
+        fechas: new Map(),
+      });
+    }
+
+    const especialista = especialistas.get(slot.id_usuario);
+    especialista.totalSlots += 1;
+
+    if (!especialista.fechas.has(slot.fecha)) {
+      especialista.fechas.set(slot.fecha, []);
+    }
+    especialista.fechas.get(slot.fecha).push(slot);
+  }
+
+  return Array.from(especialistas.values());
 }
 
 function NuevaCita() {
@@ -22,8 +70,11 @@ function NuevaCita() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
+  const [idEspecialista, setIdEspecialista] = useState(null);
+  const [fechaElegida, setFechaElegida] = useState(null);
+  const [idDisponibilidad, setIdDisponibilidad] = useState(null);
+
   const [idMascota, setIdMascota] = useState("");
-  const [idDisponibilidad, setIdDisponibilidad] = useState("");
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState("");
@@ -58,6 +109,37 @@ function NuevaCita() {
     cargarDatos();
   }, [usuario]);
 
+  const especialistas = useMemo(
+    () => agruparPorEspecialista(disponibilidad),
+    [disponibilidad]
+  );
+
+  const especialistaActivo = especialistas.find((e) => e.id_usuario === idEspecialista);
+
+  const fechasDisponibles = especialistaActivo
+    ? Array.from(especialistaActivo.fechas.keys()).sort()
+    : [];
+
+  const horariosDelDia =
+    especialistaActivo && fechaElegida
+      ? especialistaActivo.fechas.get(fechaElegida) || []
+      : [];
+
+  const slotElegido = horariosDelDia.find(
+    (s) => s.id_disponibilidad === idDisponibilidad
+  );
+
+  const handleElegirEspecialista = (id_usuario) => {
+    setIdEspecialista(id_usuario);
+    setFechaElegida(null);
+    setIdDisponibilidad(null);
+  };
+
+  const handleElegirFecha = (fecha) => {
+    setFechaElegida(fecha);
+    setIdDisponibilidad(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje("");
@@ -86,14 +168,14 @@ function NuevaCita() {
 
   return (
     <div className="container">
-      <div className="form-page">
+      <div className="form-page form-page--wide">
         <Link to="/dashboard" className="back-link">
           ← Volver a mi panel
         </Link>
 
         <h1>Agendar cita</h1>
         <p className="auth-card__subtitle">
-          Elige un horario disponible, la mascota y cuéntanos el motivo de la consulta.
+          Elige un doctor, un día y una hora disponible para tu mascota.
         </p>
 
         {error && <p className="message message-error">{error}</p>}
@@ -108,41 +190,95 @@ function NuevaCita() {
 
         {!error && !cargando && mascotas.length > 0 && (
           <form onSubmit={handleSubmit} noValidate>
-            <h2 className="section-title">1. Elige un horario</h2>
+            {/* Paso 1: doctor */}
+            <h2 className="section-title">1. Elige un doctor</h2>
 
-            {disponibilidad.length === 0 ? (
+            {especialistas.length === 0 ? (
               <p className="empty-state">No hay horarios disponibles por el momento.</p>
             ) : (
-              <div className="slot-grid">
-                {disponibilidad.map((slot) => (
+              <div className="doctor-grid">
+                {especialistas.map((esp) => (
                   <button
                     type="button"
-                    key={slot.id_disponibilidad}
-                    className={`slot-card ${
-                      idDisponibilidad === String(slot.id_disponibilidad) ? "slot-card--selected" : ""
+                    key={esp.id_usuario}
+                    className={`doctor-card ${
+                      idEspecialista === esp.id_usuario ? "doctor-card--selected" : ""
                     }`}
-                    onClick={() => setIdDisponibilidad(String(slot.id_disponibilidad))}
+                    onClick={() => handleElegirEspecialista(esp.id_usuario)}
                   >
-                    <div className="slot-card__specialist">
-                      <FaUserMd /> {slot.especialista_nombre} {slot.especialista_apellidos}
-                    </div>
-                    <div className="slot-card__meta">
-                      <span>
-                        <FaCalendarAlt /> {formatearFecha(slot.fecha)}
+                    <span className="doctor-card__avatar">
+                      <FaUserMd />
+                    </span>
+                    <span className="doctor-card__info">
+                      <span className="doctor-card__name">{esp.nombre}</span>
+                      <span className="doctor-card__specialty">{esp.especializacion}</span>
+                      <span className="doctor-card__count">
+                        {esp.totalSlots} {esp.totalSlots === 1 ? "horario" : "horarios"} disponibles
                       </span>
-                      <span>
-                        <FaClock /> {slot.hora}
+                    </span>
+                    {idEspecialista === esp.id_usuario && (
+                      <span className="doctor-card__check">
+                        <FaCheck />
                       </span>
-                    </div>
-                    {slot.especializacion && (
-                      <span className="badge">{slot.especializacion}</span>
                     )}
                   </button>
                 ))}
               </div>
             )}
 
-            <h2 className="section-title">2. Datos de la cita</h2>
+            {/* Paso 2: día */}
+            {especialistaActivo && (
+              <>
+                <h2 className="section-title">2. Elige un día</h2>
+                <div className="date-tabs">
+                  {fechasDisponibles.map((fecha) => (
+                    <button
+                      type="button"
+                      key={fecha}
+                      className={`date-tab ${fechaElegida === fecha ? "date-tab--selected" : ""}`}
+                      onClick={() => handleElegirFecha(fecha)}
+                    >
+                      {formatearFechaCorta(fecha)}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Paso 3: hora */}
+            {especialistaActivo && fechaElegida && (
+              <>
+                <h2 className="section-title">3. Elige una hora</h2>
+                <div className="time-grid">
+                  {horariosDelDia.map((slot) => (
+                    <button
+                      type="button"
+                      key={slot.id_disponibilidad}
+                      className={`time-chip ${
+                        idDisponibilidad === slot.id_disponibilidad ? "time-chip--selected" : ""
+                      }`}
+                      onClick={() => setIdDisponibilidad(slot.id_disponibilidad)}
+                    >
+                      {formatearHora(slot.hora)}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Resumen de lo elegido */}
+            {slotElegido && especialistaActivo && (
+              <div className="selection-summary">
+                <FaCalendarAlt />
+                <span>
+                  {especialistaActivo.nombre} · {formatearFechaLarga(slotElegido.fecha)} ·{" "}
+                  {formatearHora(slotElegido.hora)}
+                </span>
+              </div>
+            )}
+
+            {/* Paso 4: datos de la cita */}
+            <h2 className="section-title">4. Datos de la cita</h2>
 
             <div className="field">
               <label htmlFor="id_mascota">Mascota</label>
@@ -176,8 +312,8 @@ function NuevaCita() {
               />
             </div>
 
-            <button className="btn btn-primary" disabled={enviando}>
-              {enviando ? "Agendando..." : "Confirmar cita"}
+            <button className="btn btn-primary" disabled={enviando || !idDisponibilidad}>
+              <FaClock /> {enviando ? "Agendando..." : "Confirmar cita"}
             </button>
 
             {mensaje && <p className="message message-error">{mensaje}</p>}

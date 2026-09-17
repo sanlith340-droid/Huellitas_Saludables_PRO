@@ -788,3 +788,175 @@ select:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Agendar cita: flujo guiado (doctor -> día -> hora) ---------- */
+
+.form-page--wide {
+  max-width: 880px;
+}
+
+/* Paso 1: tarjetas de doctor (una por especialista, no por horario) */
+
+.doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+.doctor-card {
+  position: relative;
+  text-align: left;
+  background: #fff;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.doctor-card:hover {
+  border-color: var(--sage-400);
+}
+
+.doctor-card--selected {
+  border-color: var(--pine-700);
+  background: var(--sand-100);
+}
+
+.doctor-card__avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--sand-200);
+  color: var(--pine-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+
+.doctor-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.doctor-card__name {
+  font-weight: 600;
+  font-size: 0.94rem;
+  color: var(--pine-900);
+}
+
+.doctor-card__specialty {
+  font-size: 0.82rem;
+  color: var(--ink-600);
+}
+
+.doctor-card__count {
+  font-size: 0.76rem;
+  color: var(--sage-400);
+  font-weight: 600;
+}
+
+.doctor-card__check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--pine-700);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+}
+
+/* Paso 2: pestañas de fecha, en una sola fila que se puede desplazar */
+
+.date-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.date-tab {
+  flex-shrink: 0;
+  background: #fff;
+  border: 1.5px solid var(--sand-300);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.date-tab:hover {
+  border-color: var(--sage-400);
+}
+
+.date-tab--selected {
+  border-color: var(--pine-700);
+  background: var(--pine-700);
+  color: #fff;
+}
+
+/* Paso 3: solo las horas del día ya elegido, sin repetir doctor/fecha */
+
+.time-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.time-chip {
+  background: #fff;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  padding: 10px 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-900);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.time-chip:hover {
+  border-color: var(--sage-400);
+}
+
+.time-chip--selected {
+  border-color: var(--pine-700);
+  background: var(--pine-700);
+  color: #fff;
+}
+
+/* Resumen de lo elegido antes del formulario final */
+
+.selection-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sand-100);
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin: 8px 0 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--pine-900);
+}

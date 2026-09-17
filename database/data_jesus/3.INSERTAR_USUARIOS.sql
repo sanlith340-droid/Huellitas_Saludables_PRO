@@ -285,3 +285,39 @@ VALUES
     'especialista'
 );
 
+
+-- =========================================================
+-- AGENDA ESP001, ESP002 y ESP003
+-- Genera horarios DINÁMICOS: desde mañana hasta 14 días
+-- adelante, solo días hábiles (lunes a viernes), de 08:00
+-- a 17:00, en franjas de 1 hora.
+--
+-- Reemplaza a 5.INSERTAR_DISPONILBIDAD.sql, que tenía
+-- fechas fijas (19-21 de agosto de 2026) que ya pasaron.
+-- =========================================================
+
+-- (Opcional) Borra franjas de prueba viejas o mal creadas
+-- antes de insertar las nuevas. Descomenta si las quieres
+-- limpiar primero:
+-- DELETE FROM disponibilidad WHERE estado = 'disponible';
+
+/*
+INSERT INTO disponibilidad (
+    id_usuario,
+    fecha,
+    hora,
+    estado
+)
+SELECT
+    esp.id_usuario,
+    fecha_hora::DATE,
+    fecha_hora::TIME,
+    'disponible'
+FROM (VALUES ('ESP001'), ('ESP002'), ('ESP003')) AS esp(id_usuario)
+CROSS JOIN generate_series(
+    (CURRENT_DATE + INTERVAL '1 day') + TIME '08:00:00',
+    (CURRENT_DATE + INTERVAL '14 days') + TIME '17:00:00',
+    INTERVAL '1 hour'
+) AS fecha_hora
+WHERE fecha_hora::TIME BETWEEN TIME '08:00:00' AND TIME '17:00:00'
+  AND EXTRACT(DOW FROM fecha_hora) NOT IN (0, 6); -- 0=domingo, 6=sábado

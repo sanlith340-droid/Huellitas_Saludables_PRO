@@ -1,35 +1,35 @@
-## 📦 [HUELLITAS SALUDABLES]
-Ficha: 3407180 
+## DOCUMENTACION GENERAL DEL PROYECTO 
 
-## INTEGRANTES: 
+``` bash 
+
 Santiago Buitrago Goyeneche 
-Sara Jasmin Cruz Calderon
-Jorge Alejandro Torres Paez 
+Sara Jasmin Cruz 
+Jorge Alejandro Paez
 
-## 📁 PLANTILLA DE ESTRUCTURA 
+ficha: 3047180 
+
+``` 
+
+``` bash 
+
+ESTRUCTURA DEL PROYECTO Huellitas_Saludables_PRO
+
+back  - // BACKEND Desarollado por Jorge 
+
+database  // Sara , Jorge , Santiago
+
+//FULLSTACK: Sara
+
+veterinaria-frontend  // Santiago 
+
 
 ```
-BACKEND_HUELLITAS/
-│
-├── src/
-│   ├── config/
-│   ├── controllers/
-│   ├── routes/
-│   ├── models/
-│   └── app.js
-│
-├── package.json
-├── .env.example
-├── README.md
-├── .gitignore
-├── requirements.txt
-```
 
-## DEPENDENCIAS Y REQUERIMIENTOS 
+## INSTALACION DE DEPENDENCIAS 
 
-npm install express
+npm install --save
 
-npm init -y
+cp .env.example .env
 
 npm run dev : para iniciar el servidor
 
@@ -37,46 +37,31 @@ comandos de sguridad:
 
 git config --global --list
 
-//////
+---
 
-git branch -r : ver ramas remotas git
+## 🛠 Tecnologías
 
-git fetch --all : actuliza el remoto
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
+| **Node.js** | v16+ | Entorno de ejecución |
+| **Express.js** | v4.18+ | Framework web |
+| **PostgreSQL** | v12+ | Base de datos relacional |
+| **pg** | v8.10+ | Driver nativo de PostgreSQL |
+| **Joi** | v17.9+ | Validación de datos |
+| **Swagger** | v6.2+ | Documentación de API |
+| **Nodemon** | v2.0+ | Recarga automática en desarrollo |
 
-git branch commonjs origin/commonjs
-
-git add .
-
-git commit -m "lista"
-
-///
-
-git checkout main
-
-git branch
-
-git checkout "commit"
-
-git checkout -b "" // crear rama
-
-git branch : ver ramas
-
-//
+---
 
 
-## DEPENDENCIAS Y PAQUETES NECESARIO EN REQUIREMENTS 
+## Documentacion del Front en Huellitas Saludables 
 
--express
--Gestor de paquetes npm
-npm install express
+## 
 
-npm init -y
+Conectar con Postgres
 
-npm run dev : para iniciar el servidor 
+ cd ..
+cd front
 
-comandos de sguridad: 
-
-git config --global --list 
-
-
-## DOCUMENTO HECHO POR SANTIAGO BUITRAGO GOYENECHE // SCRUM MASTER 
+npm install
+npm run dev

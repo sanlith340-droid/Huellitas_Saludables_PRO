@@ -1,8 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from "react-icons/fa";
+
+const ESTADO_LABEL = {
+  pendiente: "Pendiente",
+  confirmado: "Confirmada",
+  cancelado: "Cancelada",
+  atendido: "Atendida",
+};
 
 function formatearFechaLarga(fechaISO) {
   const fecha = new Date(`${fechaISO}T00:00:00`);
@@ -62,13 +69,14 @@ function agruparPorEspecialista(disponibilidad) {
 }
 
 function NuevaCita() {
-  const navigate = useNavigate();
   const { usuario } = useAuth();
 
   const [mascotas, setMascotas] = useState([]);
   const [disponibilidad, setDisponibilidad] = useState([]);
+  const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [cancelandoId, setCancelandoId] = useState(null);
 
   const [idEspecialista, setIdEspecialista] = useState(null);
   const [fechaElegida, setFechaElegida] = useState(null);
@@ -79,35 +87,44 @@ function NuevaCita() {
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState("");
 
-  useEffect(() => {
-    const cargarDatos = async () => {
-      setCargando(true);
-      setError("");
+  // Componente principal: se conecta a la API REST del proyecto
+  // (mascotas, disponibilidad y citas) cada vez que se monta la página.
+  const cargarDatos = useCallback(async () => {
+    setCargando(true);
+    setError("");
 
-      try {
-        const [resMascotas, resDisponibilidad] = await Promise.all([
-          api.get("/mascotas"),
-          api.get("/disponibilidad", { params: { estado: "disponible" } }),
-        ]);
+    try {
+      const [resMascotas, resDisponibilidad, resCitas] = await Promise.all([
+        api.get("/mascotas"),
+        api.get("/disponibilidad", { params: { estado: "disponible" } }),
+        api.get("/citas"),
+      ]);
 
-        const misMascotas = (resMascotas.data.data || []).filter(
-          (m) => m.propietario_id === usuario?.id_usuario
-        );
+      const misMascotas = (resMascotas.data.data || []).filter(
+        (m) => m.propietario_id === usuario?.id_usuario
+      );
 
-        setMascotas(misMascotas);
-        setDisponibilidad(resDisponibilidad.data.data || []);
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "No se pudo cargar la disponibilidad. Verifica que el backend esté activo."
-        );
-      } finally {
-        setCargando(false);
-      }
-    };
+      setMascotas(misMascotas);
+      setDisponibilidad(resDisponibilidad.data.data || []);
 
-    cargarDatos();
+      const idsMascotas = new Set(misMascotas.map((m) => m.id_mascota));
+      const misCitas = (resCitas.data.data || []).filter((c) =>
+        idsMascotas.has(c.id_mascota)
+      );
+      setCitas(misCitas);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          "No se pudo cargar la disponibilidad. Verifica que el backend esté activo."
+      );
+    } finally {
+      setCargando(false);
+    }
   }, [usuario]);
+
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
   const especialistas = useMemo(
     () => agruparPorEspecialista(disponibilidad),
@@ -116,8 +133,8 @@ function NuevaCita() {
 
   const especialistaActivo = especialistas.find((e) => e.id_usuario === idEspecialista);
 
-  const fechasDisponibles = especialistaActivo
-    ? Array.from(especialistaActivo.fechas.keys()).sort()
+  const fechasDisponibles: string[] = especialistaActivo
+    ? (Array.from(especialistaActivo.fechas.keys()) as string[]).sort()
     : [];
 
   const horariosDelDia =
@@ -158,11 +175,28 @@ function NuevaCita() {
         motivo: motivo.trim(),
       });
 
-      navigate("/dashboard");
+      setIdEspecialista(null);
+      setFechaElegida(null);
+      setIdDisponibilidad(null);
+      setIdMascota("");
+      setMotivo("");
+      await cargarDatos();
     } catch (err) {
       setMensaje(err.response?.data?.message || "No se pudo agendar la cita.");
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const handleCancelar = async (id_cita) => {
+    setCancelandoId(id_cita);
+    try {
+      await api.patch(`/citas/${id_cita}/cancelar`);
+      await cargarDatos();
+    } catch (err) {
+      setMensaje(err.response?.data?.message || "No se pudo cancelar la cita.");
+    } finally {
+      setCancelandoId(null);
     }
   };
 
@@ -319,6 +353,54 @@ function NuevaCita() {
             {mensaje && <p className="message message-error">{mensaje}</p>}
           </form>
         )}
+      </div>
+
+      <div className="form-page form-page--wide">
+        <div className="panel">
+          <div className="panel__head">
+            <h2>Mis citas</h2>
+            {!cargando && <span className="badge">{citas.length}</span>}
+          </div>
+
+          {cargando ? (
+            <p className="empty-state">Cargando citas...</p>
+          ) : citas.length === 0 ? (
+            <p className="empty-state">No tienes citas agendadas.</p>
+          ) : (
+            citas.map((cita) => (
+              <div className="list-item list-item--cita" key={cita.id_cita}>
+                <div className="list-item__icon">
+                  <FaCalendarAlt />
+                </div>
+                <div className="list-item__body">
+                  <div className="list-item__title">{cita.motivo}</div>
+                  <div className="list-item__meta">
+                    {cita.mascota_nombre} · {formatearFechaCorta(cita.fecha_cita)} ·{" "}
+                    {formatearHora(cita.hora_cita)}
+                  </div>
+                  <div className="list-item__meta">
+                    Dr(a). {cita.especialista_nombre} {cita.especialista_apellidos}
+                  </div>
+                </div>
+                <div className="list-item__side">
+                  <span className={`badge badge-${cita.estado}`}>
+                    {ESTADO_LABEL[cita.estado] || cita.estado}
+                  </span>
+                  {cita.estado !== "cancelado" && cita.estado !== "atendido" && (
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      disabled={cancelandoId === cita.id_cita}
+                      onClick={() => handleCancelar(cita.id_cita)}
+                    >
+                      {cancelandoId === cita.id_cita ? "Cancelando..." : "Cancelar"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

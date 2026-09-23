@@ -961,185 +961,230 @@ select:focus {
   color: var(--pine-900);
 }
 
-/* ---------- Disponibilidad: filtros, grupos por día y paginación ---------- */
+/* ---------- Disponibilidad: vista semanal por especialista ---------- */
 
-.filters {
+.avail-form-panel {
+  margin: 20px 0 0;
+}
+
+.avail-form {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 14px;
-  margin-bottom: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  align-items: end;
 }
 
-.filters .field {
-  margin-bottom: 0;
+.avail-form .btn {
+  height: 46px;
 }
 
-.filters__wide {
-  grid-column: 1 / -1;
+.avail-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 24px 0 72px;
 }
 
-/* Selector de estado tipo "píldoras" (Todas / Disponibles / Ocupadas) */
-.segmented {
+.avail-specialists {
+  position: sticky;
+  top: 88px;
+}
+
+.avail-search {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 14px;
-}
-
-.segmented__btn {
-  background: #fff;
-  color: var(--ink-600);
-  border: 1.5px solid var(--sand-300);
-  border-radius: 999px;
-  padding: 6px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-
-.segmented__btn:hover {
-  border-color: var(--sage-400);
-}
-
-.segmented__btn--active {
-  background: var(--pine-700);
-  border-color: var(--pine-700);
-  color: #fff;
-}
-
-.segmented__count {
-  margin-left: 5px;
-  font-weight: 500;
-  opacity: 0.8;
-}
-
-.filter-note {
-  font-size: 0.85rem;
-  color: var(--ink-600);
-  background: var(--sand-100);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  margin-bottom: 14px;
-}
-
-.filter-note strong {
-  color: var(--pine-900);
-}
-
-/* Estado vacío con acciones */
-.empty-state__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-/* Lista agrupada por día */
-.slot-list {
-  transition: opacity 0.15s ease;
-}
-
-.slot-list--loading {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.day-group {
-  margin-bottom: 16px;
-}
-
-.day-group__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  background: var(--sand-100);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  margin-bottom: 2px;
-}
-
-.day-group__title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--pine-900);
-}
-
-.day-group__count {
-  font-size: 0.78rem;
-  color: var(--ink-600);
-  white-space: nowrap;
-}
-
-/* Bloque de un especialista dentro de un día (solo en la vista "todos") */
-.specialist-head {
-  padding: 12px 4px 4px;
-  font-size: 0.85rem;
-  color: var(--ink-600);
-}
-
-.specialist-head strong {
-  color: var(--pine-900);
-  font-weight: 600;
-}
-
-/* Fila compacta de una franja: hora · estado · acciones */
-.slot-row {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px 12px;
-  padding: 8px 4px;
+  gap: 8px;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  margin-bottom: 14px;
+  color: var(--ink-600);
+}
+
+.avail-search input {
+  border: none;
+  padding: 0;
+  flex: 1;
+}
+
+.avail-search input:focus {
+  border: none;
+  outline: none;
+}
+
+.avail-specialists__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.avail-doctor {
+  width: 100%;
+}
+
+.avail-doctor-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
   border-bottom: 1px solid var(--sand-200);
 }
 
-.specialist-block .slot-row:last-child {
-  border-bottom: none;
+.avail-doctor-header__avatar {
+  width: 52px;
+  height: 52px;
+  font-size: 1.2rem;
 }
 
-.slot-row__time {
-  min-width: 48px;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--pine-900);
-}
-
-.slot-row__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-/* Un hijo de grid no se encoge por debajo de su contenido salvo que se
-   le indique: sin esto, las filas de franjas ensanchan el panel en móvil. */
-.dash-grid--wide > .panel {
-  min-width: 0;
-}
-
-/* Paginación */
-.pagination {
+.avail-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-top: 8px;
-  padding-top: 14px;
-  border-top: 1px solid var(--sand-200);
-  font-size: 0.85rem;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.avail-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
   color: var(--ink-600);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot--disponible {
+  background: var(--sage-400);
+}
+
+.legend-dot--pocos {
+  background: #c98a1f;
+}
+
+.legend-dot--no {
+  background: var(--red-600);
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.week-nav__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--pine-900);
+  white-space: nowrap;
+}
+
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+}
+
+.day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 14px 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+
+.day-cell:hover {
+  border-color: var(--sage-400);
+  transform: translateY(-1px);
+}
+
+.day-cell--selected {
+  border-color: var(--pine-700);
+  box-shadow: 0 0 0 2px var(--pine-700) inset;
+}
+
+.day-cell__weekday {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--ink-600);
+  text-transform: uppercase;
+}
+
+.day-cell__date {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--pine-900);
+}
+
+.day-cell__status {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  margin-top: 2px;
   text-align: center;
 }
 
-@media (max-width: 520px) {
-  .filters {
+.day-cell--disponible .day-cell__status {
+  background: #dbe6d2;
+  color: var(--pine-700);
+}
+
+.day-cell--pocos-disponibles .day-cell__status {
+  background: #f6e6c8;
+  color: #8a5a12;
+}
+
+.day-cell--no-disponible .day-cell__status {
+  background: #fbe9e4;
+  color: var(--red-600);
+}
+
+.day-cell--sin-datos .day-cell__status {
+  background: var(--sand-200);
+  color: var(--ink-600);
+}
+
+.avail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 960px) {
+  .avail-layout {
     grid-template-columns: 1fr;
   }
 
-  .pagination {
-    flex-wrap: wrap;
-    justify-content: center;
+  .avail-specialists {
+    position: static;
+  }
+
+  .week-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   }
 }

@@ -12,6 +12,7 @@
 
 const { Usuario } = require('../models');
 const { verificarToken } = require('../utils/jwt');
+const { mensajeSinPermiso, nombreRol } = require('../utils/roleMessages');
 
 // ============================================================
 // RUTAS PÚBLICAS - COINCIDENCIA EXACTA
@@ -139,9 +140,10 @@ const requireRole = (...rolesPermitidos) => {
     const roles = rolesPermitidos.map(r => String(r).trim().toLowerCase());
 
     if (!roles.includes(rolUsuario)) {
+      const rolesPermitidosTexto = roles.map(nombreRol).join(' o ');
       return res.status(403).json({
         success: false,
-        message: 'No tiene permisos para realizar esta acción',
+        message: `${mensajeSinPermiso(rolUsuario)} Esta acción está disponible para ${rolesPermitidosTexto}.`,
         code: 'FORBIDDEN',
         details: {
           rol_actual: req.user.rol,

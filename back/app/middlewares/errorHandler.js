@@ -23,8 +23,9 @@ function errorHandler(err, req, res, _next) {
     return fail(res, err.message, err.statusCode, err.code);
   }
 
-  if (err.code && PG_ERROR_MESSAGES[err.code]) {
-    return fail(res, PG_ERROR_MESSAGES[err.code], 409, `PG_${err.code}`, {
+  const postgresCode = err.code || err.parent?.code || err.original?.code;
+  if (postgresCode && PG_ERROR_MESSAGES[postgresCode]) {
+    return fail(res, PG_ERROR_MESSAGES[postgresCode], 409, `PG_${postgresCode}`, {
       detail: err.detail,
     });
   }

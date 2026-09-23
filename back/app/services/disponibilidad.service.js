@@ -6,6 +6,7 @@
 
 const disponibilidadModel = require('../models/disponibilidad.model');
 const usuarioModel = require('../models/usuario.model');
+const { Cita } = require('../models');
 const AppError = require('../utils/AppError');
 const { LIMITE_POR_DEFECTO } = require('../schemas/disponibilidad.schema');
 
@@ -160,7 +161,32 @@ async function eliminar(id) {
     throw AppError.conflict('No se puede eliminar una disponibilidad ocupada');
   }
 
-  return disponibilidadModel.remove(id);
+  // Una cita (incluso cancelada) conserva la referencia para proteger el
+  // historial. Se comprueba antes del DELETE para no depender del mensaje
+  // que PostgreSQL/Sequelize pueda encapsular en la excepción.
+  const citasAsociadas = await Cita.count({
+    where: { id_disponibilidad: id },
+  });
+  if (citasAsociadas > 0) {
+    throw AppError.conflict(
+      'No se puede eliminar esta disponibilidad porque tiene una cita asociada. Cancela o elimina primero la cita.'
+    );
+  }
+
+  try {
+    return await disponibilidadModel.remove(id);
+  } catch (error) {
+    // Sequelize expone el código PostgreSQL en parent/original. Una cita
+    // conserva la disponibilidad para proteger el historial y PostgreSQL
+    // rechaza su borrado con una restricción de clave foránea (23503).
+    const codigoPostgres = error.code || error.parent?.code || error.original?.code;
+    if (codigoPostgres === '23503') {
+      throw AppError.conflict(
+        'No se puede eliminar esta disponibilidad porque tiene una cita asociada. Cancela o elimina primero la cita.'
+      );
+    }
+    throw error;
+  }
 }
 
 module.exports = {

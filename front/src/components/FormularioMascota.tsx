@@ -9,6 +9,33 @@ const ESTADO_INICIAL = {
   id_raza: "",
 };
 
+const RAZAS_POR_ESPECIE = {
+  perro: new Set([
+    "labrador retriever",
+    "golden retriever",
+    "pastor aleman",
+    "bulldog frances",
+    "beagle",
+    "poodle",
+    "chihuahua",
+    "husky siberiano",
+  ]),
+  gato: new Set([
+    "persa",
+    "siames",
+    "maine coon",
+    "bengali",
+    "angora",
+    "british shorthair",
+  ]),
+};
+
+const normalizarNombre = (nombre) =>
+  nombre
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 function FormularioMascota({ onMascotaRegistrada = null }) {
   const [razas, setRazas] = useState([]);
   const [cargandoRazas, setCargandoRazas] = useState(true);
@@ -16,6 +43,10 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [form, setForm] = useState(ESTADO_INICIAL);
+
+  const razasFiltradas = razas.filter((raza) =>
+    RAZAS_POR_ESPECIE[form.especie]?.has(normalizarNombre(raza.nombre))
+  );
 
   useEffect(() => {
     const cargarRazas = async () => {
@@ -37,9 +68,13 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
   }, []);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm((formularioActual) => ({
       ...formularioActual,
-      [e.target.name]: e.target.value,
+      [name]: value,
+      ...(name === "especie" && value !== formularioActual.especie
+        ? { id_raza: "" }
+        : {}),
     }));
     setMensaje("");
     setError("");
@@ -135,9 +170,13 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
               disabled={cargandoRazas}
             >
               <option value="" disabled>
-                {cargandoRazas ? "Cargando razas..." : "Selecciona una raza"}
+                {cargandoRazas
+                  ? "Cargando razas..."
+                  : razasFiltradas.length === 0
+                  ? "No hay razas disponibles"
+                  : "Selecciona una raza"}
               </option>
-              {razas.map((raza) => (
+              {razasFiltradas.map((raza) => (
                 <option key={raza.id_raza} value={raza.id_raza}>
                   {raza.nombre}
                 </option>

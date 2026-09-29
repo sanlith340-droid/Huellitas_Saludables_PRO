@@ -1,143 +1,81 @@
-# Despliegue Docker de Huellitas Saludables
+# Levantar Huellitas Saludables con Docker
 
-## Requisitos
+Con Docker puedes iniciar la base de datos, la API y el frontend juntos, sin instalar cada parte por separado.
 
-Se necesita Docker Engine con Docker Compose v2 (`docker compose`). El proyecto queda dividido en tres contenedores: PostgreSQL, API Express y frontend React/Vite servido por Nginx.
+## Lo que necesitas
 
-## Arranque rápido
+- Docker Engine.
+- Docker Compose v2, que se usa como `docker compose`.
 
-Desde la raíz del proyecto:
+## Arranque
+
+Desde la carpeta principal del proyecto:
 
 ```bash
 cp .env.docker.example .env
-# Edita .env y cambia, como mínimo, DB_PASSWORD y JWT_SECRET.
+```
+
+Edita `.env` antes de arrancar y cambia `DB_PASSWORD` y `JWT_SECRET` por valores tuyos. No publiques la app con las claves de ejemplo.
+
+```bash
 docker compose up -d --build
-```
-
-La aplicación queda disponible en `http://localhost:8080`. También se publican, mediante el proxy de Nginx:
-
-- `http://localhost:8080/health`: salud de la API y conexión a PostgreSQL.
-- `http://localhost:8080/api-docs`: documentación Swagger.
-- `http://localhost:8080/api/...`: endpoints del backend.
-
-Para ver el arranque y las migraciones:
-
-```bash
-docker compose logs -f backend
-```
-
-Para comprobar el estado:
-
-```bash
 docker compose ps
 curl http://localhost:8080/health
 ```
 
-Para detener los servicios sin borrar los datos:
+Abre <http://localhost:8080> para ver la app. Swagger está en <http://localhost:8080/api-docs> y el puerto público se puede cambiar con `APP_PORT`.
+
+## Comandos útiles
+
+```bash
+docker compose logs -f                 # ver todos los logs
+docker compose logs -f backend        # ver solo la API
+docker compose exec backend sh        # abrir una shell en el backend
+docker compose exec backend npx sequelize-cli db:migrate
+```
+
+Para apagar el proyecto y conservar los datos:
 
 ```bash
 docker compose down
 ```
 
-Para borrar también la base de datos persistida y empezar desde cero —**esto elimina los datos del volumen**—:
+**Ojo:** este comando sí borra los datos del volumen:
 
 ```bash
 docker compose down -v
 ```
 
-## Cómo funciona
+Úsalo solo cuando quieras borrar la base y empezar de cero.
 
-`db` usa la imagen oficial `postgres:16-alpine`. La base se guarda en el volumen Docker `postgres_data`, por lo que reiniciar o recrear los contenedores no elimina los datos.
+## ¿Qué hacen los contenedores?
 
-`backend` se construye desde `back/Dockerfile`. Su entrypoint espera hasta que PostgreSQL acepte conexiones, ejecuta `npx sequelize-cli db:migrate` y finalmente inicia `node server.js`. Los seeders son opcionales: se ejecutan cuando `DB_SEED=true`. Las migraciones son idempotentes porque Sequelize registra las ya aplicadas en `SequelizeMeta`.
+- `db` usa PostgreSQL 16 y guarda los datos en el volumen `postgres_data`.
+- `backend` espera a que PostgreSQL esté listo, aplica las migraciones y arranca Express. Los datos demo solo se cargan si `DB_SEED=true`.
+- `frontend` compila React/Vite y Nginx sirve los archivos. Nginx también pasa `/api`, `/health` y `/api-docs` al backend.
 
-`frontend` usa una construcción multi-stage. En la primera etapa, Node instala las dependencias y ejecuta `npm run build`; en la segunda, Nginx sirve los archivos estáticos resultantes. Nginx también hace proxy de `/api`, `/health` y `/api-docs` al servicio interno `backend`, evitando que el navegador tenga que conocer el nombre de red Docker.
+La URL de API del frontend se configura durante la compilación. Con Docker, `/api` es el valor recomendado porque Nginx se encarga del resto.
 
-La variable `VITE_API_URL` se inserta durante el build de Vite. Su valor predeterminado es `/api`, que es la opción recomendada cuando frontend y backend se sirven detrás del mismo Nginx.
+## Correr las pruebas
 
-## Tests automatizados dentro de Docker
-
-El archivo `docker-compose.test.yml` define un flujo separado para Jest. Levanta un PostgreSQL de pruebas (`db-test`) con almacenamiento temporal (`tmpfs`) y un contenedor `tests` que reutiliza la imagen del backend, pero reemplaza el entrypoint normal por `npm test -- --runInBand`.
-
-La suite actual ya contiene pruebas unitarias y de integración con Jest y Supertest. Sus hooks crean `proyectohs_test`, ejecutan las migraciones y seeders, y eliminan la base al terminar. En Docker, `DB_HOST=db-test` hace que esos hooks se conecten al servicio correcto en lugar de intentar usar `localhost`.
-
-Para ejecutar todos los tests:
+El archivo `docker-compose.test.yml` levanta una base PostgreSQL temporal y corre Jest/Supertest en otro contenedor:
 
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
 ```
 
-El comando devuelve código `0` si todas las pruebas pasan y un código distinto de cero si alguna falla. Después de una ejecución normal, se pueden eliminar los contenedores de prueba con:
+Cuando termines, puedes limpiar los contenedores de pruebas así:
 
 ```bash
 docker compose -f docker-compose.test.yml down -v
 ```
 
-En CI/CD, el primer comando debe ser el paso de validación. Por ejemplo, un pipeline puede construir las imágenes, ejecutar ese comando y solamente después ejecutar `docker compose up -d` para desplegar. La base de pruebas está separada de la base de desarrollo/producción y se destruye al finalizar, de modo que las pruebas no modifican los datos de la aplicación.
+Esa base es temporal y está separada de la base normal del proyecto.
 
-## Archivos agregados
+## Claves y CORS
 
-| Archivo | Función |
-|---|---|
-| `docker-compose.yml` | Orquesta PostgreSQL, backend y frontend, redes implícitas, volumen, puertos y healthchecks. |
-| `back/Dockerfile` | Construye la imagen de Node para la API. |
-| `back/docker-entrypoint.sh` | Espera la base, corre migraciones y opcionalmente seeders. |
-| `front/Dockerfile` | Compila React/Vite y crea la imagen final de Nginx. |
-| `front/nginx.conf` | Sirve la SPA, resuelve rutas de React y proxifica la API. |
-| `.env.docker.example` | Plantilla de configuración para Docker sin incluir secretos reales. |
-| `docker-compose.test.yml` | Ejecuta Jest en un contenedor contra un PostgreSQL efímero de pruebas. |
-| `.dockerignore` y variantes | Evitan enviar `.env`, `node_modules`, `dist` y logs al contexto de build. |
+Las variables principales están en `.env.docker.example`. Copia ese archivo a `.env` y cambia los valores de ejemplo. No subas `.env` a Git ni lo incluyas en imágenes o ZIP que compartas.
 
-## Notas de seguridad
+Hay un detalle importante: aunque Docker pasa `CORS_ORIGIN` al backend, el código actual acepta cualquier origen. Esa variable todavía no limita quién se conecta; hay que implementar esa regla en `back/app/app.js` antes de publicar la API. En un servidor real también configura HTTPS.
 
-No se deben copiar los archivos `.env` reales a una imagen ni subirlos al repositorio. En un servidor real, crea `.env` fuera del control de versiones, usa un `JWT_SECRET` aleatorio y restringe `CORS_ORIGIN` al dominio del frontend. Para producción con HTTPS, coloca un proxy TLS externo delante de este stack o termina TLS en Nginx.
-
-## Comandos útiles
-
-```bash
-# Reconstruir después de modificar código
-docker compose up -d --build
-
-# Entrar a la API
-docker compose exec backend sh
-
-# Ejecutar migraciones manualmente
-docker compose exec backend npx sequelize-cli db:migrate
-
-# Cargar datos demo
-docker compose exec backend npx sequelize-cli db:seed:all
-
-# Ver logs de todos los servicios
-docker compose logs -f
-```
-
-## RECORDATORIO DE COMANDOS
-# Levantar todo
-docker compose up -d
-
-# Ver estado
-docker compose ps
-
-# Logs en vivo
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f db
-
-# Ejecutar comandos dentro de un contenedor
-docker compose exec backend sh
-docker compose exec backend npx sequelize-cli db:migrate
-docker compose exec backend npx sequelize-cli db:seed:all
-docker compose exec db psql -U postgres -d proyectohs
-
-# Reconstruir tras cambiar código/Dockerfile
-docker compose up -d --build backend
-docker compose up -d --build frontend
-
-# Reiniciar sin reconstruir
-docker compose restart backend
-
-# Detener todo
-docker compose down
-
-# Detener y borrar la DB ⚠️
-docker compose down -v
+Para conocer los endpoints, mira [la guía de API](docs/API.md); para entender cómo se conectan las partes, mira [la arquitectura](docs/ARQUITECTURA.md).

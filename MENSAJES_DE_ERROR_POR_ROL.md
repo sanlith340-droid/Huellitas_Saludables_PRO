@@ -1,53 +1,47 @@
-# Mensajes de error específicos por tipo de usuario
+# Mensajes cuando una cuenta no tiene permiso
 
-Se ajustó el manejo de errores de autorización para que los mensajes indiquen el tipo de cuenta que está intentando realizar la acción y qué tipo de cuenta sí puede realizarla. **No se cambiaron las reglas de permisos**; únicamente se hicieron más claros los mensajes.
+Esta guía explica qué ve una persona cuando intenta abrir una sección o usar una función que no corresponde a su rol. Solo cambia la explicación del error: **no cambia quién puede hacer cada acción**. Cuando el token sirve, pero el rol no tiene permiso, la API responde `403 FORBIDDEN`.
 
-## Mensajes del backend
+## Lo que responde el backend
 
-Estos mensajes aparecen cuando una persona está autenticada, pero intenta usar un endpoint cuyo rol no está autorizado. La respuesta HTTP continúa siendo `403 FORBIDDEN`.
+El mensaje depende del rol actual. Después, la API agrega qué roles sí pueden hacer esa acción.
 
-| Tipo de usuario | Mensaje base nuevo | Cuándo aparece |
+| Rol | Mensaje que usa el backend | Un ejemplo de cuándo sale |
 |---|---|---|
-| `usuario` | **“Tu cuenta de usuario no tiene permisos para realizar esta acción. Solo el personal autorizado puede acceder a esta función.”** | Cuando una cuenta de usuario intenta una función reservada al personal, por ejemplo crear o modificar disponibilidad, gestionar historias clínicas o registrar cuentas administrativas. |
-| `especialista` | **“Tu cuenta de especialista no tiene permisos para realizar esta acción. Si necesitas gestionar horarios o citas administrativas, solicita apoyo a recepción.”** | Cuando un especialista intenta una operación que no le corresponde, por ejemplo administrar disponibilidad, cancelar/editar citas reservadas para otros roles o crear usuarios administrativos. |
-| `recepcionista` | **“Tu cuenta de recepcionista no tiene permisos para realizar esta acción. Esta función está reservada para especialistas o administradores.”** | Cuando una cuenta de recepción intenta acceder a historias clínicas u otra función reservada para especialistas o administradores. |
-| `admin` | **“Tu cuenta de administrador no tiene permisos para realizar esta acción con la configuración actual. Verifica la operación solicitada.”** | Cuando una cuenta administradora intenta una operación que, según la ruta actual, está limitada a otro rol. |
-| Rol desconocido | **“Tu cuenta no tiene permisos para realizar esta acción. Verifica tu tipo de usuario o solicita apoyo al administrador.”** | Como mensaje de respaldo si la base de datos contiene un rol no contemplado en el catálogo. |
+| `usuario` | “Tu cuenta de usuario no tiene permisos para realizar esta acción. Solo el personal autorizado puede acceder a esta función.” | Intenta administrar horarios o historias clínicas. |
+| `especialista` | “Tu cuenta de especialista no tiene permisos para realizar esta acción. Si necesitas gestionar horarios o citas administrativas, solicita apoyo a recepción.” | Intenta administrar disponibilidad o hacer una tarea de recepción. |
+| `recepcionista` | “Tu cuenta de recepcionista no tiene permisos para realizar esta acción. Esta función está reservada para especialistas o administradores.” | Intenta abrir una historia clínica. |
+| `admin` | “Tu cuenta de administrador no tiene permisos para realizar esta acción con la configuración actual. Verifica la operación solicitada.” | La ruta permite solo otro rol. |
+| Rol que no está en la lista | “Tu cuenta no tiene permisos para realizar esta acción. Verifica tu tipo de usuario o solicita apoyo al administrador.” | La base tiene un rol no reconocido por la app. |
 
-Después del mensaje base, el backend agrega automáticamente los roles permitidos para esa ruta. Por ejemplo:
+Por ejemplo, una respuesta puede decir que una cuenta de usuario no tiene permiso y agregar que esa acción está disponible para especialistas. Los roles permitidos salen de la configuración de cada ruta.
 
-> “Tu cuenta de usuario no tiene permisos para realizar esta acción. Solo el personal autorizado puede acceder a esta función. Esta acción está disponible para especialista.”
+| Acción | Roles permitidos en la ruta |
+|---|---|
+| Crear disponibilidad | `recepcionista`, `admin` |
+| Crear o actualizar una historia clínica | `especialista` |
+| Crear una mascota | `usuario`, `admin` |
+| Crear una cuenta desde administración | `admin` |
 
-Los roles permitidos se calculan directamente desde cada ruta, por lo que el mensaje se mantiene sincronizado con la autorización real. Algunos ejemplos son:
+## Lo que muestra el frontend
 
-| Acción protegida | Roles permitidos | Caso que genera el mensaje |
-|---|---|---|
-| Crear disponibilidad | `recepcionista` o `admin` | Un `usuario` o `especialista` intenta crear una franja horaria. |
-| Crear o actualizar historia clínica | `especialista` | Un `usuario`, `recepcionista` o `admin` intenta gestionar una historia clínica. |
-| Crear una mascota | `usuario` o `admin` | Un `especialista` o `recepcionista` intenta registrar una mascota. |
-| Crear una cuenta desde administración | `admin` | Cualquier rol distinto de `admin` intenta registrar personal o administradores. |
+Si alguien escribe directamente una dirección de pantalla que no puede usar, `RoleRoute` muestra un aviso. La persona se queda en la app y entiende qué pasó, en vez de ser enviada al panel sin explicación.
 
-## Mensajes del frontend
+| Rol | Mensaje que aparece en pantalla |
+|---|---|
+| `usuario` | “Tu cuenta de usuario no tiene permisos para ver esta sección. Solo el personal autorizado puede acceder.” |
+| `especialista` | “Tu cuenta de especialista no tiene permisos para ver esta sección. Si necesitas gestionar horarios o citas administrativas, solicita apoyo a recepción.” |
+| `recepcionista` | “Tu cuenta de recepcionista no tiene permisos para ver esta sección. Esta función está reservada para especialistas o administradores.” |
+| `admin` | “Tu cuenta de administrador no tiene permisos para ver esta sección con la configuración actual. Verifica la operación solicitada.” |
+| Rol que no está en la lista | “Tu cuenta no tiene permisos para ver esta sección. Verifica tu tipo de usuario o solicita apoyo al administrador.” |
 
-También se modificó `RoleRoute`. Antes, cuando una persona autenticada entraba manualmente a una vista no permitida, era redirigida a `/dashboard` sin explicación. Ahora permanece en la aplicación y ve un mensaje específico para su rol:
+## Archivos relacionados
 
-| Tipo de usuario | Mensaje mostrado en la pantalla | Cuándo aparece |
-|---|---|---|
-| `usuario` | **“Tu cuenta de usuario no tiene permisos para ver esta sección. Solo el personal autorizado puede acceder.”** | Al intentar abrir directamente una pantalla protegida para personal autorizado. |
-| `especialista` | **“Tu cuenta de especialista no tiene permisos para ver esta sección. Si necesitas gestionar horarios o citas administrativas, solicita apoyo a recepción.”** | Al abrir una sección exclusiva de recepción o administración. |
-| `recepcionista` | **“Tu cuenta de recepcionista no tiene permisos para ver esta sección. Esta función está reservada para especialistas o administradores.”** | Al abrir una sección exclusiva de especialistas o administradores. |
-| `admin` | **“Tu cuenta de administrador no tiene permisos para ver esta sección con la configuración actual. Verifica la operación solicitada.”** | Si la configuración de rutas limita una vista a otros roles. |
-| Rol desconocido | **“Tu cuenta no tiene permisos para ver esta sección. Verifica tu tipo de usuario o solicita apoyo al administrador.”** | Como respaldo para un rol no reconocido. |
+- `back/app/middlewares/identifyUser.js`: revisa el rol y arma la respuesta `403`.
+- `back/app/utils/roleMessages.js`: mensajes del backend.
+- `front/src/components/RoleRoute.tsx`: protección de pantallas.
+- `front/src/utils/roleMessages.ts`: mensajes del frontend.
 
-## Archivos modificados
+## Revisarlo
 
-- `back/app/middlewares/identifyUser.js`: usa el mensaje específico del rol y agrega los roles permitidos por endpoint en las respuestas `403`.
-- `back/app/utils/roleMessages.js`: catálogo centralizado de mensajes del backend.
-- `front/src/components/RoleRoute.tsx`: reemplaza la redirección silenciosa por un mensaje visible.
-- `front/src/utils/roleMessages.ts`: catálogo centralizado de mensajes del frontend.
-
-## Validación realizada
-
-- La sintaxis de los dos archivos JavaScript del backend fue validada con `node --check`.
-- Se ejecutó TypeScript directamente con `node ./node_modules/typescript/bin/tsc -b --pretty false` y no reportó errores de tipos.
-- El empaquetado de Vite no pudo completarse porque la instalación incluida en el ZIP no contiene el paquete opcional nativo `@rollup/rollup-linux-x64-gnu`; es un problema de dependencias del entorno, no del código modificado.
+Desde `back/`, `npm test` corre las pruebas del backend. Desde `front/`, `npm run type-check` revisa los tipos de TypeScript. El servidor es quien debe bloquear las operaciones; ocultar una pantalla en el frontend no reemplaza esa verificación.

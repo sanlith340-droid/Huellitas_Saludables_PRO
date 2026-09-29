@@ -110,3 +110,34 @@ docker compose exec backend npx sequelize-cli db:seed:all
 # Ver logs de todos los servicios
 docker compose logs -f
 ```
+
+## RECORDATORIO DE COMANDOS
+# Levantar todo
+docker compose up -d
+
+# Ver estado
+docker compose ps
+
+# Logs en vivo
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f db
+
+# Ejecutar comandos dentro de un contenedor
+docker compose exec backend sh
+docker compose exec backend npx sequelize-cli db:migrate
+docker compose exec backend npx sequelize-cli db:seed:all
+docker compose exec db psql -U postgres -d proyectohs
+
+# Reconstruir tras cambiar código/Dockerfile
+docker compose up -d --build backend
+docker compose up -d --build frontend
+
+# Reiniciar sin reconstruir
+docker compose restart backend
+
+# Detener todo
+docker compose down
+
+# Detener y borrar la DB ⚠️
+docker compose down -v

@@ -12,7 +12,7 @@ Desde la carpeta principal del proyecto:
 
 ```bash
 cd back
-npm install
+npm install --save
 cp .env.example .env
 ```
 

@@ -74,7 +74,7 @@ Edita `back/.env.test` con los datos de tu PostgreSQL local. `DB_NAME_TEST` pued
 Desde `back/`:
 
 ```bash
-npm test
+npm run test
 ```
 
 El script de `package.json` activa `NODE_ENV=test` y `--runInBand`, así que Jest ejecuta los archivos uno por uno. Esto evita que varias suites intenten borrar o sembrar la misma base al mismo tiempo.
@@ -87,10 +87,10 @@ Desde `back/`, por ejemplo:
 
 ```bash
 # Solo las pruebas de citas
-npm test -- tests/integration/citas.test.js
+npm run test -- tests/integration/citas.test.js
 
 # Solo los casos cuyo nombre contenga este texto
-npm test -- -t "sin token devuelve 401"
+npm run test -- -t "sin token devuelve 401"
 
 # Modo watch: vuelve a ejecutar al detectar cambios
 npm run test:watch

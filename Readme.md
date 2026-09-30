@@ -23,11 +23,17 @@ Abre `.env` y cambia `DB_PASSWORD` y `JWT_SECRET` por valores tuyos y seguros. L
 ```bash
 docker compose exec backend npx sequelize-cli db:seed:undo:all
 docker compose exec backend npx sequelize-cli db:migrate:undo:all
-newgrp docker
 docker compose up -d --build
 docker compose ps
 docker compose exec backend npx sequelize-cli db:migrate
 docker compose exec backend npx sequelize-cli db:seed:all
+```
+```
+Solucion de errores
+
+```bash
+newgrp docker
+
 ```
 
 Después puedes abrir <http://localhost:8080>. La API se conecta por `/api`, el estado del servidor se revisa en `/health` y la documentación interactiva está en `/api-docs`.

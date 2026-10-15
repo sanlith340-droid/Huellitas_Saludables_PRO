@@ -1,20 +1,20 @@
 # 🐾 Huellitas Saludables
 
 # INTEGRANTES
-Santiago Buitrago Goyeneche 
-Sara Jasmin Cruz
-Jorge ALejandro Torres
+|**Santiago Buitrago Goyeneche** |
+|**Sara Jasmin Cruz**|
+|**Jorge ALejandro Torres**|
 
 Sistema web para la gestión de una veterinaria: registro de mascotas, agendamiento de citas según la disponibilidad de los especialistas e historias clínicas, con acceso diferenciado por rol.
 
-| | |
+| TECNOLOGIAS| |
 |---|---|
 | **Frontend** | React 18 · TypeScript · Vite · Nginx |
 | **Backend** | Node.js 22 · Express 4 · Sequelize 6 |
 | **Base de datos** | PostgreSQL 16 |
 | **Autenticación** | JWT (`Authorization: Bearer <token>`) + autorización por roles |
-| **Despliegue** | Docker Compose (3 contenedores) |
-| **Documentación API** | Swagger / OpenAPI en `/api-docs` |
+| **Despliegue** | Docker Compose (3 contenedores: Back, Front , BD )  |
+| **Documentación API** | Swagger / OpenAPI en `/api-dVocs` |
 | **Estado** | En desarrollo · apto para entorno académico/demo, **no listo para producción** (ver [Seguridad](#9-seguridad-y-riesgos-conocidos)) |
 
 ---

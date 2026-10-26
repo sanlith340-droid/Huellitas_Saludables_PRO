@@ -16,6 +16,12 @@ const auditLog = require('./middlewares/auditLog');
 const { notFoundHandler, errorHandler } = require('./middlewares/errorHandler');
 const { testConnection } = require('./config/database');
 const { ok } = require('./utils/response');
+const AppError = require('./utils/AppError');
+
+const origenesPermitidos = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origen) => origen.trim())
+  .filter(Boolean);
 
 const app = express();
 
@@ -25,10 +31,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // 2. Middlewares globales
 app.use(cors({
   origin: (origin, callback) => {
-    // Permitir cualquier origen (para desarrollo).
-    // El navegador NO acepta origin: '*' + credentials: true,
-    // por eso usamos una función que refleja el origen de la petición.
-    callback(null, true);
+    if (!origin || origenesPermitidos.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(AppError.forbidden('Origen no autorizado por CORS'));
   },
   allowedHeaders: ['Content-Type', 'Authorization'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -44,10 +51,13 @@ app.get('/health', async (_req, res) => {
     const now = await testConnection();
     return ok(res, { db_time: now }, 'Servicio y base de datos activos');
   } catch (err) {
+    const nombre = typeof err?.name === 'string' ? err.name : 'Error';
+    const codigo = typeof err?.code === 'string' ? err.code : 'SIN_CODIGO';
+    console.error(`[health] Base de datos no disponible (${nombre}/${codigo})`);
+
     return res.status(503).json({
       success: false,
-      message: 'Sin conexión a la base de datos',
-      detail: err.message
+      message: 'Sin conexión a la base de datos'
     });
   }
 });

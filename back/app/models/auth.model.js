@@ -7,6 +7,7 @@
  */
 
 const { Usuario } = require('./index');
+const { esHashScrypt } = require('../utils/password');
 
 const ATTRS_PUBLICOS = [
   'id_usuario',
@@ -54,6 +55,10 @@ async function create(usuarioData) {
     tipo,
     rol,
   } = usuarioData;
+
+  if (!esHashScrypt(contrasena)) {
+    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  }
 
   const nuevo = await Usuario.create({
     id_usuario,
@@ -146,6 +151,10 @@ async function updateEspecializacion(id_usuario, especializacion) {
  * Cambia la contraseña de un usuario
  */
 async function updatePassword(id_usuario, nuevaContrasena) {
+  if (!esHashScrypt(nuevaContrasena)) {
+    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  }
+
   const usuario = await Usuario.findByPk(id_usuario);
   if (!usuario) return null;
   usuario.contrasena = nuevaContrasena;

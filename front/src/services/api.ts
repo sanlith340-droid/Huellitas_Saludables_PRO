@@ -3,8 +3,12 @@
 import axios from "axios";
 
 // Permite sobreescribir la URL del backend con una variable de entorno
-// (VITE_API_URL) en producción, sin tocar el código.
-const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+// (VITE_API_URL) en producción, sin tocar el código. En producción usa /api
+// por defecto; en desarrollo local mantiene el backend de Vite.
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const baseURL =
+  configuredApiUrl ||
+  (import.meta.env.DEV ? "http://localhost:3000/api" : "/api");
 
 const api = axios.create({ baseURL });
 

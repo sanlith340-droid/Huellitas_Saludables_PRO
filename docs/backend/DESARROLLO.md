@@ -108,4 +108,4 @@ back/
 
 ## Para tener presente
 
-Las variables están explicadas en `back/.env.example`; ese archivo es una plantilla, no lleva claves reales. Aunque existe la variable `CORS_ORIGIN`, por ahora el backend acepta todos los orígenes. O sea, todavía no sirve para restringir quién se conecta; hay que cambiar el código en `app/app.js` para hacerlo.
+Las variables están explicadas en `back/.env.example`; ese archivo es una plantilla, no lleva claves reales. `CORS_ORIGIN` debe contener orígenes exactos separados por comas; el backend rechaza los orígenes que no estén en esa lista y no usa `*` como comodín con credenciales. En Render puedes usar `DATABASE_URL` en lugar de las variables `DB_*`; si la URL incluye `sslmode=require`, se activa SSL.

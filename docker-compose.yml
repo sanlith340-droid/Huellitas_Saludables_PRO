@@ -30,8 +30,9 @@ services:
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME_TEST: ${DB_NAME_TEST:-proyectohs_test}
-      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      JWT_SECRET: "${JWT_SECRET:?Define JWT_SECRET en el entorno o en el archivo .env de Docker Compose}"
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-10h}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173,http://localhost:8080}
       DB_SEED: ${DB_SEED:-false}
     depends_on:
       db:

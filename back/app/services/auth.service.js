@@ -7,28 +7,34 @@
 const authModel = require('../models/auth.model');
 const AppError = require('../utils/AppError');
 const { generarToken } = require('../utils/jwt');
+const { hashContrasena, verificarContrasena, esHashScrypt } = require('../utils/password');
 
 async function login({ correo, contrasena }) {
-  console.log('[auth.service] Login para:', correo);
-
   const usuario = await authModel.findByEmail(correo);
-  
+
   if (!usuario) {
-    console.log('[auth.service] ❌ Usuario no encontrado');
     throw AppError.unauthorized('Credenciales inválidas. Verifica tu correo y contraseña.');
   }
 
-  console.log('[auth.service] ✅ Usuario encontrado:', usuario.id_usuario);
+  const passwordMatch = await verificarContrasena(contrasena, usuario.contrasena);
 
-  // NOTA: En producción usar bcrypt.compare()
-  const passwordMatch = contrasena === usuario.contrasena;
-  
   if (!passwordMatch) {
-    console.log('[auth.service] ❌ Contraseña incorrecta');
     throw AppError.unauthorized('Credenciales inválidas. Verifica tu correo y contraseña.');
   }
 
-  console.log('[auth.service] ✅ Contraseña correcta');
+  // Migración best-effort: un fallo no debe bloquear un login ya verificado.
+  if (!esHashScrypt(usuario.contrasena)) {
+    try {
+      const nuevoHash = await hashContrasena(contrasena);
+      const actualizado = await authModel.updatePassword(usuario.id_usuario, nuevoHash);
+
+      if (!actualizado) {
+        console.error('[auth.service] No se pudo migrar la contraseña a hash');
+      }
+    } catch {
+      console.error('[auth.service] No se pudo migrar la contraseña a hash');
+    }
+  }
 
   const { contrasena: _, ...usuarioSinPassword } = usuario;
 
@@ -49,8 +55,6 @@ async function registro(datosUsuario) {
     tipo
   } = datosUsuario;
 
-  console.log('[auth.service] Registro usuario:', correo);
-
   const emailExists = await authModel.existsByEmail(correo);
   if (emailExists) {
     throw AppError.conflict('El correo electrónico ya está registrado');
@@ -58,8 +62,7 @@ async function registro(datosUsuario) {
 
   const id_usuario = await authModel.generarIdUsuario('usuario');
 
-  // NOTA: En producción usar bcrypt.hash()
-  const hashedPassword = contrasena;
+  const hashedPassword = await hashContrasena(contrasena);
 
   const nuevoUsuario = await authModel.create({
     id_usuario,
@@ -73,8 +76,6 @@ async function registro(datosUsuario) {
     tipo: tipo || 'principal',
     rol: 'usuario'
   });
-
-  console.log('[auth.service] ✅ Usuario creado:', id_usuario);
 
   const { contrasena: _, ...usuarioSinPassword } = nuevoUsuario;
 
@@ -96,31 +97,22 @@ async function registroAdmin(datosUsuario, adminId) {
     rol
   } = datosUsuario;
 
-  console.log('[auth.service] RegistroAdmin - Admin ID:', adminId);
-  console.log('[auth.service] RegistroAdmin - Datos:', { nombre, correo, rol });
-
   // 1. Validar que el administrador tenga permisos
   const admin = await authModel.findById(adminId);
   if (!admin || admin.rol !== 'admin') {
-    console.log('[auth.service] ❌ Admin no encontrado o no es admin');
     throw AppError.forbidden('Solo los administradores pueden crear cuentas de otros roles');
   }
-
-  console.log('[auth.service] ✅ Admin verificado:', adminId);
 
   // 2. Validar que el correo no esté registrado
   const emailExists = await authModel.existsByEmail(correo);
   if (emailExists) {
-    console.log('[auth.service] ❌ Email ya registrado');
     throw AppError.conflict('El correo electrónico ya está registrado');
   }
 
   // 3. Generar ID automático
   const id_usuario = await authModel.generarIdUsuario(rol);
-  console.log('[auth.service] 📝 ID generado:', id_usuario);
 
-  // 4. En producción: Hashear contraseña
-  const hashedPassword = contrasena;
+  const hashedPassword = await hashContrasena(contrasena);
 
   // 5. Determinar especialización y tipo SEGÚN EL ROL
   let especializacionFinal = null;
@@ -128,10 +120,7 @@ async function registroAdmin(datosUsuario, adminId) {
 
   if (rol === 'especialista') {
     especializacionFinal = especializacion;
-    console.log('[auth.service] 📝 Especialización:', especializacionFinal);
   }
-
-  console.log('[auth.service] 📝 tipoFinal:', tipoFinal);
 
   // 6. Crear usuario
   const nuevoUsuario = await authModel.create({
@@ -146,8 +135,6 @@ async function registroAdmin(datosUsuario, adminId) {
     tipo: tipoFinal,
     rol
   });
-
-  console.log('[auth.service] ✅ Usuario creado:', id_usuario);
 
   // 7. Eliminar contraseña del objeto de respuesta
   const { contrasena: _, ...usuarioSinPassword } = nuevoUsuario;

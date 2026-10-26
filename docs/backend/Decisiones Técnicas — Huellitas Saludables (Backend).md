@@ -2,6 +2,8 @@
 
 > **Versión**: 1.1  
 > **Alcance**: API, persistencia, autenticación, pruebas y ejecución del backend  
+>
+> **Nota de actualización:** este documento es un registro de auditoría de una versión anterior. Las correcciones posteriores de contraseñas con scrypt, CORS por orígenes exactos, `/health` sin detalles internos y soporte de `DATABASE_URL` ya están aplicadas en el código; verifica siempre los archivos actuales.
 ---
 
 ## Índice

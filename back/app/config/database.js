@@ -10,6 +10,7 @@
 
 require('dotenv').config();
 const { Sequelize } = require('sequelize');
+const { parseDatabaseUrl } = require('./databaseUrl');
 
 // Si estamos en modo test, usamos una BD distinta:
 //   - Si existe DB_NAME_TEST, la usa
@@ -19,27 +20,41 @@ const dbName = process.env.NODE_ENV === 'test'
   ? (process.env.DB_NAME_TEST || `${process.env.DB_NAME || 'proyectohs'}_test`)
   : (process.env.DB_NAME || 'proyectohs');
 
-const sequelize = new Sequelize(
-  dbName,
-  process.env.DB_USER || 'postgres',
-  process.env.DB_PASSWORD || 'postgres',
-  {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT) || 5432,
-    dialect: 'postgres',
-    // En test NO mostramos las queries SQL (ensucian la salida).
-    logging: (process.env.NODE_ENV === 'development') ? console.log : false,
-    define: {
-      freezeTableName: true,
-    },
-    pool: {
-      max: 10,
-      min: 0,
-      acquire: 30000,
-      idle: 10000,
-    },
-  }
-);
+const opcionesComunes = {
+  // En test NO mostramos las queries SQL (ensucian la salida).
+  logging: (process.env.NODE_ENV === 'development') ? console.log : false,
+  define: {
+    freezeTableName: true,
+  },
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+};
+
+// En test se mantiene la separación: se usan DB_* y DB_NAME_TEST.
+const databaseUrlConfig = process.env.NODE_ENV === 'test'
+  ? null
+  : parseDatabaseUrl(process.env.DATABASE_URL);
+
+const sequelize = databaseUrlConfig
+  ? new Sequelize({
+    ...databaseUrlConfig,
+    ...opcionesComunes,
+  })
+  : new Sequelize(
+    dbName,
+    process.env.DB_USER || 'postgres',
+    process.env.DB_PASSWORD || 'postgres',
+    {
+      host: process.env.DB_HOST || 'localhost',
+      port: Number(process.env.DB_PORT) || 5432,
+      dialect: 'postgres',
+      ...opcionesComunes,
+    }
+  );
 
 async function testConnection() {
   await sequelize.authenticate();

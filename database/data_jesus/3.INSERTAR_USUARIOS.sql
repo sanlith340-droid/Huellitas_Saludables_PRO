@@ -1,6 +1,12 @@
 -- =========================================================
 -- INSERTAR USUARIOS DE PRUEBA
 -- =========================================================
+--
+-- ADVERTENCIA: archivo histórico de demostración.
+-- No debe utilizarse para inicializar producción.
+-- Las contraseñas de este archivo no están hasheadas.
+-- Para datos de demostración use el seeder JS, que aplica scrypt.
+--
 
 -- =========================================================
 -- 3 RECEPCIONISTAS

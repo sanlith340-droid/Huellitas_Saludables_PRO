@@ -96,6 +96,7 @@ Vite te muestra en la terminal la dirección para abrir la app (normalmente usa 
 - [Rutas de la API y roles](docs/API.md)
 - [Cómo está organizado el proyecto](docs/ARQUITECTURA.md)
 - [Levantarlo con Docker](DOCKER.md)
+- [Despliegue en Render](docs/RENDER.md)
 - [Mensajes de permisos por rol](MENSAJES_DE_ERROR_POR_ROL.md)
 
 Los detalles de cada petición y respuesta están en Swagger y en `back/app/config/swagger.js`.
@@ -104,5 +105,5 @@ Los detalles de cada petición y respuesta están en Swagger y en `back/app/conf
 
 - No subas archivos `.env` reales ni claves a Git o a un ZIP que vayas a compartir.
 - Cambia las claves de ejemplo antes de publicar la app.
-- Por ahora, el backend acepta peticiones de cualquier origen: `CORS_ORIGIN` todavía no se usa para limitarlo. Antes de exponer el sistema en Internet, hay que revisar esa parte en `back/app/app.js`.
+- El backend solo acepta los orígenes indicados en `CORS_ORIGIN`, separados por comas. No uses `*` con credenciales; en producción pon el dominio exacto del frontend.
 - Para un despliegue real también hacen falta HTTPS y claves guardadas de forma segura.

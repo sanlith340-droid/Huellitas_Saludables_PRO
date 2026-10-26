@@ -130,15 +130,19 @@ cp .env.example .env
 PORT=3000
 NODE_ENV=development
 
-# CORS
-CORS_ORIGIN=*
+# CORS: orígenes exactos separados por comas (no usar *)
+CORS_ORIGIN=http://localhost:5173,http://localhost:8080
 
 # Database PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=proyectohs
 DB_USER=postgres
-DB_PASSWORD=tu_contraseña
+DB_PASSWORD=CAMBIAR_POR_UNA_PASSWORD_LOCAL_SEGURA
+
+# JWT
+JWT_SECRET=CAMBIAR_POR_UN_SECRETO_ALEATORIO_UNICO
+JWT_EXPIRES_IN=10h
 
 
 # 1. Crear base de datos

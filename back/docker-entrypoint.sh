@@ -21,7 +21,7 @@ done
 echo "[backend] Ejecutando migraciones..."
 npx sequelize-cli db:migrate
 
-if [ "${DB_SEED:-false}" = "true" ]; then
+if [ "${DB_SEED:-false}" = "true" ] && [ "${NODE_ENV:-production}" != "production" ]; then
   USER_COUNT=$(node - <<'NODE'
 const { Client } = require('pg');
 const client = new Client({
@@ -45,6 +45,10 @@ NODE
   else
     echo "[backend] Seeders omitidos: ya existen usuarios."
   fi
+fi
+
+if [ "${DB_SEED:-false}" = "true" ] && [ "${NODE_ENV:-production}" = "production" ]; then
+  echo "[backend] Seeders omitidos: DB_SEED no está permitido en producción."
 fi
 
 exec "$@"

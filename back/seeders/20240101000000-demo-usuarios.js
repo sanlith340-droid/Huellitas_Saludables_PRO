@@ -1,13 +1,18 @@
 'use strict';
 
+const { hashContrasena } = require('../app/utils/password');
+
 /**
  * Migra los datos de database/data_jesus/3.INSERTAR_USUARIOS.sql
  * al mundo Sequelize (seeders), conservando exactamente los mismos
  * IDs y datos de prueba.
+ *
+ * Datos exclusivamente de demostración. Las contraseñas se hashean
+ * con scrypt antes de insertarse; no deben usarse en producción.
  */
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('usuario', [
+    const usuarios = [
       // --- Recepcionistas ---
       { id_usuario: 'REC001', nombre: 'Laura', apellidos: 'Gomez Rodriguez', telefono: '3001112233', correo: 'laura.gomez@proyectohs.com', direccion: 'Calle 80 # 15-20', contrasena: '123456', especializacion: null, tipo: null, rol: 'recepcionista' },
       { id_usuario: 'REC002', nombre: 'Andrea', apellidos: 'Martinez Lopez', telefono: '3012223344', correo: 'andrea.martinez@proyectohs.com', direccion: 'Carrera 13 # 72-15', contrasena: '123456', especializacion: null, tipo: null, rol: 'recepcionista' },
@@ -34,7 +39,13 @@ module.exports = {
       { id_usuario: 'ESP001', nombre: 'Alejandro', apellidos: 'Castillo Moreno', telefono: '3211112233', correo: 'alejandro.castillo@proyectohs.com', direccion: 'Carrera 15 # 80-25', contrasena: '123456', especializacion: 'Medicina Veterinaria General', tipo: null, rol: 'especialista' },
       { id_usuario: 'ESP002', nombre: 'Carolina', apellidos: 'Mendez Torres', telefono: '3222223344', correo: 'carolina.mendez@proyectohs.com', direccion: 'Calle 90 # 18-35', contrasena: '123456', especializacion: 'Medicina Felina', tipo: null, rol: 'especialista' },
       { id_usuario: 'ESP003', nombre: 'Mauricio', apellidos: 'Rojas Hernandez', telefono: '3233334455', correo: 'mauricio.rojas@proyectohs.com', direccion: 'Carrera 50 # 75-40', contrasena: '123456', especializacion: 'Cirugia Veterinaria', tipo: null, rol: 'especialista' },
-    ]);
+    ];
+
+    for (const usuario of usuarios) {
+      usuario.contrasena = await hashContrasena(usuario.contrasena);
+    }
+
+    await queryInterface.bulkInsert('usuario', usuarios, {});
   },
 
   down: async (queryInterface) => {

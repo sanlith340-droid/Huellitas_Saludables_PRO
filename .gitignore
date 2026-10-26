@@ -147,3 +147,17 @@ node_modules/
 npm-debug.log
 *.log
 .DS_Store
+
+# Archivos internos del proyecto
+/AGENTS.md
+/NOTAS-PROYECTO.md
+
+# Binario descargado de Cloudflare Tunnel
+/cloudflared-linux-amd64.deb
+
+# Variables de entorno reales: ignorar cualquier variante,
+# pero conservar los archivos de ejemplo que sí deben versionarse.
+.env*
+!.env.example
+!.env.docker.example
+!.env.*.example

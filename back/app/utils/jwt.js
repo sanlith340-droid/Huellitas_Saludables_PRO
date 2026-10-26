@@ -10,7 +10,12 @@
 
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'huellitas_saludables_dev_secret_change_me';
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET || JWT_SECRET.trim() === '') {
+  throw new Error('JWT_SECRET no está configurada. Define la variable de entorno antes de iniciar el backend.');
+}
+
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 /**
@@ -23,7 +28,10 @@ function generarToken(usuario) {
     id: usuario.id_usuario,
     rol: usuario.rol,
   };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, {
+    algorithm: 'HS256',
+    expiresIn: JWT_EXPIRES_IN,
+  });
 }
 
 /**
@@ -31,7 +39,9 @@ function generarToken(usuario) {
  * Lanza si el token es inválido, está mal firmado o expiró.
  */
 function verificarToken(token) {
-  return jwt.verify(token, JWT_SECRET);
+  return jwt.verify(token, JWT_SECRET, {
+    algorithms: ['HS256'],
+  });
 }
 
 module.exports = { generarToken, verificarToken, JWT_SECRET, JWT_EXPIRES_IN };

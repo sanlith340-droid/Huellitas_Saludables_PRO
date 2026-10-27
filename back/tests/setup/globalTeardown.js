@@ -6,7 +6,7 @@
 // depende de valores de otro entorno ni repite el nombre de la BD.
 
 const { Sequelize } = require('sequelize');
-const { obtenerConfigPruebas, describirError } = require('./testDbConfig');
+const { obtenerConfigPruebas, describirError, borrarBaseSiExiste } = require('./testDbConfig');
 
 module.exports = async () => {
   let config;
@@ -25,7 +25,7 @@ module.exports = async () => {
   });
 
   try {
-    await admin.query(`DROP DATABASE IF EXISTS "${config.database}" WITH (FORCE)`);
+    await borrarBaseSiExiste(admin, config.database);
     console.log('[test-teardown] Base de datos de prueba eliminada:', config.database);
   } catch (err) {
     console.warn('[test-teardown] No se pudo eliminar la BD de pruebas:', describirError(err));

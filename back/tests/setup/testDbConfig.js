@@ -38,9 +38,22 @@ function obtenerConfigPruebas() {
 }
 
 // Descripción del error SIN credenciales (nunca incluye usuario ni contraseña).
+// Incluye el mensaje real de PostgreSQL (Sequelize a veces lo deja vacío en el stack).
 function describirError(err) {
   const codigo = err?.original?.code || err?.parent?.code || err?.code || err?.name || 'SIN_CODIGO';
-  return `${err?.name || 'Error'} / ${codigo}`;
+  const mensaje = err?.parent?.message || err?.original?.message || err?.message || '';
+  return `${err?.name || 'Error'} / ${codigo}${mensaje ? ` / ${mensaje}` : ''}`;
 }
 
-module.exports = { obtenerConfigPruebas, describirError };
+// Borra una base de datos si existe, compatible con PostgreSQL 12 en adelante.
+// ("DROP DATABASE ... WITH (FORCE)" solo existe desde PostgreSQL 13, por eso
+// primero se cierran las conexiones abiertas a esa base.)
+async function borrarBaseSiExiste(admin, nombreBd) {
+  await admin.query(
+    'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :nombreBd AND pid <> pg_backend_pid()',
+    { replacements: { nombreBd } }
+  );
+  await admin.query(`DROP DATABASE IF EXISTS "${nombreBd}"`);
+}
+
+module.exports = { obtenerConfigPruebas, describirError, borrarBaseSiExiste };

@@ -9,7 +9,7 @@
 const path = require('path');
 const { execSync } = require('child_process');
 const { Sequelize } = require('sequelize');
-const { obtenerConfigPruebas, describirError } = require('./testDbConfig');
+const { obtenerConfigPruebas, describirError, borrarBaseSiExiste } = require('./testDbConfig');
 
 module.exports = async () => {
   const config = obtenerConfigPruebas();
@@ -35,8 +35,12 @@ module.exports = async () => {
       );
     }
 
-    await admin.query(`DROP DATABASE IF EXISTS "${nombreBd}" WITH (FORCE)`);
-    await admin.query(`CREATE DATABASE "${nombreBd}"`);
+    try {
+      await borrarBaseSiExiste(admin, nombreBd);
+      await admin.query(`CREATE DATABASE "${nombreBd}"`);
+    } catch (err) {
+      throw new Error(`[test-setup] No se pudo preparar la base "${nombreBd}": ${describirError(err)}`);
+    }
   } finally {
     await admin.close();
   }

@@ -17,8 +17,8 @@ const {
 const router = Router();
 
 router.get('/', validate(listarCitasQuerySchema, 'query'), controller.listar);
-router.get('/:id', validate(idParamSchema, 'params'), controller.obtener);
 router.get('/especialista/:id_especialista', controller.listarPorEspecialista);
+router.get('/:id', validate(idParamSchema, 'params'), controller.obtener);
 
 router.post(
   '/',

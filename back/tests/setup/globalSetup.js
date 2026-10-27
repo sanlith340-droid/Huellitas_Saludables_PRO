@@ -1,49 +1,52 @@
-  // tests/setup/globalSetup.js
-  // Se ejecuta UNA SOLA VEZ al inicio de todos los tests.
-  //
-  // Sus tareas:
-  //   1. Crear la base de datos "proyectohs_test"
-  //   2. Correr las migraciones (crear las tablas)
-  //   3. Correr los seeders (insertar los datos de prueba)
-  //
-  // Al terminar, la BD de prueba queda idéntica a como estaría la real.
-  require('dotenv').config({ path: '.env.test' }); 
+// tests/setup/globalSetup.js
+// Se ejecuta UNA SOLA VEZ al inicio de todos los tests.
+//
+// Sus tareas:
+//   1. Comprobar que PostgreSQL responde (con un mensaje claro si no).
+//   2. Borrar y crear de nuevo la BD de pruebas (nunca la BD normal).
+//   3. Correr las migraciones y los seeders dentro de esa BD.
 
+const path = require('path');
+const { execSync } = require('child_process');
+const { Sequelize } = require('sequelize');
+const { obtenerConfigPruebas, describirError } = require('./testDbConfig');
 
-  const { execSync } = require('child_process');
-  const path = require('path');
-  const { Sequelize } = require('sequelize');
+module.exports = async () => {
+  const config = obtenerConfigPruebas();
+  const nombreBd = config.database;
 
-  module.exports = async () => {
-    // Leemos la configuración del proyecto para saber cómo conectarnos
-    const config = require('../../app/config/config.js');
-    const testDbName = config.test.database;  // "proyectohs_test"
+  // Nos conectamos a la BD de sistema "postgres" para poder crear la BD de pruebas.
+  const admin = new Sequelize('postgres', config.username, config.password, {
+    host: config.host,
+    port: config.port,
+    dialect: 'postgres',
+    logging: false,
+  });
 
-    const dbUser = config.test.username;
-    const dbPass = config.test.password;
-    const dbHost = config.test.host;
-    const dbPort = config.test.port;
+  try {
+    try {
+      await admin.authenticate();
+    } catch (err) {
+      throw new Error(
+        `[test-setup] No se pudo conectar a PostgreSQL en ${config.host}:${config.port} ` +
+        `(${describirError(err)}). Si ejecutas las pruebas en tu equipo, PostgreSQL debe estar ` +
+        'encendido en ese host y puerto. Lo recomendado es usar Docker: ' +
+        'docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests'
+      );
+    }
 
-    // Nos conectamos a la BD "postgres" (la del sistema) para poder
-    // crear la nueva BD desde cero.
-    const admin = new Sequelize('postgres', dbUser, dbPass, {
-      host: dbHost,
-      port: dbPort,
-      dialect: 'postgres',
-      logging: false,
-    });
-
-    // Borra la BD de prueba si ya existe, y la crea de nuevo (vacía).
-    await admin.query(`DROP DATABASE IF EXISTS "${testDbName}" WITH (FORCE)`);
-    await admin.query(`CREATE DATABASE "${testDbName}"`);
+    await admin.query(`DROP DATABASE IF EXISTS "${nombreBd}" WITH (FORCE)`);
+    await admin.query(`CREATE DATABASE "${nombreBd}"`);
+  } finally {
     await admin.close();
+  }
 
-    // Ahora corremos las migraciones y seeders DENTRO de la BD de prueba.
-    const cwd = path.resolve(__dirname, '..', '..');
-    const env = { ...process.env, NODE_ENV: 'test' };
+  // Migraciones y seeders DENTRO de la BD de pruebas (NODE_ENV=test).
+  const cwd = path.resolve(__dirname, '..', '..');
+  const env = { ...process.env, NODE_ENV: 'test' };
 
-    execSync('npx sequelize-cli db:migrate', { cwd, env, stdio: 'inherit' });
-    execSync('npx sequelize-cli db:seed:all', { cwd, env, stdio: 'inherit' });
+  execSync('npx sequelize-cli db:migrate', { cwd, env, stdio: 'inherit' });
+  execSync('npx sequelize-cli db:seed:all', { cwd, env, stdio: 'inherit' });
 
-    console.log('[test-setup] Base de datos de prueba lista:', testDbName);
-  };
+  console.log('[test-setup] Base de datos de prueba lista:', nombreBd);
+};

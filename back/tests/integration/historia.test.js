@@ -6,9 +6,11 @@
 //
 // Endpoints probados:
 //   - GET /api/historia
+//   - GET /api/historia/:id
+//   - GET /api/historia/mascota/:id_mascota
+//   - GET /api/historia/cita/:id_cita
 //   - POST /api/historia
 //   - PUT /api/historia/:id
-//   - GET /api/historia/cita/:id_cita
 
 const request = require('supertest');
 const app = require('../../app/app');
@@ -21,10 +23,11 @@ describe('Historia Clínica - /api/historia', () => {
 
   beforeAll(async () => {
     await resetDatabase();
-    tokenUsuario       = await getToken('usuario');
-    tokenEspecialista  = await getToken('especialista');   // ESP001
-    tokenEspecialista2 = await getToken('especialista2');  // ESP002
-    tokenAdmin         = await getToken('admin');
+
+    tokenUsuario = await getToken('usuario');
+    tokenEspecialista = await getToken('especialista'); // ESP001
+    tokenEspecialista2 = await getToken('especialista2'); // ESP002
+    tokenAdmin = await getToken('admin');
   });
 
   // ============================================================
@@ -46,15 +49,19 @@ describe('Historia Clínica - /api/historia', () => {
       'rol %s NO puede listar (403)',
       async (rol) => {
         const token = await getToken(rol);
+
         const res = await request(app)
           .get('/api/historia')
           .set('Authorization', `Bearer ${token}`);
+
         expect(res.status).toBe(403);
       }
     );
 
     it('sin token devuelve 401', async () => {
-      const res = await request(app).get('/api/historia');
+      const res = await request(app)
+        .get('/api/historia');
+
       expect(res.status).toBe(401);
     });
   });
@@ -66,7 +73,7 @@ describe('Historia Clínica - /api/historia', () => {
 
     // TEST POSITIVO + TEST DEL TRIGGER
     it('especialista asignado crea historia para su cita (201)', async () => {
-      // 1. Primero creamos una cita con ESP001
+      // 1. Creamos una cita con ESP001.
       const cita = await request(app)
         .post('/api/citas')
         .set('Authorization', `Bearer ${tokenUsuario}`)
@@ -76,7 +83,9 @@ describe('Historia Clínica - /api/historia', () => {
           motivo: 'Consulta con ESP001',
         });
 
-      // 2. Luego creamos la historia clínica
+      expect(cita.status).toBe(201);
+
+      // 2. Creamos la historia clínica.
       const res = await request(app)
         .post('/api/historia')
         .set('Authorization', `Bearer ${tokenEspecialista}`)
@@ -91,8 +100,7 @@ describe('Historia Clínica - /api/historia', () => {
       expect(res.status).toBe(201);
       expect(res.body.data.diagnostico).toBe('Otitis externa leve');
 
-      // 3. VERIFICAMOS EL TRIGGER:
-      //    La cita debe haber pasado a "atendido" automáticamente
+      // 3. Verificamos que la cita haya pasado a "atendido".
       const citaDespues = await request(app)
         .get(`/api/citas/${cita.body.data.id_cita}`)
         .set('Authorization', `Bearer ${tokenEspecialista}`);
@@ -100,9 +108,8 @@ describe('Historia Clínica - /api/historia', () => {
       expect(citaDespues.body.data.estado).toBe('atendido');
     });
 
-    // TEST NEGATIVO: especialista que NO es el asignado
+    // TEST NEGATIVO: especialista que NO es el asignado.
     it('especialista que no es el asignado devuelve 403', async () => {
-      // La cita es con ESP001 (disponibilidad LIBRE_ID_3 es de ESP001)
       const cita = await request(app)
         .post('/api/citas')
         .set('Authorization', `Bearer ${tokenUsuario}`)
@@ -112,55 +119,74 @@ describe('Historia Clínica - /api/historia', () => {
           motivo: 'Cita con ESP001',
         });
 
-      // Pero intenta crear la historia ESP002
+      expect(cita.status).toBe(201);
+
       const res = await request(app)
         .post('/api/historia')
         .set('Authorization', `Bearer ${tokenEspecialista2}`)
         .send({
           id_cita: cita.body.data.id_cita,
-          diagnostico: 'X', tratamiento: 'Y',
+          diagnostico: 'X',
+          tratamiento: 'Y',
         });
 
       expect(res.status).toBe(403);
     });
 
-    // TEST NEGATIVO: usuario NO puede crear
+    // TEST NEGATIVO: usuario NO puede crear.
     it('usuario NO puede crear (403)', async () => {
       const res = await request(app)
         .post('/api/historia')
         .set('Authorization', `Bearer ${tokenUsuario}`)
-        .send({ id_cita: 1, diagnostico: 'X', tratamiento: 'Y' });
+        .send({
+          id_cita: 1,
+          diagnostico: 'X',
+          tratamiento: 'Y',
+        });
+
       expect(res.status).toBe(403);
     });
 
-    // TEST NEGATIVO: cita no existe
+    // TEST NEGATIVO: cita no existe.
     it('cita inexistente devuelve 404', async () => {
       const res = await request(app)
         .post('/api/historia')
         .set('Authorization', `Bearer ${tokenEspecialista}`)
-        .send({ id_cita: 99999, diagnostico: 'X', tratamiento: 'Y' });
+        .send({
+          id_cita: 99999,
+          diagnostico: 'X',
+          tratamiento: 'Y',
+        });
+
       expect(res.status).toBe(404);
     });
 
-    // TEST NEGATIVO: cita ya tiene historia
+    // TEST NEGATIVO: cita ya tiene historia.
     it('cita que ya tiene historia devuelve 409', async () => {
       const res = await request(app)
         .post('/api/historia')
         .set('Authorization', `Bearer ${tokenEspecialista}`)
-        .send({ id_cita: 1, diagnostico: 'X', tratamiento: 'Y' });
+        .send({
+          id_cita: 1,
+          diagnostico: 'X',
+          tratamiento: 'Y',
+        });
+
       expect(res.status).toBe(409);
     });
 
-    // TEST DE FRONTERA: diagnostico de 200 caracteres
+    // TEST DE FRONTERA: diagnóstico de 200 caracteres.
     it('diagnostico de 200 caracteres se acepta', async () => {
       const cita = await request(app)
         .post('/api/citas')
         .set('Authorization', `Bearer ${tokenUsuario}`)
         .send({
           id_mascota: MASCOTAS.LUNA.id,
-          id_disponibilidad: 31,
+          id_disponibilidad: DISPONIBILIDAD.LIBRE_ID_31.id,
           motivo: 'X',
         });
+
+      expect(cita.status).toBe(201);
 
       const res = await request(app)
         .post('/api/historia')
@@ -174,7 +200,7 @@ describe('Historia Clínica - /api/historia', () => {
       expect(res.status).toBe(201);
     });
 
-    // TEST DE FRONTERA: diagnostico de 201 caracteres
+    // TEST DE FRONTERA: diagnóstico de 201 caracteres.
     it('diagnostico de 201 caracteres devuelve 400', async () => {
       const cita = await request(app)
         .post('/api/citas')
@@ -184,6 +210,8 @@ describe('Historia Clínica - /api/historia', () => {
           id_disponibilidad: 32,
           motivo: 'X',
         });
+
+      expect(cita.status).toBe(201);
 
       const res = await request(app)
         .post('/api/historia')
@@ -197,14 +225,20 @@ describe('Historia Clínica - /api/historia', () => {
       expect(res.status).toBe(400);
     });
 
-    // TEST PARAMETRIZADO: pesos inválidos
+    // TEST PARAMETRIZADO: pesos inválidos.
     it.each([0, -1, 1000, 999.995])(
       'peso inválido (%s) devuelve 400',
       async (peso) => {
         const res = await request(app)
           .post('/api/historia')
           .set('Authorization', `Bearer ${tokenEspecialista}`)
-          .send({ id_cita: 99999, peso, diagnostico: 'X', tratamiento: 'Y' });
+          .send({
+            id_cita: 99999,
+            peso,
+            diagnostico: 'X',
+            tratamiento: 'Y',
+          });
+
         expect(res.status).toBe(400);
       }
     );
@@ -219,33 +253,112 @@ describe('Historia Clínica - /api/historia', () => {
       const res = await request(app)
         .put('/api/historia/1')
         .set('Authorization', `Bearer ${tokenEspecialista}`)
-        .send({ diagnostico: 'Otitis externa moderada' });
+        .send({
+          diagnostico: 'Otitis externa moderada',
+        });
 
       expect(res.status).toBe(200);
       expect(res.body.data.diagnostico).toBe('Otitis externa moderada');
     });
 
-    // TEST NEGATIVO: otro especialista no puede
+    // TEST NEGATIVO: otro especialista no puede actualizar.
     it('otro especialista NO puede actualizar (403)', async () => {
       const res = await request(app)
         .put('/api/historia/1')
         .set('Authorization', `Bearer ${tokenEspecialista2}`)
-        .send({ diagnostico: 'X' });
+        .send({
+          diagnostico: 'X',
+        });
+
       expect(res.status).toBe(403);
     });
 
-    // TEST DE FRONTERA: body vacío
+    // TEST DE FRONTERA: body vacío.
     it('body vacío devuelve 400', async () => {
       const res = await request(app)
         .put('/api/historia/1')
         .set('Authorization', `Bearer ${tokenEspecialista}`)
         .send({});
+
       expect(res.status).toBe(400);
     });
   });
 
   // ============================================================
-  // OBTENER HISTORIA POR CITA - GET /api/historia/cita/:id_cita
+  // OBTENER HISTORIA POR ID - GET /api/historia/:id
+  // ============================================================
+  describe('GET /api/historia/:id', () => {
+
+    it('el especialista asignado puede consultar la historia (200)', async () => {
+      const res = await request(app)
+        .get('/api/historia/1')
+        .set('Authorization', `Bearer ${tokenEspecialista}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.id_cita).toBe(1);
+    });
+
+    it('otro especialista no puede consultar la historia (403)', async () => {
+      const res = await request(app)
+        .get('/api/historia/1')
+        .set('Authorization', `Bearer ${tokenEspecialista2}`);
+
+      expect(res.status).toBe(403);
+    });
+
+    it('sin token devuelve 401', async () => {
+      const res = await request(app)
+        .get('/api/historia/1');
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ============================================================
+  // OBTENER HISTORIAS POR MASCOTA
+  // GET /api/historia/mascota/:id_mascota
+  // ============================================================
+  describe('GET /api/historia/mascota/:id_mascota', () => {
+
+    it('el especialista recibe las historias de su ámbito autorizado (200)', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.MAX.id}`)
+        .set('Authorization', `Bearer ${tokenEspecialista}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      for (const historia of res.body.data) {
+        expect(String(historia.especialista_id)).toBe('ESP001');
+      }
+    });
+
+    it('otro especialista no recibe historias pertenecientes a ESP001', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.MAX.id}`)
+        .set('Authorization', `Bearer ${tokenEspecialista2}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.data)).toBe(true);
+
+      expect(
+        res.body.data.some(
+          historia => String(historia.especialista_id) === 'ESP001'
+        )
+      ).toBe(false);
+    });
+
+    it('sin token devuelve 401', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.MAX.id}`);
+
+      expect(res.status).toBe(401);
+    });
+  });
+
+  // ============================================================
+  // OBTENER HISTORIA POR CITA
+  // GET /api/historia/cita/:id_cita
   // ============================================================
   describe('GET /api/historia/cita/:id_cita', () => {
 
@@ -258,6 +371,14 @@ describe('Historia Clínica - /api/historia', () => {
       expect(res.body.data.id_cita).toBe(1);
     });
 
+    it('otro especialista no puede consultar la historia de la cita (403)', async () => {
+      const res = await request(app)
+        .get('/api/historia/cita/1')
+        .set('Authorization', `Bearer ${tokenEspecialista2}`);
+
+      expect(res.status).toBe(403);
+    });
+
     it('cita sin historia devuelve 404', async () => {
       const cita = await request(app)
         .post('/api/citas')
@@ -268,9 +389,12 @@ describe('Historia Clínica - /api/historia', () => {
           motivo: 'X',
         });
 
+      expect(cita.status).toBe(201);
+
       const res = await request(app)
         .get(`/api/historia/cita/${cita.body.data.id_cita}`)
         .set('Authorization', `Bearer ${tokenEspecialista}`);
+
       expect(res.status).toBe(404);
     });
   });

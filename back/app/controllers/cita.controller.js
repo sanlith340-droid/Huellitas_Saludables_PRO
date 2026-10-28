@@ -21,7 +21,7 @@ const obtener = asyncHandler(async (req, res) => {
 
 const listarPorEspecialista = asyncHandler(async (req, res) => {
   const { id_especialista } = req.params;
-  const citas = await citaService.listarPorEspecialista(id_especialista);
+  const citas = await citaService.listarPorEspecialista(id_especialista, req.query, req.user);
   return ok(res, citas, 'Citas del especialista listadas correctamente');
 });
 
@@ -56,7 +56,21 @@ const cancelar = asyncHandler(async (req, res) => {
   return ok(res, cita, 'Cita cancelada correctamente');
 });
 
+const cambiarEstado = asyncHandler(async (req, res) => {
+  if (!req.user) {
+    throw AppError.unauthorized('Usuario no autenticado');
+  }
+
+  const cita = await citaService.cambiarEstadoPorEspecialista(req.params.id, req.body, req.user);
+  const mensaje =
+    cita.estado === 'atendido'
+      ? 'Cita marcada como atendida'
+      : 'Cita cancelada por el especialista';
+  return ok(res, cita, mensaje);
+});
+
 module.exports = {
+  cambiarEstado,
   listar,
   obtener,
   listarPorEspecialista,

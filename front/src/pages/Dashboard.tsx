@@ -28,7 +28,11 @@ function Dashboard() {
     return <Navigate to="/citas/especialista" replace />;
   }
 
-  if (usuario?.rol === "recepcionista" || usuario?.rol === "admin") {
+  if (usuario?.rol === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (usuario?.rol === "recepcionista") {
     return <Navigate to="/disponibilidad" replace />;
   }
 

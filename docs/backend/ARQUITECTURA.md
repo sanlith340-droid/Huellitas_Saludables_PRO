@@ -48,8 +48,10 @@ Las rutas del frontend están en `front/src/routes/AppRoutes.tsx`.
 | `/mascotas` | Lista de mascotas | Sesión iniciada |
 | `/mascotas/nueva` | Registrar mascota | Sesión iniciada; la API revisa permisos |
 | `/citas/nueva` | Pedir una cita | Sesión iniciada |
-| `/disponibilidad` | Administrar horarios | `recepcionista` o `admin` |
-| `/citas/especialista` | Ver citas asignadas | `especialista` |
+| `/disponibilidad` | Administrar horarios | `recepcionista` |
+| `/citas/especialista` | Ver citas asignadas y marcarlas como atendidas o canceladas | `especialista` |
+| `/admin` | Panel de administración (resumen del personal) | `admin` |
+| `/usuarios/admin` | Registrar personal y eliminar especialistas y recepcionistas | `admin` |
 
 Si alguien entra a una ruta que no existe, se muestra la página de no encontrado. Las reglas del frontend ayudan con la navegación, pero el backend también revisa los permisos antes de hacer cambios.
 

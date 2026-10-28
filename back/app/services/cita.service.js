@@ -17,12 +17,17 @@ async function obtenerPorId(id_cita) {
   return cita;
 }
 
-async function listarPorEspecialista(id_especialista) {
+async function listarPorEspecialista(id_especialista, filtros = {}, solicitante = null) {
+  // Un especialista solo puede ver SUS propias citas
+  if (solicitante && solicitante.rol === 'especialista' && solicitante.id !== id_especialista) {
+    throw AppError.forbidden('Solo puedes consultar tus propias citas');
+  }
+
   const especialista = await usuarioModel.findByIdAndRol(id_especialista, 'especialista');
   if (!especialista) {
     throw AppError.notFound(`No existe especialista con ID ${id_especialista}`);
   }
-  return citaModel.findByEspecialista(id_especialista);
+  return citaModel.findByEspecialista(id_especialista, filtros);
 }
 
 async function crear({ id_mascota, id_disponibilidad, motivo, solicitante }) {
@@ -117,7 +122,32 @@ async function cancelar(id_cita, solicitante) {
   return citaModel.cancelarConTransaccion(id_cita);
 }
 
+/**
+ * El especialista decide si la cita fue 'atendido' o 'cancelado'
+ * (y, al cancelar, si el horario queda 'disponible' o no).
+ */
+async function cambiarEstadoPorEspecialista(id_cita, { estado, liberar_horario }, solicitante) {
+  const cita = await obtenerPorId(id_cita);
+
+  // Solo el especialista dueño del horario (o un admin) puede decidir
+  if (solicitante.rol === 'especialista' && cita.id_especialista !== solicitante.id) {
+    throw AppError.forbidden('Esta cita no está asignada a ti');
+  }
+
+  if (cita.estado === 'cancelado') {
+    throw AppError.conflict('La cita ya está cancelada y no puede modificarse');
+  }
+  if (cita.estado === 'atendido') {
+    throw AppError.conflict('La cita ya fue atendida y no puede modificarse');
+  }
+
+  return citaModel.cambiarEstadoConTransaccion(id_cita, estado, {
+    liberarHorario: liberar_horario !== false,
+  });
+}
+
 module.exports = {
+  cambiarEstadoPorEspecialista,
   listar,
   obtenerPorId,
   listarPorEspecialista,

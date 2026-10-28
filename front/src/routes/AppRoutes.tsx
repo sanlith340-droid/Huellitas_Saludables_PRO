@@ -15,6 +15,8 @@ import ListaMascotas from "../pages/ListaMascotas";
 import NuevaCita from "../pages/NuevaCita";
 import Disponibilidad from "../pages/Disponibilidad";
 import CitasEspecialista from "../pages/CitasEspecialista";
+import GestionUsuarios from "../pages/GestionUsuarios";
+import DashboardAdmin from "../pages/DashboardAdmin";
 
 import NotFound from "../pages/NotFound";
 
@@ -79,7 +81,7 @@ const AppRoutes = () => {
         <Route
           path="/disponibilidad"
           element={
-            <RoleRoute roles={["recepcionista", "admin"]}>
+            <RoleRoute roles={["recepcionista"]}>
               <Disponibilidad />
             </RoleRoute>
           }
@@ -90,6 +92,24 @@ const AppRoutes = () => {
           element={
             <RoleRoute roles={["especialista"]}>
               <CitasEspecialista />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <RoleRoute roles={["admin"]}>
+              <DashboardAdmin />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/usuarios/admin"
+          element={
+            <RoleRoute roles={["admin"]}>
+              <GestionUsuarios />
             </RoleRoute>
           }
         />

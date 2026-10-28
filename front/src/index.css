@@ -1188,3 +1188,392 @@ select:focus {
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   }
 }
+
+/* ---------- Mis citas (especialista): filtros y acciones ---------- */
+
+.cita-filters {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cita-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: center;
+}
+
+.cita-filters__search {
+  flex: 1 1 260px;
+  margin-bottom: 0;
+}
+
+.cita-filters__dates,
+.cita-filters__estados {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.cita-filters__date {
+  width: auto;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+}
+
+.cita-filters__date--active {
+  border-color: var(--pine-700);
+  background: var(--sand-100);
+}
+
+.chip {
+  border: 1.5px solid var(--sand-300);
+  background: #fff;
+  color: var(--ink-600);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--pine-500);
+  color: var(--pine-900);
+}
+
+.chip--active {
+  background: var(--pine-700);
+  border-color: var(--pine-700);
+  color: #fff;
+}
+
+.chip--active:hover {
+  color: #fff;
+}
+
+.chip__count {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 4px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--sand-200);
+  color: var(--pine-900);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.chip--active .chip__count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.cita-group {
+  margin-bottom: 16px;
+}
+
+.cita-group__title {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 4px;
+  border-bottom: 2px solid var(--sand-200);
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--pine-900);
+}
+
+.cita-group__count {
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--ink-600);
+}
+
+.cita-row .list-item__side {
+  min-width: 150px;
+}
+
+.cita-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  color: var(--red-600);
+  border: 1.5px solid var(--red-600);
+}
+
+.btn-outline-danger:hover {
+  background: var(--red-600);
+  color: #fff;
+}
+
+.btn-danger {
+  background: var(--red-600);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #8f3624;
+}
+
+.badge-horario-libre {
+  background: #dbe6d2;
+  color: var(--pine-700);
+}
+
+.badge-horario-bloqueado {
+  background: #f6e6c8;
+  color: #8a5a12;
+}
+
+.cancel-confirm {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: #fbe9e4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cancel-confirm p {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--pine-900);
+}
+
+.cancel-confirm__check {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--ink-900);
+  cursor: pointer;
+}
+
+.cancel-confirm__check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--pine-700);
+}
+
+@media (max-width: 640px) {
+  .cita-row {
+    flex-wrap: wrap;
+  }
+
+  .cita-row .list-item__side {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* ---------- Dueño de la mascota destacado ---------- */
+
+.cita-owner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 4px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background: var(--sand-100);
+  border: 1.5px solid var(--sand-300);
+}
+
+.cita-owner__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pine-700);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.cita-owner__name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--pine-900);
+}
+
+.cita-owner__phone {
+  font-size: 0.82rem;
+  color: var(--ink-600);
+  padding-left: 8px;
+  border-left: 1.5px solid var(--sand-300);
+}
+
+/* ---------- Gestión de personal (administrador) ---------- */
+
+.users-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) 1.3fr;
+  gap: 20px;
+  align-items: start;
+  margin-top: 24px;
+  padding-bottom: 72px;
+}
+
+.users-form .panel__head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.role-picker .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.staff-row {
+  align-items: flex-start;
+}
+
+.staff-you {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--sand-200);
+  color: var(--pine-700);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.staff-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-600);
+}
+
+.badge-rol--especialista {
+  background: #dbe6d2;
+  color: var(--pine-700);
+}
+
+.badge-rol--recepcionista {
+  background: #f6e6c8;
+  color: #8a5a12;
+}
+
+.badge-rol--admin {
+  background: var(--pine-700);
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .users-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Panel de administración ---------- */
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 18px 20px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(22, 48, 43, 0.08), 0 14px 28px rgba(22, 48, 43, 0.12);
+}
+
+.stat-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--sand-200);
+  color: var(--pine-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--pine-900);
+}
+
+.stat-card__label {
+  font-size: 0.85rem;
+  color: var(--ink-600);
+}
+
+.admin-recent {
+  margin-top: 20px;
+  margin-bottom: 72px;
+}
+
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pine-700);
+  text-decoration: none;
+}
+
+.admin-link:hover {
+  color: var(--pine-900);
+}

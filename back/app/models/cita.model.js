@@ -12,10 +12,23 @@
  * negocio no dependa silenciosamente de algo que vive solo en la BD.
  */
 
+const { Op } = require('sequelize');
 const { sequelize, Cita, Mascota, Disponibilidad, Usuario, UsuarioMascota } = require('./index');
 
 const INCLUDE_BASE = [
-  { model: Mascota, as: 'Mascota', attributes: ['nombre', 'especie', 'genero'] },
+  {
+    model: Mascota,
+    as: 'Mascota',
+    attributes: ['nombre', 'especie', 'genero'],
+    // Dueño(s) de la mascota, para que el especialista sepa a quién atiende
+    include: [
+      {
+        model: Usuario,
+        attributes: ['nombre', 'apellidos', 'telefono'],
+        through: { attributes: [] },
+      },
+    ],
+  },
   {
     model: Disponibilidad,
     attributes: ['fecha', 'hora', 'estado', 'id_usuario'],
@@ -29,6 +42,9 @@ function aplanar(c) {
   const disponibilidad = p.Disponibilidad || {};
   const especialista = disponibilidad.Especialista || {};
 
+  const propietarios = (p.Mascota && p.Mascota.Usuarios) || [];
+  const propietario = propietarios[0] || {};
+
   return {
     id_cita: p.id_cita,
     id_recepcionista: p.id_recepcionista,
@@ -39,6 +55,10 @@ function aplanar(c) {
     mascota_nombre: p.Mascota ? p.Mascota.nombre : null,
     mascota_especie: p.Mascota ? p.Mascota.especie : null,
     mascota_genero: p.Mascota ? p.Mascota.genero : null,
+    propietario_nombre: propietario.nombre
+      ? `${propietario.nombre} ${propietario.apellidos || ''}`.trim()
+      : null,
+    propietario_telefono: propietario.telefono ?? null,
     fecha_cita: disponibilidad.fecha ?? null,
     hora_cita: disponibilidad.hora ?? null,
     disponibilidad_estado: disponibilidad.estado ?? null,
@@ -51,15 +71,28 @@ function aplanar(c) {
   };
 }
 
-async function findAll({ id_mascota, estado, fecha, id_especialista } = {}) {
+async function findAll({
+  id_mascota,
+  estado,
+  fecha,
+  fecha_desde,
+  fecha_hasta,
+  id_especialista,
+} = {}) {
   const where = {};
   if (id_mascota) where.id_mascota = id_mascota;
   if (estado) where.estado = estado;
 
   const includeDisponibilidad = { ...INCLUDE_BASE[1] };
-  if (fecha || id_especialista) {
+  if (fecha || fecha_desde || fecha_hasta || id_especialista) {
     includeDisponibilidad.where = {};
-    if (fecha) includeDisponibilidad.where.fecha = fecha;
+    if (fecha) {
+      includeDisponibilidad.where.fecha = fecha;
+    } else if (fecha_desde || fecha_hasta) {
+      includeDisponibilidad.where.fecha = {};
+      if (fecha_desde) includeDisponibilidad.where.fecha[Op.gte] = fecha_desde;
+      if (fecha_hasta) includeDisponibilidad.where.fecha[Op.lte] = fecha_hasta;
+    }
     if (id_especialista) includeDisponibilidad.where.id_usuario = id_especialista;
     includeDisponibilidad.required = true;
   }
@@ -81,8 +114,8 @@ async function findById(id_cita, { transaction } = {}) {
   return cita ? aplanar(cita) : null;
 }
 
-async function findByEspecialista(id_especialista) {
-  return findAll({ id_especialista });
+async function findByEspecialista(id_especialista, filtros = {}) {
+  return findAll({ ...filtros, id_especialista });
 }
 
 async function obtenerPrimerRecepcionista() {
@@ -141,6 +174,35 @@ async function cancelarConTransaccion(id_cita) {
       { estado: 'disponible' },
       { where: { id_disponibilidad: cita.id_disponibilidad }, transaction: t }
     );
+
+    return findById(id_cita, { transaction: t });
+  });
+}
+
+/**
+ * Decisión del especialista: marcar la cita como 'atendido' o 'cancelado'.
+ *  - atendido : el horario permanece 'ocupado' (la consulta ya ocurrió).
+ *  - cancelado: si liberarHorario es true, el horario vuelve a 'disponible';
+ *               si es false, queda 'ocupado' (el especialista no lo ofrece de nuevo).
+ */
+async function cambiarEstadoConTransaccion(id_cita, estado, { liberarHorario = true } = {}) {
+  return sequelize.transaction(async (t) => {
+    const cita = await Cita.findByPk(id_cita, { transaction: t, lock: t.LOCK.UPDATE });
+    if (!cita) {
+      const error = new Error('CITA_NO_EXISTE');
+      error.code = 'CITA_NO_EXISTE';
+      throw error;
+    }
+
+    cita.estado = estado;
+    await cita.save({ transaction: t });
+
+    if (estado === 'cancelado' && liberarHorario) {
+      await Disponibilidad.update(
+        { estado: 'disponible' },
+        { where: { id_disponibilidad: cita.id_disponibilidad }, transaction: t }
+      );
+    }
 
     return findById(id_cita, { transaction: t });
   });
@@ -213,5 +275,6 @@ module.exports = {
   crearConTransaccion,
   editarConTransaccion,
   cancelarConTransaccion,
+  cambiarEstadoConTransaccion,
   perteneceAUsuario,
 };

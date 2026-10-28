@@ -14,9 +14,20 @@ function Navbar() {
   const panelPath =
     usuario?.rol === "especialista"
       ? "/citas/especialista"
-      : usuario?.rol === "recepcionista" || usuario?.rol === "admin"
+      : usuario?.rol === "admin"
+      ? "/admin"
+      : usuario?.rol === "recepcionista"
       ? "/disponibilidad"
       : "/dashboard";
+
+  const panelLabel =
+    usuario?.rol === "especialista"
+      ? "Mis citas"
+      : usuario?.rol === "admin"
+      ? "Panel"
+      : usuario?.rol === "recepcionista"
+      ? "Disponibilidad"
+      : "Mi panel";
 
   return (
     <header className="navbar">
@@ -31,13 +42,12 @@ function Navbar() {
         <nav className="navbar__links">
           {autenticado ? (
             <>
-              <Link to={panelPath}>
-                {usuario?.rol === "especialista"
-                  ? "Mis citas"
-                  : usuario?.rol === "recepcionista" || usuario?.rol === "admin"
-                  ? "Disponibilidad"
-                  : "Mi panel"}
-              </Link>
+              <Link to={panelPath}>{panelLabel}</Link>
+              {usuario?.rol === "admin" && (
+                <>
+                  <Link to="/usuarios/admin">Personal</Link>
+                </>
+              )}
               {usuario?.rol === "usuario" && <Link to="/citas/nueva">Agendar cita</Link>}
               <div className="navbar__user">
                 <span>

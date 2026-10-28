@@ -219,11 +219,14 @@ CREATE TABLE cita (
         FOREIGN KEY (id_disponibilidad)
         REFERENCES disponibilidad(id_disponibilidad)
         ON UPDATE CASCADE
-        ON DELETE RESTRICT,
-
-    CONSTRAINT uq_cita_disponibilidad
-        UNIQUE (id_disponibilidad)
+        ON DELETE RESTRICT
 );
+
+-- Solo puede haber UNA cita no cancelada por horario. Así, cuando una cita
+-- se cancela y el horario vuelve a quedar 'disponible', se puede reservar de nuevo.
+CREATE UNIQUE INDEX uq_cita_disponibilidad_activa
+    ON cita (id_disponibilidad)
+    WHERE estado <> 'cancelado';
 
 
 -- =========================================================

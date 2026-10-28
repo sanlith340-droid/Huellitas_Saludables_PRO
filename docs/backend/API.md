@@ -28,7 +28,9 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `GET` | `/api/mascotas/{id}` | JWT | Busca una mascota por ID. |
 | `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota. |
 | `GET` | `/api/usuarios/especialistas` | JWT | Muestra especialistas. |
+| `GET` | `/api/usuarios/personal` | `admin` | Lista al personal (admin, especialistas, recepcionistas) sin contraseña, con `citas_asociadas` y `puede_eliminar`. |
 | `GET` | `/api/usuarios/{documento}` | JWT | Busca un usuario por documento/identificador. |
+| `DELETE` | `/api/usuarios/{id}` | `admin` | Elimina la cuenta de un **especialista o recepcionista**. 403 si es admin o usuario cliente; 404 si no existe; 409 si tiene citas asociadas (se conserva el historial). Al eliminar un especialista se borran sus horarios. Su token deja de ser válido. |
 | `GET` | `/api/razas` | JWT | Muestra las razas. |
 | `GET` | `/api/disponibilidad` | JWT | Lista horarios disponibles; acepta filtros y paginación. |
 | `GET` | `/api/disponibilidad/especialista/{id_usuario}` | JWT | Busca horarios de un especialista. |
@@ -38,10 +40,11 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `DELETE` | `/api/disponibilidad/{id}` | `recepcionista`, `admin` | Elimina una franja. |
 | `GET` | `/api/citas` | JWT | Lista citas y acepta filtros configurados. |
 | `GET` | `/api/citas/{id}` | JWT | Busca una cita. |
-| `GET` | `/api/citas/especialista/{id_especialista}` | JWT | Muestra citas de un especialista. |
+| `GET` | `/api/citas/especialista/{id_especialista}` | `especialista` (solo las suyas), `recepcionista`, `admin` | Muestra citas de un especialista con dueño, fecha y hora. Filtros opcionales: `estado`, `fecha`, `fecha_desde`, `fecha_hasta` (`YYYY-MM-DD`). |
 | `POST` | `/api/citas` | `usuario`, `recepcionista`, `admin` | Crea una cita. |
 | `PUT` | `/api/citas/{id}` | `usuario`, `recepcionista`, `admin` | Edita una cita. |
 | `PATCH` | `/api/citas/{id}/cancelar` | `usuario`, `recepcionista`, `admin` | Cancela una cita. |
+| `PATCH` | `/api/citas/{id}/estado` | `especialista` (solo sus citas), `admin` | El especialista marca la cita como `atendido` o `cancelado`. Body: `{ "estado": "atendido" \| "cancelado", "liberar_horario": true }`. Al cancelar, `liberar_horario` (por defecto `true`) deja el horario `disponible`; con `false` queda `ocupado`. Una cita ya atendida o cancelada devuelve 409. |
 | `GET` | `/api/historia` | `especialista` | Lista historias clínicas. |
 | `GET` | `/api/historia/{id}` | `especialista` | Busca una historia clínica. |
 | `GET` | `/api/historia/mascota/{id_mascota}` | `especialista` | Busca historias de una mascota. |

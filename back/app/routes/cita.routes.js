@@ -11,14 +11,23 @@ const { requireRole } = require('../middlewares/identifyUser');
 const {
   crearCitaSchema,
   idParamSchema,
-  listarCitasQuerySchema
+  listarCitasQuerySchema,
+  listarCitasEspecialistaQuerySchema,
+  especialistaParamSchema,
+  cambiarEstadoCitaSchema
 } = require('../schemas/cita.schema');
 
 const router = Router();
 
 router.get('/', validate(listarCitasQuerySchema, 'query'), controller.listar);
 router.get('/:id', validate(idParamSchema, 'params'), controller.obtener);
-router.get('/especialista/:id_especialista', controller.listarPorEspecialista);
+router.get(
+  '/especialista/:id_especialista',
+  requireRole('especialista', 'recepcionista', 'admin'),
+  validate(especialistaParamSchema, 'params'),
+  validate(listarCitasEspecialistaQuerySchema, 'query'),
+  controller.listarPorEspecialista
+);
 
 router.post(
   '/',
@@ -39,6 +48,15 @@ router.patch(
   requireRole('usuario', 'recepcionista', 'admin'),  // ← NO incluye 'especialista'
   validate(idParamSchema, 'params'),
   controller.cancelar
+);
+
+// El especialista decide: atendido | cancelado (+ dejar el horario disponible)
+router.patch(
+  '/:id/estado',
+  requireRole('especialista', 'admin'),
+  validate(idParamSchema, 'params'),
+  validate(cambiarEstadoCitaSchema, 'body'),
+  controller.cambiarEstado
 );
 
 module.exports = router;

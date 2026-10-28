@@ -168,7 +168,7 @@ const Cita = sequelize.define(
     },
     id_recepcionista: { type: DataTypes.STRING(10), allowNull: false },
     id_mascota: { type: DataTypes.INTEGER, allowNull: false },
-    id_disponibilidad: { type: DataTypes.INTEGER, allowNull: false, unique: true },
+    id_disponibilidad: { type: DataTypes.INTEGER, allowNull: false },
     motivo: { type: DataTypes.STRING(200), allowNull: false },
     estado: {
       type: DataTypes.STRING(20),

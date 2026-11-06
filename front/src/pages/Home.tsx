@@ -11,7 +11,7 @@ import {
   FaShieldAlt,
   FaStethoscope,
 } from "react-icons/fa";
-import perritoImg from "../assets/perrito.png";
+import perritoGif from "../assets/perrito-pixel.gif";
 
 const slides = [
   {
@@ -108,7 +108,9 @@ function Home() {
           {slide.visual === "puppy" && (
             <>
               <div className="home-carousel__sun" />
-              <img className="home-carousel__puppy" src={perritoImg} alt="Cachorro listo para su próxima revisión veterinaria" />
+              <div className="home-carousel__mascot-card">
+                <img className="home-carousel__mascot" src={perritoGif} alt="Perrito pixelado descansando" />
+              </div>
               <div className="home-carousel__floating-note">
                 <span className="home-carousel__note-icon"><FaPaw /></span>
                 <span><strong>Pequeños cuidados,</strong><br />grandes momentos</span>

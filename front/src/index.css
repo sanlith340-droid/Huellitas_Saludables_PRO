@@ -154,7 +154,7 @@ img {
 .navbar__links a {
   text-decoration: none;
   font-weight: 500;
-  color: var(--ink-600);
+  color: var(--ink-600 #060906);
   font-size: 0.95rem;
   padding: 8px 4px;
   border-bottom: 2px solid transparent;
@@ -2441,5 +2441,51 @@ input:focus-visible {
   .day-cell,
   .chip {
     transition-duration: 0.01ms;
+  }
+}
+
+
+/* GIF del perrito: mascota visual destacada en la portada. */
+.home-carousel__mascot-card {
+  position: absolute;
+  right: 6%;
+  bottom: 22px;
+  z-index: 1;
+  display: grid;
+  width: min(80%, 330px);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 8px solid rgba(255, 255, 255, 0.96);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 20px 42px rgba(49, 68, 46, 0.2), 0 0 0 1px rgba(54, 89, 57, 0.08);
+  animation: mascot-card-in 550ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.home-carousel__mascot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  transform: scale(1.32);
+}
+
+@keyframes mascot-card-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 720px) {
+  .home-carousel__mascot-card {
+    right: 50%;
+    bottom: 19px;
+    width: min(78%, 290px);
+    transform: translateX(50%);
+  }
+
+  @keyframes mascot-card-in {
+    from { opacity: 0; transform: translateX(50%) translateY(10px) scale(0.97); }
+    to { opacity: 1; transform: translateX(50%) translateY(0) scale(1); }
   }
 }

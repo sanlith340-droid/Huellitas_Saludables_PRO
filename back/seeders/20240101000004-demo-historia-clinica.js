@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Migra database/data_jesus/7.HISTORIA_CLINICA.sql
@@ -6,7 +5,7 @@
  * Insertarla dispara trg_historia_cita_atendida, que marca la cita
  * como 'atendido' automáticamente.
  */
-module.exports = {
+export default {
   up: async (queryInterface) => {
     await queryInterface.bulkInsert('historia_clinica', [
       {

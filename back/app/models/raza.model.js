@@ -4,7 +4,7 @@
  * Consultas de razas usando Sequelize (ORM).
  */
 
-const { Raza } = require('./index');
+import { Raza } from './index.js';
 
 async function findById(id_raza) {
   const raza = await Raza.findByPk(id_raza);
@@ -16,7 +16,5 @@ async function findAll() {
   return razas.map((r) => r.get({ plain: true }));
 }
 
-module.exports = {
-  findById,
-  findAll,
-};
+export { findById, findAll };
+export default { findById, findAll };

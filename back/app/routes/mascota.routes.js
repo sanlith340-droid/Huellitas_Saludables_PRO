@@ -1,8 +1,9 @@
-const { Router } = require('express');
-const controller = require('../controllers/mascota.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const { crearMascotaSchema, idParamSchema } = require('../schemas/mascota.schema');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/mascota.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import { crearMascotaSchema, idParamSchema } from '../schemas/mascota.schema.js';
 
 const router = Router();
 
@@ -16,4 +17,4 @@ router.post(
   controller.crear
 );
 
-module.exports = router;
+export default router;

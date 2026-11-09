@@ -1,6 +1,5 @@
-'use strict';
 
-module.exports = {
+export default {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('usuario_mascota', {
       id_usuario: {

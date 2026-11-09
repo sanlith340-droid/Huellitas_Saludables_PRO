@@ -6,7 +6,10 @@
  * que la versión anterior para no romper auth.service.js.
  */
 
-const { Usuario } = require('./index');
+import { Usuario } from './index.js';
+import { esHashScrypt } from '../utils/password.js';
+import sequelizePkg from 'sequelize';
+const { Op } = sequelizePkg;
 
 const ATTRS_PUBLICOS = [
   'id_usuario',
@@ -55,6 +58,10 @@ async function create(usuarioData) {
     rol,
   } = usuarioData;
 
+  if (!esHashScrypt(contrasena)) {
+    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  }
+
   const nuevo = await Usuario.create({
     id_usuario,
     nombre,
@@ -102,7 +109,7 @@ async function generarIdUsuario(rol) {
 
   const prefix = prefixMap[rol] || 'USU';
 
-  const { Op } = require('sequelize');
+
   const ultimo = await Usuario.findOne({
     where: { id_usuario: { [Op.like]: `${prefix}%` } },
     order: [['id_usuario', 'DESC']],
@@ -146,6 +153,10 @@ async function updateEspecializacion(id_usuario, especializacion) {
  * Cambia la contraseña de un usuario
  */
 async function updatePassword(id_usuario, nuevaContrasena) {
+  if (!esHashScrypt(nuevaContrasena)) {
+    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  }
+
   const usuario = await Usuario.findByPk(id_usuario);
   if (!usuario) return null;
   usuario.contrasena = nuevaContrasena;
@@ -153,14 +164,5 @@ async function updatePassword(id_usuario, nuevaContrasena) {
   return { id_usuario: usuario.id_usuario };
 }
 
-module.exports = {
-  findByEmail,
-  findById,
-  create,
-  existsById,
-  existsByEmail,
-  generarIdUsuario,
-  updateTipo,
-  updateEspecializacion,
-  updatePassword,
-};
+export { findByEmail, findById, create, existsById, existsByEmail, generarIdUsuario, updateTipo, updateEspecializacion, updatePassword };
+export default { findByEmail, findById, create, existsById, existsByEmail, generarIdUsuario, updateTipo, updateEspecializacion, updatePassword };

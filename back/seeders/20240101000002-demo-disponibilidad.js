@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Migra database/data_jesus/5.INSERTAR_DISPONILBIDAD.sql
@@ -16,7 +15,7 @@ function generarFranjas() {
   return franjas;
 }
 
-module.exports = {
+export default {
   up: async (queryInterface) => {
     const especialistas = ['ESP001', 'ESP002', 'ESP003'];
     const franjas = generarFranjas();

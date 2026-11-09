@@ -4,7 +4,7 @@
  * Validaciones de disponibilidad con Joi.
  */
 
-const Joi = require('joi');
+import Joi from 'joi';
 
 const ESTADOS_DISPONIBILIDAD = ['disponible', 'ocupado'];
 const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/;
@@ -66,14 +66,5 @@ const listarPorEspecialistaQuerySchema = Joi.object({
   ...filtrosComunes
 });
 
-module.exports = {
-  ESTADOS_DISPONIBILIDAD,
-  crearDisponibilidadSchema,
-  actualizarDisponibilidadSchema,
-  idParamSchema,
-  listarDisponibilidadQuerySchema,
-  especialistaParamSchema,
-  listarPorEspecialistaQuerySchema,
-  LIMITE_POR_DEFECTO,
-  LIMITE_MAXIMO
-};
+export { ESTADOS_DISPONIBILIDAD, crearDisponibilidadSchema, actualizarDisponibilidadSchema, idParamSchema, listarDisponibilidadQuerySchema, especialistaParamSchema, listarPorEspecialistaQuerySchema, LIMITE_POR_DEFECTO, LIMITE_MAXIMO };
+export default { ESTADOS_DISPONIBILIDAD, crearDisponibilidadSchema, actualizarDisponibilidadSchema, idParamSchema, listarDisponibilidadQuerySchema, especialistaParamSchema, listarPorEspecialistaQuerySchema, LIMITE_POR_DEFECTO, LIMITE_MAXIMO };

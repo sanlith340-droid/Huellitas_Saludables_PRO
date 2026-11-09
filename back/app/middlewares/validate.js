@@ -4,7 +4,7 @@
  * Middleware de validación con Joi.
  */
 
-const AppError = require('../utils/AppError');
+import AppError from '../utils/AppError.js';
 
 function validate(schema, property = 'body') {
   return (req, _res, next) => {
@@ -23,4 +23,4 @@ function validate(schema, property = 'body') {
   };
 }
 
-module.exports = validate;
+export default validate;

@@ -6,16 +6,12 @@
  * NOTA: Todos los endpoints requieren rol ESPECIALISTA
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/historia.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const {
-  crearHistoriaSchema,
-  actualizarHistoriaSchema,
-  idParamSchema,
-  listarHistoriaQuerySchema
-} = require('../schemas/historia.schema');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/historia.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema } from '../schemas/historia.schema.js';
 
 const router = Router();
 
@@ -88,4 +84,4 @@ router.put(
   controller.actualizar
 );
 
-module.exports = router;
+export default router;

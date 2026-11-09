@@ -4,11 +4,11 @@
  * Lógica de negocio de disponibilidad.
  */
 
-const disponibilidadModel = require('../models/disponibilidad.model');
-const usuarioModel = require('../models/usuario.model');
-const { Cita } = require('../models');
-const AppError = require('../utils/AppError');
-const { LIMITE_POR_DEFECTO } = require('../schemas/disponibilidad.schema');
+import disponibilidadModel from '../models/disponibilidad.model.js';
+import usuarioModel from '../models/usuario.model.js';
+import { Cita } from '../models/index.js';
+import AppError from '../utils/AppError.js';
+import { LIMITE_POR_DEFECTO } from '../schemas/disponibilidad.schema.js';
 
 /**
  * Arma el bloque "meta" de paginación que acompaña a la lista.
@@ -189,11 +189,5 @@ async function eliminar(id) {
   }
 }
 
-module.exports = {
-  listar,
-  listarPorEspecialista,
-  obtenerPorId,
-  crear,
-  actualizar,
-  eliminar
-};
+export { listar, listarPorEspecialista, obtenerPorId, crear, actualizar, eliminar };
+export default { listar, listarPorEspecialista, obtenerPorId, crear, actualizar, eliminar };

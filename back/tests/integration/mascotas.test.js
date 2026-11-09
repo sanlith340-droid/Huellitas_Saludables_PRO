@@ -6,11 +6,11 @@
 //   - GET  /api/mascotas/:id
 //   - POST /api/mascotas
 
-const request = require('supertest');
-const app = require('../../app/app');
-const { getToken } = require('../helpers/auth.helper');
-const { resetDatabase } = require('../setup/dbHelper');
-const { MASCOTAS } = require('../fixtures');
+import request from 'supertest';
+import app from '../../app/app.js';
+import { getToken } from '../helpers/auth.helper.js';
+import { resetDatabase } from '../setup/dbHelper.js';
+import { MASCOTAS } from '../fixtures/index.js';
 
 describe('Mascotas - /api/mascotas', () => {
   // Variables para guardar los tokens que usaremos

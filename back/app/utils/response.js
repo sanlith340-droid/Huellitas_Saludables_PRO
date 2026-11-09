@@ -33,4 +33,5 @@ function fail(res, message = 'Ocurrió un error', statusCode = 400, code = 'BAD_
   });
 }
 
-module.exports = { ok, created, fail };
+export { ok, created, fail };
+export default { ok, created, fail };

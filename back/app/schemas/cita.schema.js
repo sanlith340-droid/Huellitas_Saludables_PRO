@@ -4,7 +4,7 @@
  * Validaciones de citas con Joi.
  */
 
-const Joi = require('joi');
+import Joi from 'joi';
 
 const ESTADOS_CITA = ['pendiente', 'confirmado', 'cancelado', 'atendido'];
 
@@ -51,7 +51,16 @@ const cambiarEstadoCitaSchema = Joi.object({
   liberar_horario: Joi.boolean().default(true)
 });
 
-module.exports = {
+export {
+  ESTADOS_CITA,
+  crearCitaSchema,
+  idParamSchema,
+  listarCitasQuerySchema,
+  listarCitasEspecialistaQuerySchema,
+  especialistaParamSchema,
+  cambiarEstadoCitaSchema
+};
+export default {
   ESTADOS_CITA,
   crearCitaSchema,
   idParamSchema,

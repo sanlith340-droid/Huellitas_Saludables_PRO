@@ -3,11 +3,11 @@
 //   - GET   /api/citas/especialista/:id   (con filtros estado / fecha / rango)
 //   - PATCH /api/citas/:id/estado         (atendido | cancelado + liberar horario)
 
-const request = require('supertest');
-const app = require('../../app/app');
-const { getToken } = require('../helpers/auth.helper');
-const { resetDatabase } = require('../setup/dbHelper');
-const { MASCOTAS } = require('../fixtures');
+import request from 'supertest';
+import app from '../../app/app.js';
+import { getToken } from '../helpers/auth.helper.js';
+import { resetDatabase } from '../setup/dbHelper.js';
+import { MASCOTAS } from '../fixtures/index.js';
 
 describe('Citas del especialista', () => {
   let tokenUsuario, tokenEsp1, tokenEsp2, tokenRecepcionista, tokenAdmin;

@@ -4,8 +4,9 @@
  * Consultas de disponibilidad usando Sequelize (ORM).
  */
 
-const { Op, fn, col } = require('sequelize');
-const { sequelize, Disponibilidad, Usuario } = require('./index');
+import sequelizePkg from 'sequelize';
+const { Op, fn, col } = sequelizePkg;
+import { sequelize, Disponibilidad, Usuario } from './index.js';
 
 function aplanar(d) {
   const plano = d.get ? d.get({ plain: true }) : d;
@@ -220,13 +221,5 @@ async function remove(id_disponibilidad) {
   return { id_disponibilidad };
 }
 
-module.exports = {
-  findAll,
-  findPaginado,
-  contarPorEstado,
-  findById,
-  findExacta,
-  create,
-  update,
-  remove,
-};
+export { findAll, findPaginado, contarPorEstado, findById, findExacta, create, update, remove };
+export default { findAll, findPaginado, contarPorEstado, findById, findExacta, create, update, remove };

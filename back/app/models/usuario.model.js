@@ -4,8 +4,9 @@
  * Consultas de usuarios usando Sequelize (ORM).
  */
 
-const { Op } = require('sequelize');
-const { sequelize, Usuario, Cita, Disponibilidad } = require('./index');
+import sequelizePkg from 'sequelize';
+const { Op } = sequelizePkg;
+import { sequelize, Usuario, Cita, Disponibilidad } from './index.js';
 
 const ROLES_PERSONAL = ['admin', 'especialista', 'recepcionista'];
 
@@ -112,7 +113,17 @@ async function eliminar(id_usuario) {
   return Usuario.destroy({ where: { id_usuario } });
 }
 
-module.exports = {
+export {
+  findPersonal,
+  contarCitasPorPersonal,
+  contarCitasDe,
+  eliminar,
+  findById,
+  findByIdAndRol,
+  findByDocumento,
+  findEspecialistas,
+};
+export default {
   findPersonal,
   contarCitasPorPersonal,
   contarCitasDe,

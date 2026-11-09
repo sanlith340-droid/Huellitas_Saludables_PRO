@@ -4,11 +4,12 @@
  * Endpoints de razas.
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/raza.controller');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/raza.controller.js';
 
 const router = Router();
 
 router.get('/', controller.listar);
 
-module.exports = router;
+export default router;

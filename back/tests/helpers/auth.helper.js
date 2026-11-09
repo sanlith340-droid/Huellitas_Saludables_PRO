@@ -5,8 +5,8 @@
 //   - Hace login con un usuario del rol indicado
 //   - Devuelve el token JWT para usar en los tests
 
-const request = require('supertest');
-const app = require('../../app/app');
+import request from 'supertest';
+import app from '../../app/app.js';
 
 // Aquí están los correos y contraseñas de cada rol (según los seeders)
 const CREDENCIALES = {
@@ -34,4 +34,5 @@ async function getToken(rol) {
   return res.body.data.token;
 }
 
-module.exports = { getToken, CREDENCIALES };
+export { getToken, CREDENCIALES };
+export default { getToken, CREDENCIALES };

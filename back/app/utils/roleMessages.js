@@ -29,4 +29,5 @@ function nombreRol(rol) {
   return NOMBRES_ROL[rolNormalizado] || 'usuario';
 }
 
-module.exports = { mensajeSinPermiso, nombreRol };
+export { mensajeSinPermiso, nombreRol };
+export default { mensajeSinPermiso, nombreRol };

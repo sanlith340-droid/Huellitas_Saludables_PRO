@@ -28,4 +28,4 @@ function auditLog(req, res, next) {
   next();
 }
 
-module.exports = auditLog;
+export default auditLog;

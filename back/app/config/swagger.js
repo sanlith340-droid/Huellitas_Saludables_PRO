@@ -1,5 +1,5 @@
 // app/config/swagger.js
-const swaggerJsdoc = require('swagger-jsdoc');
+import swaggerJsdoc from 'swagger-jsdoc';
 
 const options = {
   definition: {
@@ -822,6 +822,38 @@ const options = {
           },
         },
       },
+      '/api/citas/{id}/estado': {
+        patch: {
+          summary: 'Marcar cita como atendida o cancelada (especialista)',
+          tags: ['Citas'],
+          description: 'Roles: especialista (solo sus citas) y admin. Al cancelar, liberar_horario=true (por defecto) deja el horario disponible.',
+          security: [{ apiKey: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'integer' } },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['estado'],
+                  properties: {
+                    estado: { type: 'string', enum: ['atendido', 'cancelado'] },
+                    liberar_horario: { type: 'boolean', default: true },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: 'Estado actualizado' },
+            403: { description: 'La cita no está asignada al especialista' },
+            404: { description: 'Cita no encontrada' },
+            409: { description: 'La cita ya estaba cancelada o atendida' },
+          },
+        },
+      },
       '/api/citas/especialista/{id_especialista}': {
         get: {
           summary: 'Listar citas de un especialista',
@@ -836,7 +868,12 @@ const options = {
               required: true,
               schema: { type: 'string' },
             },
+            { name: 'estado', in: 'query', schema: { type: 'string', enum: ['pendiente', 'confirmado', 'cancelado', 'atendido'] } },
+            { name: 'fecha', in: 'query', schema: { type: 'string', example: '2026-08-19' }, description: 'YYYY-MM-DD' },
+            { name: 'fecha_desde', in: 'query', schema: { type: 'string', example: '2026-08-01' }, description: 'YYYY-MM-DD' },
+            { name: 'fecha_hasta', in: 'query', schema: { type: 'string', example: '2026-08-31' }, description: 'YYYY-MM-DD' },
           ],
+          description: 'Roles: especialista (solo sus citas), recepcionista y admin.',
           responses: {
             200: {
               description: 'Citas del especialista listadas',
@@ -892,6 +929,18 @@ const options = {
           },
         },
       },
+      '/api/usuarios/personal': {
+        get: {
+          summary: 'Listar personal de la clínica (solo admin)',
+          tags: ['Usuarios'],
+          description: 'Admin, especialistas y recepcionistas, con citas_asociadas y puede_eliminar.',
+          security: [{ apiKey: [] }],
+          responses: {
+            200: { description: 'Personal listado correctamente' },
+            403: { description: 'Solo el administrador' },
+          },
+        },
+      },
       '/api/usuarios/{documento}': {
         get: {
           summary: 'Buscar usuario por documento',
@@ -924,6 +973,21 @@ const options = {
               },
             },
             404: { description: 'Usuario no encontrado' },
+          },
+        },
+        delete: {
+          summary: 'Eliminar cuenta de especialista o recepcionista (solo admin)',
+          tags: ['Usuarios'],
+          description: 'El parámetro es el id_usuario. No elimina admins ni dueños, ni cuentas con citas asociadas.',
+          security: [{ apiKey: [] }],
+          parameters: [
+            { name: 'documento', in: 'path', required: true, schema: { type: 'string' }, description: 'id_usuario (ej: ESP004)' },
+          ],
+          responses: {
+            200: { description: 'Cuenta eliminada correctamente' },
+            403: { description: 'Rol no eliminable o sin permisos' },
+            404: { description: 'Usuario no encontrado' },
+            409: { description: 'La cuenta tiene citas asociadas' },
           },
         },
       },
@@ -1300,4 +1364,4 @@ const options = {
 };
 
 const swaggerSpec = swaggerJsdoc(options);
-module.exports = swaggerSpec;
+export default swaggerSpec;

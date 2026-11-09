@@ -4,7 +4,7 @@
  * Validaciones de autenticación con Joi.
  */
 
-const Joi = require('joi');
+import Joi from 'joi';
 
 // ============================================================
 // ROLES PERMITIDOS PARA REGISTRO-ADMIN
@@ -83,10 +83,5 @@ const registroAdminSchema = Joi.object({
     })
 });
 
-module.exports = {
-  loginSchema,
-  registroSchema,
-  registroAdminSchema,
-  ROLES_ADMIN,
-  TIPOS_USUARIO
-};
+export { loginSchema, registroSchema, registroAdminSchema, ROLES_ADMIN, TIPOS_USUARIO };
+export default { loginSchema, registroSchema, registroAdminSchema, ROLES_ADMIN, TIPOS_USUARIO };

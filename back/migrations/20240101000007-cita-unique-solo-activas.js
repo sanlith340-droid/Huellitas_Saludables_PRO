@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Antes: cita.id_disponibilidad era UNIQUE para siempre. Si una cita se
  * cancelaba y el horario volvía a quedar 'disponible', nadie podía
@@ -8,7 +6,7 @@
  * Ahora: solo puede haber UNA cita NO cancelada por horario. Las citas
  * canceladas conservan su historial sin bloquear el horario.
  */
-module.exports = {
+export default {
   up: async (queryInterface) => {
     // El nombre depende de cómo se creó la tabla: migración (cita_id_disponibilidad_key)
     // o script database/1.CREAR_TABLAS.sql (uq_cita_disponibilidad).

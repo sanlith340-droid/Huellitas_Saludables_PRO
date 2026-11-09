@@ -4,18 +4,12 @@
  * Endpoints de disponibilidad.
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/disponibilidad.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const {
-  crearDisponibilidadSchema,
-  actualizarDisponibilidadSchema,
-  idParamSchema,
-  listarDisponibilidadQuerySchema,
-  especialistaParamSchema,
-  listarPorEspecialistaQuerySchema
-} = require('../schemas/disponibilidad.schema');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/disponibilidad.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import { crearDisponibilidadSchema, actualizarDisponibilidadSchema, idParamSchema, listarDisponibilidadQuerySchema, especialistaParamSchema, listarPorEspecialistaQuerySchema } from '../schemas/disponibilidad.schema.js';
 
 const router = Router();
 
@@ -53,4 +47,4 @@ router.delete(
   controller.eliminar
 );
 
-module.exports = router;
+export default router;

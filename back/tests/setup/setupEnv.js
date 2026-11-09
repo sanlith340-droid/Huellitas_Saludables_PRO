@@ -3,9 +3,14 @@
 // Su trabajo es cargar el archivo .env.test (que tiene la configuración
 // de la base de datos de PRUEBAS, no la real).
 
-const path = require('path');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import dotenv from 'dotenv';
+
+// Raíz de back/, independiente del directorio de ejecución.
+const BACK_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // dotenv lee el archivo .env.test y pone sus variables en process.env
-require('dotenv').config({
-  path: path.resolve(__dirname, '..', '..', '.env.test'),
+dotenv.config({
+  path: path.resolve(BACK_ROOT, '.env.test'),
 });

@@ -4,11 +4,12 @@
  * Endpoints de usuarios.
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/usuario.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const { idUsuarioParamSchema } = require('../schemas/usuario.schema');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/usuario.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import { idUsuarioParamSchema } from '../schemas/usuario.schema.js';
 
 const router = Router();
 
@@ -28,4 +29,4 @@ router.delete(
   controller.eliminar
 );
 
-module.exports = router;
+export default router;

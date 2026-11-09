@@ -1,4 +1,4 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
 const ESPECIES_PERMITIDAS = ['perro', 'gato'];
 const GENEROS_PERMITIDOS = ['macho', 'hembra'];
@@ -15,9 +15,5 @@ const idParamSchema = Joi.object({
   id: Joi.number().integer().positive().required()
 });
 
-module.exports = {
-  crearMascotaSchema,
-  idParamSchema,
-  ESPECIES_PERMITIDAS,
-  GENEROS_PERMITIDOS
-};
+export { crearMascotaSchema, idParamSchema, ESPECIES_PERMITIDAS, GENEROS_PERMITIDOS };
+export default { crearMascotaSchema, idParamSchema, ESPECIES_PERMITIDAS, GENEROS_PERMITIDOS };

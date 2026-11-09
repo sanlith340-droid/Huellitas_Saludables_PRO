@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Migra database/data_jesus/6.CREAR_CITA.sql
@@ -11,7 +10,7 @@
  * `cita`), así que la disponibilidad usada queda en 'ocupado'
  * automáticamente, igual que con el script SQL original.
  */
-module.exports = {
+export default {
   up: async (queryInterface) => {
     const [[disponibilidad]] = await queryInterface.sequelize.query(`
       SELECT id_disponibilidad

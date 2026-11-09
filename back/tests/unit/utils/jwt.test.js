@@ -4,7 +4,7 @@
 // Estas funciones son las que firman el token cuando un usuario
 // hace login, y las que lo verifican en cada petición.
 
-const { generarToken, verificarToken } = require('../../../app/utils/jwt');
+import { generarToken, verificarToken } from '../../../app/utils/jwt.js';
 
 describe('utils/jwt', () => {
   // Datos de prueba: un usuario ficticio

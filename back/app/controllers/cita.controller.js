@@ -4,10 +4,10 @@
  * Controlador de citas.
  */
 
-const citaService = require('../services/cita.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok, created } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import citaService from '../services/cita.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok, created } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 const listar = asyncHandler(async (req, res) => {
   const citas = await citaService.listar(req.query);
@@ -69,12 +69,5 @@ const cambiarEstado = asyncHandler(async (req, res) => {
   return ok(res, cita, mensaje);
 });
 
-module.exports = {
-  cambiarEstado,
-  listar,
-  obtener,
-  listarPorEspecialista,
-  crear,
-  editar,
-  cancelar
-};
+export { cambiarEstado, listar, obtener, listarPorEspecialista, crear, editar, cancelar };
+export default { cambiarEstado, listar, obtener, listarPorEspecialista, crear, editar, cancelar };

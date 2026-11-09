@@ -4,10 +4,10 @@
  * Controlador de historia clínica.
  */
 
-const historiaService = require('../services/historia.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok, created } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import historiaService from '../services/historia.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok, created } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 /**
  * Listar historias clínicas
@@ -19,7 +19,7 @@ const listar = asyncHandler(async (req, res) => {
     throw AppError.forbidden('Solo los especialistas pueden listar historias clínicas');
   }
 
-  const historias = await historiaService.listar(req.query);
+  const historias = await historiaService.listar(req.query, req.user.id);
   return ok(res, historias, 'Historias clínicas listadas correctamente');
 });
 
@@ -32,7 +32,7 @@ const obtener = asyncHandler(async (req, res) => {
     throw AppError.forbidden('Solo los especialistas pueden ver historias clínicas');
   }
 
-  const historia = await historiaService.obtenerPorId(req.params.id);
+  const historia = await historiaService.obtenerPorId(req.params.id, req.user.id);
   return ok(res, historia, 'Historia clínica encontrada correctamente');
 });
 
@@ -45,7 +45,7 @@ const obtenerPorMascota = asyncHandler(async (req, res) => {
     throw AppError.forbidden('Solo los especialistas pueden ver historias clínicas');
   }
 
-  const historias = await historiaService.obtenerPorMascota(req.params.id_mascota);
+  const historias = await historiaService.obtenerPorMascota(req.params.id_mascota, req.user.id);
   return ok(res, historias, 'Historias clínicas de la mascota listadas correctamente');
 });
 
@@ -58,7 +58,7 @@ const obtenerPorCita = asyncHandler(async (req, res) => {
     throw AppError.forbidden('Solo los especialistas pueden ver historias clínicas');
   }
 
-  const historia = await historiaService.obtenerPorCita(req.params.id_cita);
+  const historia = await historiaService.obtenerPorCita(req.params.id_cita, req.user.id);
   return ok(res, historia, 'Historia clínica de la cita encontrada correctamente');
 });
 
@@ -105,11 +105,5 @@ const actualizar = asyncHandler(async (req, res) => {
   return ok(res, historia, 'Historia clínica actualizada correctamente');
 });
 
-module.exports = {
-  listar,
-  obtener,
-  obtenerPorMascota,
-  obtenerPorCita,
-  crear,
-  actualizar
-};
+export { listar, obtener, obtenerPorMascota, obtenerPorCita, crear, actualizar };
+export default { listar, obtener, obtenerPorMascota, obtenerPorCita, crear, actualizar };

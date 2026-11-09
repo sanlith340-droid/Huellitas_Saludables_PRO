@@ -4,10 +4,10 @@
  * Controlador de disponibilidad.
  */
 
-const disponibilidadService = require('../services/disponibilidad.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok, created } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import disponibilidadService from '../services/disponibilidad.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok, created } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 const listar = asyncHandler(async (req, res) => {
   const { datos, meta } = await disponibilidadService.listar(req.query);
@@ -66,11 +66,5 @@ const eliminar = asyncHandler(async (req, res) => {
   return ok(res, null, 'Disponibilidad eliminada correctamente');
 });
 
-module.exports = {
-  listar,
-  listarPorEspecialista,
-  obtener,
-  crear,
-  actualizar,
-  eliminar
-};
+export { listar, listarPorEspecialista, obtener, crear, actualizar, eliminar };
+export default { listar, listarPorEspecialista, obtener, crear, actualizar, eliminar };

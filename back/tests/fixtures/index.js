@@ -33,4 +33,5 @@ const CITA = {
   DEMO_ID_1: { id: 1, id_mascota: 1, id_disponibilidad: 1, id_recepcionista: 'REC001', estado: 'atendido' },
 };
 
-module.exports = { USUARIOS, MASCOTAS, DISPONIBILIDAD, CITA };
+export { USUARIOS, MASCOTAS, DISPONIBILIDAD, CITA };
+export default { USUARIOS, MASCOTAS, DISPONIBILIDAD, CITA };

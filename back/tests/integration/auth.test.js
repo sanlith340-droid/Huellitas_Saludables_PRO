@@ -6,9 +6,9 @@
 //   - GET  /api/auth/perfil
 //   - POST /api/auth/registro
 
-const request = require('supertest');
-const app = require('../../app/app');
-const { resetDatabase } = require('../setup/dbHelper');
+import request from 'supertest';
+import app from '../../app/app.js';
+import { resetDatabase } from '../setup/dbHelper.js';
 
 describe('Auth - /api/auth', () => {
 

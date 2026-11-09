@@ -4,13 +4,14 @@
  * Controlador de razas (usado por el formulario de "nueva mascota").
  */
 
-const razaModel = require('../models/raza.model');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok } = require('../utils/response');
+import razaModel from '../models/raza.model.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok } from '../utils/response.js';
 
 const listar = asyncHandler(async (req, res) => {
   const razas = await razaModel.findAll();
   return ok(res, razas, 'Razas listadas correctamente');
 });
 
-module.exports = { listar };
+export { listar };
+export default { listar };

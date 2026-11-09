@@ -1,9 +1,9 @@
 // app/services/cita.service.js
-const citaModel = require('../models/cita.model');
-const mascotaModel = require('../models/mascota.model');
-const disponibilidadModel = require('../models/disponibilidad.model');
-const usuarioModel = require('../models/usuario.model');
-const AppError = require('../utils/AppError');
+import citaModel from '../models/cita.model.js';
+import mascotaModel from '../models/mascota.model.js';
+import disponibilidadModel from '../models/disponibilidad.model.js';
+import usuarioModel from '../models/usuario.model.js';
+import AppError from '../utils/AppError.js';
 
 async function listar(filtros) {
   return citaModel.findAll(filtros);
@@ -146,12 +146,21 @@ async function cambiarEstadoPorEspecialista(id_cita, { estado, liberar_horario }
   });
 }
 
-module.exports = {
+export {
   cambiarEstadoPorEspecialista,
   listar,
   obtenerPorId,
   listarPorEspecialista,
   crear,
   editar,
-  cancelar
+  cancelar,
+};
+export default {
+  cambiarEstadoPorEspecialista,
+  listar,
+  obtenerPorId,
+  listarPorEspecialista,
+  crear,
+  editar,
+  cancelar,
 };

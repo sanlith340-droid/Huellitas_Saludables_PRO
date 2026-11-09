@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Migra database/data_jesus/4.INSERTAR_MASCOTAS.sql
@@ -9,7 +8,7 @@
  * nombre para poder armar las relaciones, igual que hacía el SQL
  * original con subconsultas (SELECT ... WHERE nombre = ...).
  */
-module.exports = {
+export default {
   up: async (queryInterface, Sequelize) => {
     const razas = [
       'Labrador Retriever', 'Golden Retriever', 'Pastor Alemán', 'Bulldog Francés',

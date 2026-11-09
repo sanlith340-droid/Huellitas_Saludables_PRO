@@ -6,8 +6,9 @@
  * aquí las entidades ya asociadas entre sí.
  */
 
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+import sequelizePkg from 'sequelize';
+const { DataTypes } = sequelizePkg;
+import { sequelize } from '../config/database.js';
 
 // ============================================================
 // USUARIO
@@ -252,13 +253,5 @@ Cita.belongsTo(Usuario, { foreignKey: 'id_recepcionista', as: 'Recepcionista' })
 Cita.hasOne(HistoriaClinica, { foreignKey: 'id_cita', as: 'HistoriaClinica' });
 HistoriaClinica.belongsTo(Cita, { foreignKey: 'id_cita', as: 'Cita' });
 
-module.exports = {
-  sequelize,
-  Usuario,
-  Raza,
-  Mascota,
-  UsuarioMascota,
-  Disponibilidad,
-  Cita,
-  HistoriaClinica,
-};
+export { sequelize, Usuario, Raza, Mascota, UsuarioMascota, Disponibilidad, Cita, HistoriaClinica };
+export default { sequelize, Usuario, Raza, Mascota, UsuarioMascota, Disponibilidad, Cita, HistoriaClinica };

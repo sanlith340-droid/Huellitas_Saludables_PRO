@@ -38,8 +38,5 @@ async function notificarCambioDisponibilidad({ veterinarioId, disponibilidad }) 
   });
 }
 
-module.exports = {
-  notificarNuevaCita,
-  notificarCambioEstadoCita,
-  notificarCambioDisponibilidad,
-};
+export { notificarNuevaCita, notificarCambioEstadoCita, notificarCambioDisponibilidad };
+export default { notificarNuevaCita, notificarCambioEstadoCita, notificarCambioDisponibilidad };

@@ -6,19 +6,27 @@
  * La app en tiempo de ejecución NO usa este archivo directamente,
  * usa app/config/database.js (que crea la instancia real de Sequelize).
  */
-require('dotenv').config();
+import 'dotenv/config';
+import { parseDatabaseUrl } from './databaseUrl.js';
 
-const base = {
-  username: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'proyectohs',
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 5432,
-  dialect: 'postgres',
-  logging: false,
-};
+// En test se mantiene la separación: se usan DB_* y DB_NAME_TEST.
+const databaseUrlConfig = process.env.NODE_ENV === 'test'
+  ? null
+  : parseDatabaseUrl(process.env.DATABASE_URL);
 
-module.exports = {
+const base = databaseUrlConfig
+  ? { ...databaseUrlConfig, logging: false }
+  : {
+    username: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    database: process.env.DB_NAME || 'proyectohs',
+    host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT) || 5432,
+    dialect: 'postgres',
+    logging: false,
+  };
+
+export default {
   development: base,
   test: {
     ...base,

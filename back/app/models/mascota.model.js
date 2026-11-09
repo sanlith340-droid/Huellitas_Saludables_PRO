@@ -6,7 +6,7 @@
  * devolvía la versión con SQL puro para no romper mascota.service.js.
  */
 
-const { sequelize, Mascota, Raza, Usuario, UsuarioMascota } = require('./index');
+import { sequelize, Mascota, Raza, Usuario, UsuarioMascota } from './index.js';
 
 async function findAll() {
   const mascotas = await Mascota.findAll({
@@ -110,9 +110,5 @@ async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_r
   });
 }
 
-module.exports = {
-  findAll,
-  findById,
-  perteneceAUsuario,
-  crearConUsuario,
-};
+export { findAll, findById, perteneceAUsuario, crearConUsuario };
+export default { findAll, findById, perteneceAUsuario, crearConUsuario };

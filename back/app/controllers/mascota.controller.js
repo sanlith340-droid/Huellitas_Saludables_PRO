@@ -1,8 +1,8 @@
 // app/controllers/mascota.controller.js
-const mascotaService = require('../services/mascota.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok, created } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import mascotaService from '../services/mascota.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok, created } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 const listar = asyncHandler(async (req, res) => {
   const mascotas = await mascotaService.listar();
@@ -30,4 +30,5 @@ const crear = asyncHandler(async (req, res) => {
   return created(res, mascota, 'Mascota registrada exitosamente');
 });
 
-module.exports = { listar, obtener, crear };
+export { listar, obtener, crear };
+export default { listar, obtener, crear };

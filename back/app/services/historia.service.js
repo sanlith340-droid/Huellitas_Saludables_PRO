@@ -4,53 +4,84 @@
  * Lógica de negocio de historia clínica.
  */
 
-const historiaModel = require('../models/historia.model');
-const citaModel = require('../models/cita.model');
-const mascotaModel = require('../models/mascota.model');
-const usuarioModel = require('../models/usuario.model');
-const AppError = require('../utils/AppError');
+import historiaModel from '../models/historia.model.js';
+import citaModel from '../models/cita.model.js';
+import mascotaModel from '../models/mascota.model.js';
+import usuarioModel from '../models/usuario.model.js';
+import AppError from '../utils/AppError.js';
 
 /**
  * Listar historias clínicas con filtros
  */
-async function listar(filtros) {
-  return historiaModel.findAll(filtros);
+async function listar(filtros, especialistaId) {
+  return historiaModel.findAll({
+    ...filtros,
+    id_especialista: especialistaId,
+  });
 }
 
-/**
- * Obtener historia clínica por ID
- */
-async function obtenerPorId(id_historia_clinica) {
+async function obtenerPorId(id_historia_clinica, especialistaId) {
   const historia = await historiaModel.findById(id_historia_clinica);
+
   if (!historia) {
-    throw AppError.notFound(`No existe historia clínica con id ${id_historia_clinica}`);
+    throw AppError.notFound(
+      `No existe historia clínica con id ${id_historia_clinica}`
+    );
   }
+
+  if (String(historia.especialista_id) !== String(especialistaId)) {
+    throw AppError.forbidden(
+      'No tiene permisos para consultar esta historia clínica'
+    );
+  }
+
   return historia;
 }
 
-/**
- * Obtener historias por mascota
- */
-async function obtenerPorMascota(id_mascota) {
+async function obtenerPorMascota(id_mascota, especialistaId) {
   const mascota = await mascotaModel.findById(id_mascota);
+
   if (!mascota) {
-    throw AppError.notFound(`No existe la mascota con id ${id_mascota}`);
+    throw AppError.notFound(
+      `No existe la mascota con id ${id_mascota}`
+    );
   }
-  return historiaModel.findByMascota(id_mascota);
+
+  return historiaModel.findAll({
+    id_mascota,
+    id_especialista: especialistaId,
+  });
 }
 
-/**
- * Obtener historia por cita
- */
-async function obtenerPorCita(id_cita) {
+async function obtenerPorCita(id_cita, especialistaId) {
   const cita = await citaModel.findById(id_cita);
+
   if (!cita) {
-    throw AppError.notFound(`No existe cita con id ${id_cita}`);
+    throw AppError.notFound(
+      `No existe cita con id ${id_cita}`
+    );
   }
+
+  if (String(cita.id_especialista) !== String(especialistaId)) {
+    throw AppError.forbidden(
+      'No tiene permisos para consultar la historia de esta cita'
+    );
+  }
+
   const historia = await historiaModel.findByCitaId(id_cita);
+
   if (!historia) {
-    throw AppError.notFound(`No existe historia clínica para la cita ${id_cita}`);
+    throw AppError.notFound(
+      `No existe historia clínica para la cita ${id_cita}`
+    );
   }
+
+  if (String(historia.especialista_id) !== String(especialistaId)) {
+    throw AppError.forbidden(
+      'No tiene permisos para consultar esta historia clínica'
+    );
+  }
+
   return historia;
 }
 
@@ -140,11 +171,5 @@ async function actualizar(id_historia_clinica, cambios, especialistaId) {
   }
 }
 
-module.exports = {
-  listar,
-  obtenerPorId,
-  obtenerPorMascota,
-  obtenerPorCita,
-  crear,
-  actualizar
-};
+export { listar, obtenerPorId, obtenerPorMascota, obtenerPorCita, crear, actualizar };
+export default { listar, obtenerPorId, obtenerPorMascota, obtenerPorCita, crear, actualizar };

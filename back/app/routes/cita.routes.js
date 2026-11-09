@@ -4,18 +4,19 @@
  * Endpoints de citas.
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/cita.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const {
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/cita.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import {
   crearCitaSchema,
   idParamSchema,
   listarCitasQuerySchema,
   listarCitasEspecialistaQuerySchema,
   especialistaParamSchema,
   cambiarEstadoCitaSchema
-} = require('../schemas/cita.schema');
+} from '../schemas/cita.schema.js';
 
 const router = Router();
 
@@ -59,4 +60,4 @@ router.patch(
   controller.cambiarEstado
 );
 
-module.exports = router;
+export default router;

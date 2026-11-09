@@ -4,16 +4,14 @@
  * Controlador de autenticación.
  */
 
-const authService = require('../services/auth.service');
-const authModel = require('../models/auth.model');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok, created } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import authService from '../services/auth.service.js';
+import authModel from '../models/auth.model.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok, created } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 const login = asyncHandler(async (req, res) => {
   const { correo, contrasena } = req.body;
-
-  console.log('[auth.controller] Login intento:', { correo });
 
   if (!correo || !contrasena) {
     throw AppError.badRequest('Correo y contraseña son requeridos');
@@ -33,10 +31,6 @@ const registro = asyncHandler(async (req, res) => {
 });
 
 const registroAdmin = asyncHandler(async (req, res) => {
-  console.log('[auth.controller] RegistroAdmin iniciado');
-  console.log('[auth.controller] req.user:', req.user);
-  console.log('[auth.controller] req.body:', req.body);
-
   if (!req.user) {
     throw AppError.unauthorized('Usuario no autenticado');
   }
@@ -48,9 +42,7 @@ const registroAdmin = asyncHandler(async (req, res) => {
     throw AppError.badRequest(`El rol debe ser uno de: ${rolesPermitidos.join(', ')}`);
   }
 
-  console.log('[auth.controller] Llamando a authService.registroAdmin');
   const result = await authService.registroAdmin(req.body, req.user.id);
-  console.log('[auth.controller] Resultado:', result);
 
   return created(res, result, 'Usuario creado exitosamente');
 });
@@ -69,9 +61,5 @@ const perfil = asyncHandler(async (req, res) => {
   return ok(res, usuarioSinPassword, 'Perfil obtenido correctamente');
 });
 
-module.exports = {
-  login,
-  registro,
-  registroAdmin,
-  perfil
-};
+export { login, registro, registroAdmin, perfil };
+export default { login, registro, registroAdmin, perfil };

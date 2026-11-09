@@ -4,15 +4,16 @@
  * Registro central de las rutas de la API.
  */
 
-const { Router } = require('express');
+import expressPkg from 'express';
+const { Router } = expressPkg;
 
-const authRoutes = require('./auth.routes');
-const mascotaRoutes = require('./mascota.routes');
-const usuarioRoutes = require('./usuario.routes');
-const citaRoutes = require('./cita.routes');
-const disponibilidadRoutes = require('./disponibilidad.routes');
-const historiaRoutes = require('./historia.routes');  // ← NUEVO
-const razaRoutes = require('./raza.routes');
+import authRoutes from './auth.routes.js';
+import mascotaRoutes from './mascota.routes.js';
+import usuarioRoutes from './usuario.routes.js';
+import citaRoutes from './cita.routes.js';
+import disponibilidadRoutes from './disponibilidad.routes.js';
+import historiaRoutes from './historia.routes.js';// ← NUEVO
+import razaRoutes from './raza.routes.js';
 
 const router = Router();
 
@@ -27,4 +28,4 @@ router.use('/disponibilidad', disponibilidadRoutes);
 router.use('/historia', historiaRoutes);  // ← NUEVO
 router.use('/razas', razaRoutes);
 
-module.exports = router;
+export default router;

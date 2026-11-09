@@ -4,8 +4,9 @@
  * Consultas de historia clínica usando Sequelize (ORM).
  */
 
-const { Op } = require('sequelize');
-const { sequelize, HistoriaClinica, Cita, Mascota, Disponibilidad, Usuario } = require('./index');
+import sequelizePkg from 'sequelize';
+const { Op } = sequelizePkg;
+import { sequelize, HistoriaClinica, Cita, Mascota, Disponibilidad, Usuario } from './index.js';
 
 const INCLUDE_BASE = [
   {
@@ -203,11 +204,5 @@ async function actualizar(id_historia_clinica, cambios, especialistaId) {
   });
 }
 
-module.exports = {
-  findAll,
-  findById,
-  findByCitaId,
-  findByMascota,
-  crearConTransaccion,
-  actualizar,
-};
+export { findAll, findById, findByCitaId, findByMascota, crearConTransaccion, actualizar };
+export default { findAll, findById, findByCitaId, findByMascota, crearConTransaccion, actualizar };

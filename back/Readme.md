@@ -43,7 +43,7 @@ Backend en **Node.js + Express**, conectado directamente a **PostgreSQL** (sin O
 
 | Tecnología | Versión | Propósito |
 |------------|---------|-----------|
-| **Node.js** | v16+ | Entorno de ejecución |
+| **Node.js** | v22.12+ | Entorno de ejecución y Vitest 4 |
 | **Express.js** | v4.18+ | Framework web |
 | **PostgreSQL** | v12+ | Base de datos relacional |
 | **pg** | v8.10+ | Driver nativo de PostgreSQL |
@@ -130,15 +130,19 @@ cp .env.example .env
 PORT=3000
 NODE_ENV=development
 
-# CORS
-CORS_ORIGIN=*
+# CORS: orígenes exactos separados por comas (no usar *)
+CORS_ORIGIN=http://localhost:5173,http://localhost:8080
 
 # Database PostgreSQL
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=proyectohs
 DB_USER=postgres
-DB_PASSWORD=tu_contraseña
+DB_PASSWORD=CAMBIAR_POR_UNA_PASSWORD_LOCAL_SEGURA
+
+# JWT
+JWT_SECRET=CAMBIAR_POR_UN_SECRETO_ALEATORIO_UNICO
+JWT_EXPIRES_IN=10h
 
 
 # 1. Crear base de datos
@@ -190,3 +194,25 @@ git checkout -b "" // crear rama
 git branch : ver ramas
 
 //
+
+## Pruebas automatizadas con Vitest
+
+Desde `back/`, usa Node.js 22.12 o superior (validado con 22.23.4):
+
+```bash
+npm ci
+cp .env.test.example .env.test
+# Ajusta DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME_TEST y JWT_SECRET.
+# PostgreSQL debe estar activo y el usuario debe poder crear/eliminar la BD de pruebas.
+npm test
+npm run test:watch
+npm run test:coverage
+```
+
+La suite tiene 225 casos en 13 archivos: los 179 de la entrega ESM más 46 nuevos de `citas-especialista.test.js` y `usuarios-admin.test.js`, que cubren las pantallas del front PRO. No se eliminan pruebas ni se modifican sus expectativas. Los archivos se ejecutan secuencialmente porque comparten una base de datos que los hooks reinician. Se crea y elimina solamente la base de pruebas; debe terminar en `_test` y ser distinta de `DB_NAME`. No uses un usuario/servidor de producción para estas pruebas.
+
+Vitest ejecuta ESM sin Babel. `globalSetup` prepara la base y devuelve la función de limpieza; `setupFiles` carga el entorno antes de registrar el cierre del pool de Sequelize. La cobertura se genera en `back/coverage/`. Docker ejecuta `npm test` sin opciones de Jest.
+
+Bitácora y detalles: [docs/Bitacora_Migracion_Vitest.md](docs/Bitacora_Migracion_Vitest.md).
+
+`back/.npmrc` mantiene `legacy-peer-deps=true` para evitar un fallo de resolución de dependencias opcionales en npm 10.9.9 con Vitest; se validó `npm ci` desde cero. Docker copia también este archivo antes de instalar.

@@ -4,10 +4,10 @@
  * Controlador de usuarios.
  */
 
-const usuarioService = require('../services/usuario.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { ok } = require('../utils/response');
-const AppError = require('../utils/AppError');
+import usuarioService from '../services/usuario.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { ok } from '../utils/response.js';
+import AppError from '../utils/AppError.js';
 
 const obtenerPorDocumento = asyncHandler(async (req, res) => {
   const { documento } = req.params;
@@ -35,9 +35,5 @@ const eliminar = asyncHandler(async (req, res) => {
   return ok(res, eliminado, 'Cuenta eliminada correctamente');
 });
 
-module.exports = {
-  listarPersonal,
-  eliminar,
-  obtenerPorDocumento,
-  listarEspecialistas
-};
+export { listarPersonal, eliminar, obtenerPorDocumento, listarEspecialistas };
+export default { listarPersonal, eliminar, obtenerPorDocumento, listarEspecialistas };

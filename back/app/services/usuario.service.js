@@ -4,8 +4,8 @@
  * Lógica de negocio de usuarios.
  */
 
-const usuarioModel = require('../models/usuario.model');
-const AppError = require('../utils/AppError');
+import usuarioModel from '../models/usuario.model.js';
+import AppError from '../utils/AppError.js';
 
 async function obtenerPorDocumento(documento) {
   const usuario = await usuarioModel.findByDocumento(documento);
@@ -75,9 +75,5 @@ async function eliminarCuenta(id_usuario) {
   };
 }
 
-module.exports = {
-  listarPersonal,
-  eliminarCuenta,
-  obtenerPorDocumento,
-  listarEspecialistas
-};
+export { listarPersonal, eliminarCuenta, obtenerPorDocumento, listarEspecialistas };
+export default { listarPersonal, eliminarCuenta, obtenerPorDocumento, listarEspecialistas };

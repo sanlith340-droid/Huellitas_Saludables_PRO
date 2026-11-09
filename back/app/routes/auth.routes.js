@@ -4,15 +4,12 @@
  * Endpoints de autenticación.
  */
 
-const { Router } = require('express');
-const controller = require('../controllers/auth.controller');
-const validate = require('../middlewares/validate');
-const { requireRole } = require('../middlewares/identifyUser');
-const {
-  loginSchema,
-  registroSchema,
-  registroAdminSchema
-} = require('../schemas/auth.schema');
+import expressPkg from 'express';
+const { Router } = expressPkg;
+import controller from '../controllers/auth.controller.js';
+import validate from '../middlewares/validate.js';
+import { requireRole } from '../middlewares/identifyUser.js';
+import { loginSchema, registroSchema, registroAdminSchema } from '../schemas/auth.schema.js';
 
 const router = Router();
 
@@ -36,4 +33,4 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Auth routes working!' });
 });
 
-module.exports = router;
+export default router;

@@ -8,10 +8,10 @@
 //
 //   Por eso cada test usa una disponibilidad DIFERENTE.
 
-const request = require('supertest');
-const app = require('../../app/app');
-const { getToken } = require('../helpers/auth.helper');
-const { resetDatabase } = require('../setup/dbHelper');
+import request from 'supertest';
+import app from '../../app/app.js';
+import { getToken } from '../helpers/auth.helper.js';
+import { resetDatabase } from '../setup/dbHelper.js';
 
 describe('Disponibilidad - /api/disponibilidad', () => {
   let tokenUsuario, tokenEspecialista, tokenRecepcionista, tokenAdmin;

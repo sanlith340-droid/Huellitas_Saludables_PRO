@@ -1,8 +1,8 @@
 // tests/unit/services/auth.service.test.js
 // Prueba el servicio de autenticación "por dentro" (sin HTTP).
 
-const authService = require('../../../app/services/auth.service');
-const { resetDatabase } = require('../../setup/dbHelper');   // ← AGREGAR
+import authService from '../../../app/services/auth.service.js';
+import { resetDatabase } from '../../setup/dbHelper.js';// ← AGREGAR
 
 describe('services/auth.service', () => {
 

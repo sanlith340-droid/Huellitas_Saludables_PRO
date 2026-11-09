@@ -10,9 +10,9 @@
  * ya verificado, no de headers sueltos.
  */
 
-const { Usuario } = require('../models');
-const { verificarToken } = require('../utils/jwt');
-const { mensajeSinPermiso, nombreRol } = require('../utils/roleMessages');
+import { Usuario } from '../models/index.js';
+import { verificarToken } from '../utils/jwt.js';
+import { mensajeSinPermiso, nombreRol } from '../utils/roleMessages.js';
 
 // ============================================================
 // RUTAS PÚBLICAS - COINCIDENCIA EXACTA
@@ -38,12 +38,7 @@ function extraerToken(req) {
 }
 
 const identifyUser = async (req, res, next) => {
-  console.log('[identifyUser] ===== NUEVA PETICIÓN =====');
-  console.log('[identifyUser] URL:', req.originalUrl);
-  console.log('[identifyUser] Método:', req.method);
-
   if (isPublicRoute(req)) {
-    console.log('[identifyUser]  Ruta pública - saltando autenticación');
     return next();
   }
 
@@ -54,7 +49,6 @@ const identifyUser = async (req, res, next) => {
     const token = extraerToken(req);
 
     if (!token) {
-      console.log('[identifyUser]  FALTA EL TOKEN (Authorization: Bearer <token>)');
       return res.status(401).json({
         success: false,
         message: 'Falta el token de autenticación. Envía el header Authorization: Bearer <token>.',
@@ -65,16 +59,13 @@ const identifyUser = async (req, res, next) => {
     let payload;
     try {
       payload = verificarToken(token);
-    } catch (err) {
-      console.log('[identifyUser]  TOKEN INVÁLIDO O EXPIRADO:', err.message);
+    } catch {
       return res.status(401).json({
         success: false,
         message: 'Token inválido o expirado. Inicia sesión nuevamente.',
         code: 'UNAUTHORIZED'
       });
     }
-
-    console.log('[identifyUser]  Payload del token:', payload);
 
     // ============================================================
     // VERIFICAR QUE EL USUARIO SIGA EXISTIENDO EN BD
@@ -84,10 +75,7 @@ const identifyUser = async (req, res, next) => {
       attributes: ['id_usuario', 'rol'],
     });
 
-    console.log('[identifyUser]  Resultado BD:', usuarioEncontrado ? usuarioEncontrado.get({ plain: true }) : null);
-
     if (!usuarioEncontrado) {
-      console.log('[identifyUser]  USUARIO NO ENCONTRADO');
       return res.status(401).json({
         success: false,
         message: 'El usuario del token ya no existe',
@@ -106,18 +94,13 @@ const identifyUser = async (req, res, next) => {
       rol: rolReal
     };
 
-    console.log('[identifyUser]  AUTENTICACIÓN EXITOSA');
-    console.log('[identifyUser]  req.user:', req.user);
-
     next();
-  } catch (error) {
-    console.error('[identifyUser]  ERROR:', error);
-    console.error('[identifyUser] Stack:', error.stack);
+  } catch {
+    console.error('[identifyUser] Error interno al validar la sesión');
     return res.status(500).json({
       success: false,
       message: 'Error al validar el usuario',
-      code: 'INTERNAL_SERVER_ERROR',
-      details: error.message
+      code: 'INTERNAL_SERVER_ERROR'
     });
   }
 };
@@ -156,4 +139,5 @@ const requireRole = (...rolesPermitidos) => {
   };
 };
 
-module.exports = { identifyUser, requireRole };
+export { identifyUser, requireRole };
+export default { identifyUser, requireRole };

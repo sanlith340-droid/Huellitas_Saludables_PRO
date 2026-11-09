@@ -1,7 +1,7 @@
 // app/services/mascota.service.js
-const mascotaModel = require('../models/mascota.model');
-const razaModel = require('../models/raza.model');
-const AppError = require('../utils/AppError');
+import mascotaModel from '../models/mascota.model.js';
+import razaModel from '../models/raza.model.js';
+import AppError from '../utils/AppError.js';
 
 async function listar() {
   return mascotaModel.findAll();
@@ -53,8 +53,5 @@ async function crearConUsuario(datos, id_usuario) {
   }
 }
 
-module.exports = {
-  listar,
-  obtenerPorId,
-  crearConUsuario,
-};
+export { listar, obtenerPorId, crearConUsuario };
+export default { listar, obtenerPorId, crearConUsuario };

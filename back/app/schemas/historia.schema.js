@@ -4,7 +4,7 @@
  * Validaciones de historia clínica con Joi.
  */
 
-const Joi = require('joi');
+import Joi from 'joi';
 
 /**
  * Crear historia clínica
@@ -71,9 +71,5 @@ const listarHistoriaQuerySchema = Joi.object({
   fecha_fin: Joi.date().iso().optional()
 });
 
-module.exports = {
-  crearHistoriaSchema,
-  actualizarHistoriaSchema,
-  idParamSchema,
-  listarHistoriaQuerySchema
-};
+export { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema };
+export default { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema };

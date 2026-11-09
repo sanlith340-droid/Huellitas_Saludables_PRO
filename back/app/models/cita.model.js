@@ -12,8 +12,9 @@
  * negocio no dependa silenciosamente de algo que vive solo en la BD.
  */
 
-const { Op } = require('sequelize');
-const { sequelize, Cita, Mascota, Disponibilidad, Usuario, UsuarioMascota } = require('./index');
+import sequelizePkg from 'sequelize';
+const { Op } = sequelizePkg;
+import { sequelize, Cita, Mascota, Disponibilidad, Usuario, UsuarioMascota } from './index.js';
 
 const INCLUDE_BASE = [
   {
@@ -267,14 +268,5 @@ async function perteneceAUsuario(id_cita, id_usuario) {
   return count > 0;
 }
 
-module.exports = {
-  findAll,
-  findById,
-  findByEspecialista,
-  obtenerPrimerRecepcionista,
-  crearConTransaccion,
-  editarConTransaccion,
-  cancelarConTransaccion,
-  cambiarEstadoConTransaccion,
-  perteneceAUsuario,
-};
+export { findAll, findById, findByEspecialista, obtenerPrimerRecepcionista, crearConTransaccion, editarConTransaccion, cancelarConTransaccion, cambiarEstadoConTransaccion, perteneceAUsuario };
+export default { findAll, findById, findByEspecialista, obtenerPrimerRecepcionista, crearConTransaccion, editarConTransaccion, cancelarConTransaccion, cambiarEstadoConTransaccion, perteneceAUsuario };

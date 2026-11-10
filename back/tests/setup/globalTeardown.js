@@ -8,13 +8,14 @@
 import sequelizePkg from 'sequelize';
 const { Sequelize } = sequelizePkg;
 import { obtenerConfigPruebas, describirError, borrarBaseSiExiste } from './testDbConfig.js';
+import logger from '../../app/utils/logger.js';
 
 export default async () => {
   let config;
   try {
     config = obtenerConfigPruebas();
   } catch (err) {
-    console.warn('[test-teardown] No se elimina ninguna base de datos:', err.message);
+    logger.warn({ event: 'test.teardown_skipped' }, 'No se elimina ninguna base de datos');
     return;
   }
 
@@ -27,9 +28,9 @@ export default async () => {
 
   try {
     await borrarBaseSiExiste(admin, config.database);
-    console.log('[test-teardown] Base de datos de prueba eliminada:', config.database);
+    logger.info({ event: 'test.database_removed' }, 'Base de datos de prueba eliminada');
   } catch (err) {
-    console.warn('[test-teardown] No se pudo eliminar la BD de pruebas:', describirError(err));
+    logger.warn({ event: 'test.database_remove_failed', errorCode: err?.code }, 'No se pudo eliminar la base de pruebas');
   } finally {
     await admin.close();
   }

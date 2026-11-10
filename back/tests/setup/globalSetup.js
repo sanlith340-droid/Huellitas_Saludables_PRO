@@ -15,6 +15,7 @@ const { execSync } = child_processPkg;
 import sequelizePkg from 'sequelize';
 const { Sequelize } = sequelizePkg;
 import { obtenerConfigPruebas, describirError, borrarBaseSiExiste } from './testDbConfig.js';
+import logger from '../../app/utils/logger.js';
 // Raíz de back/, independiente del directorio de ejecución.
 const BACK_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
@@ -59,7 +60,7 @@ export default async () => {
   execSync('npx sequelize-cli db:migrate --config app/config/config.js --models-path app/models --migrations-path migrations --seeders-path seeders', { cwd, env, stdio: 'inherit' });
   execSync('npx sequelize-cli db:seed:all --config app/config/config.js --models-path app/models --migrations-path migrations --seeders-path seeders', { cwd, env, stdio: 'inherit' });
 
-  console.log('[test-setup] Base de datos de prueba lista:', nombreBd);
+  logger.info({ event: 'test.database_ready', database: nombreBd }, 'Base de datos de prueba lista');
 
   // Vitest ejecuta esta función una vez, después de todos los archivos.
   return teardown;

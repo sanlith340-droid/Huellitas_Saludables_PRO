@@ -8,6 +8,7 @@ import authModel from '../models/auth.model.js';
 import AppError from '../utils/AppError.js';
 import { generarToken } from '../utils/jwt.js';
 import { hashContrasena, verificarContrasena, esHashScrypt } from '../utils/password.js';
+import logger from '../utils/logger.js';
 
 async function login({ correo, contrasena }) {
   const usuario = await authModel.findByEmail(correo);
@@ -29,10 +30,10 @@ async function login({ correo, contrasena }) {
       const actualizado = await authModel.updatePassword(usuario.id_usuario, nuevoHash);
 
       if (!actualizado) {
-        console.error('[auth.service] No se pudo migrar la contraseña a hash');
+        logger.error({ event: 'auth.password_hash_migration_failed' }, 'No se pudo migrar el hash de contraseña');
       }
     } catch {
-      console.error('[auth.service] No se pudo migrar la contraseña a hash');
+      logger.error({ event: 'auth.password_hash_migration_failed' }, 'No se pudo migrar el hash de contraseña');
     }
   }
 

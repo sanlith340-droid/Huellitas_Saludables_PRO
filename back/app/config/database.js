@@ -12,6 +12,7 @@ import 'dotenv/config';
 import sequelizePkg from 'sequelize';
 const { Sequelize } = sequelizePkg;
 import { parseDatabaseUrl } from './databaseUrl.js';
+import logger from '../utils/logger.js';
 
 // Si estamos en modo test, usamos una BD distinta:
 //   - Si existe DB_NAME_TEST, la usa
@@ -23,7 +24,9 @@ const dbName = process.env.NODE_ENV === 'test'
 
 const opcionesComunes = {
   // En test NO mostramos las queries SQL (ensucian la salida).
-  logging: (process.env.NODE_ENV === 'development') ? console.log : false,
+  logging: process.env.NODE_ENV === 'development'
+    ? (sql) => logger.debug({ event: 'database.query', sql }, 'Consulta de base de datos')
+    : false,
   define: {
     freezeTableName: true,
   },

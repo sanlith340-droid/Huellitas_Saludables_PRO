@@ -3,14 +3,11 @@
  * services/notificacion.service.js
  * RF09: Notificaciones a veterinarios.
  */
+import logger from '../utils/logger.js';
 
 async function enviar({ destinatarioId, asunto, mensaje }) {
-  console.log('[notificacion]', JSON.stringify({
-    destinatarioId,
-    asunto,
-    mensaje,
-    fecha: new Date().toISOString()
-  }));
+  // No registrar destinatarios ni contenido de la notificación: pueden incluir datos personales.
+  logger.info({ event: 'notification.processed' }, 'Notificación procesada');
   return true;
 }
 

@@ -17,6 +17,7 @@ import { notFoundHandler, errorHandler } from './middlewares/errorHandler.js';
 import { testConnection } from './config/database.js';
 import { ok } from './utils/response.js';
 import AppError from './utils/AppError.js';
+import asyncHandler from './utils/asyncHandler.js';
 
 const origenesPermitidos = (process.env.CORS_ORIGIN || '')
   .split(',')
@@ -46,21 +47,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 3. Healthcheck (ruta pública)
-app.get('/health', async (_req, res) => {
+app.get('/health', asyncHandler(async (_req, res) => {
   try {
     const now = await testConnection();
     return ok(res, { db_time: now }, 'Servicio y base de datos activos');
-  } catch (err) {
-    const nombre = typeof err?.name === 'string' ? err.name : 'Error';
-    const codigo = typeof err?.code === 'string' ? err.code : 'SIN_CODIGO';
-    console.error(`[health] Base de datos no disponible (${nombre}/${codigo})`);
-
-    return res.status(503).json({
-      success: false,
-      message: 'Sin conexión a la base de datos'
-    });
+  } catch {
+    throw AppError.serviceUnavailable('La base de datos no está disponible temporalmente.');
   }
-});
+}));
 
 // 4. API (rutas) - identifyUser ANTES de apiRoutes
 app.use('/api', identifyUser, auditLog, apiRoutes);

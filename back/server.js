@@ -6,13 +6,10 @@
 
 import 'dotenv/config';
 import app from './app/app.js';
+import logger from './app/utils/logger.js';
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`[server] Huellitas Saludables API`);
-  console.log(`[server] Servidor ejecutándose en http://localhost:${PORT}`);
-  console.log(`[server] Healthcheck: http://localhost:${PORT}/health`);
-  console.log(`[server] API Docs: http://localhost:${PORT}/api-docs`);
-  console.log(`[server] Auth test: http://localhost:${PORT}/api/auth/test`);
+  logger.info({ event: 'server.started', port: PORT }, 'Huellitas Saludables API iniciada');
 });

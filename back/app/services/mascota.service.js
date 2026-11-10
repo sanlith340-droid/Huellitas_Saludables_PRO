@@ -46,8 +46,11 @@ async function crearConUsuario(datos, id_usuario) {
       id_usuario
     });
   } catch (error) {
-    if (error.code === '23505') {
+    if (error?.code === 'P2002') {
       throw AppError.conflict('Ya existe una mascota con esos datos');
+    }
+    if (error?.code === 'P2003') {
+      throw AppError.badRequest('La referencia de raza o usuario no es válida');
     }
     throw error;
   }

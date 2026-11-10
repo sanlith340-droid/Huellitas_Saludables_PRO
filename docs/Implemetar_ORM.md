@@ -1,20 +1,22 @@
-# Sequelize: lo que usa el proyecto ahora
+# Prisma ORM 7 en Huellitas Saludables
 
-Este documento reemplaza el tutorial antiguo, porque algunos nombres de archivos y pasos que aparecían ahí ya cambiaron.
+El backend utiliza Prisma ORM 7 en ESM. La definición de los siete modelos está en `back/prisma/schema.prisma`, la configuración CLI en `back/prisma.config.ts`, y el cliente generado se importa desde el singleton `back/app/config/prisma.js`.
 
-El backend usa Sequelize 6 con PostgreSQL. La conexión está en `back/app/config/database.js`, la configuración del CLI está en `back/app/config/config.js` y `.sequelizerc`, y las tablas y relaciones se describen en `back/app/models/index.js`.
-
-Las migraciones de `back/migrations/` crean usuarios, razas, mascotas, la relación entre usuarios y mascotas, disponibilidad, citas e historias clínicas. Los datos demo están en `back/seeders/`.
-
-Desde la carpeta `back/`, el flujo básico es:
+## Instalar y aplicar el esquema
 
 ```bash
-npm install
-cp .env.example .env
+cd back
+npm ci                 # incluye prisma generate
+npx prisma validate
 npm run migrate
-npm run seed       # si quieres cargar datos de ejemplo
 ```
 
-Si vas a cambiar una tabla, crea una migración nueva y pruébala en una base aparte. Evita editar migraciones que ya se hayan usado en otros equipos. Las opciones para revertir migraciones o usar `db:reset` pueden borrar datos, así que no las corras en producción.
+`npm run migrate` crea el schema en una base vacía. Para una base ya existente, primero valida que tablas, columnas, restricciones, índice parcial y triggers coincidan con el baseline; si no coinciden, termina sin borrar ni modificar filas. Mantén una copia de seguridad antes de actualizar.
 
-Más detalles en [la guía para trabajar en backend](docs/DESARROLLO.md) y [la arquitectura](docs/ARQUITECTURA.md).
+Para cargar los registros de demostración en desarrollo:
+
+```bash
+npm run seed
+```
+
+No uses los datos demo ni sus credenciales en producción. Más información: [guía de desarrollo](backend/DESARROLLO.md) y [arquitectura](backend/ARQUITECTURA.md).

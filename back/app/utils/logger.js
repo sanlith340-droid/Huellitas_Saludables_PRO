@@ -17,10 +17,15 @@ const logger = pino({
   timestamp: pino.stdTimeFunctions.isoTime,
   redact: {
     paths: [
+      'password', 'passwd', 'pwd', 'contrasena', 'contraseña', 'clave', 'secret',
+      'token', 'accessToken', 'refreshToken', 'authorization', 'cookie', 'set-cookie',
+      'apiKey', 'api_key', 'hash', 'correo', 'email', 'user', 'usuario', 'req', 'request', 'body',
+      'id_usuario', 'nombre', 'apellidos', 'telefono', 'direccion', 'especializacion',
       '*.password', '*.passwd', '*.pwd', '*.contrasena', '*.contraseña', '*.clave', '*.secret',
       '*.token', '*.accessToken', '*.refreshToken', '*.authorization', '*.cookie', '*.set-cookie',
-      '*.apiKey', '*.api_key', '*.hash', '*.correo', '*.email',
-      'req.headers.authorization', 'req.headers.cookie', 'req.body', 'user', 'usuario',
+      '*.apiKey', '*.api_key', '*.hash', '*.correo', '*.email', '*.user', '*.usuario', '*.id_usuario',
+      '*.nombre', '*.apellidos', '*.telefono', '*.direccion', '*.especializacion',
+      'req.headers.authorization', 'req.headers.cookie', 'req.body', 'request.headers.authorization',
     ],
     censor: '[REDACTADO]',
   },

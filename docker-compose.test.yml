@@ -32,4 +32,4 @@ services:
       db-test:
         condition: service_healthy
     entrypoint: []
-    command: ["npm", "test", "--", "--runInBand"]
+    command: ["npm", "test"]

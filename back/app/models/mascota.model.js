@@ -1,42 +1,62 @@
 // app/models/mascota.model.js
 /**
- * models/mascota.model.js
- * Consultas de mascotas usando Sequelize (ORM).
- * Se mantiene exactamente la misma forma de los objetos que
- * devolvía la versión con SQL puro para no romper mascota.service.js.
+ * Consultas de mascotas con Prisma, conservando las formas de respuesta
+ * que consume la API.
  */
 
-import { sequelize, Mascota, Raza, Usuario, UsuarioMascota } from './index.js';
+import { prisma } from '../config/prisma.js';
+
+const camposUsuario = {
+  id_usuario: true,
+  nombre: true,
+  apellidos: true,
+  telefono: true,
+  correo: true,
+};
+
+function fechaComoDia(value) {
+  if (value == null) return value;
+  if (typeof value === 'string') return value.slice(0, 10);
+  return value.toISOString().slice(0, 10);
+}
+
+function fechaParaPrisma(value) {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(`${value}T00:00:00.000Z`);
+  }
+  return value;
+}
 
 async function findAll() {
-  const mascotas = await Mascota.findAll({
-    include: [
-      { model: Raza, attributes: ['id_raza', 'nombre'] },
-      {
-        model: Usuario,
-        attributes: ['id_usuario', 'nombre', 'apellidos', 'telefono', 'correo'],
-        through: { attributes: [] },
-        required: false,
+  const mascotas = await prisma.mascota.findMany({
+    include: {
+      raza: { select: { id_raza: true, nombre: true } },
+      propietarios: {
+        select: {
+          usuario: { select: camposUsuario },
+        },
       },
-    ],
-    order: [['id_mascota', 'ASC']],
+    },
+    orderBy: { id_mascota: 'asc' },
   });
 
-  // Aplanar: una fila por (mascota, propietario), igual que el JOIN original.
+  // Una fila por mascota-propietario, o una fila con propietario nulo.
   const filas = [];
   for (const m of mascotas) {
-    const plano = m.get({ plain: true });
-    const propietarios = plano.Usuarios && plano.Usuarios.length > 0 ? plano.Usuarios : [null];
+    const propietarios = m.propietarios.length > 0
+      ? m.propietarios.map((asociacion) => asociacion.usuario)
+      : [null];
 
     for (const u of propietarios) {
       filas.push({
-        id_mascota: plano.id_mascota,
-        mascota: plano.nombre,
-        fecha_nacimiento: plano.fecha_nacimiento,
-        especie: plano.especie,
-        genero: plano.genero,
-        id_raza: plano.Raza ? plano.Raza.id_raza : null,
-        raza: plano.Raza ? plano.Raza.nombre : null,
+        id_mascota: m.id_mascota,
+        mascota: m.nombre,
+        fecha_nacimiento: fechaComoDia(m.fecha_nacimiento),
+        especie: m.especie,
+        genero: m.genero,
+        id_raza: m.raza ? m.raza.id_raza : null,
+        raza: m.raza ? m.raza.nombre : null,
         propietario_id: u ? u.id_usuario : null,
         propietario_nombre: u ? u.nombre : null,
         propietario_apellidos: u ? u.apellidos : null,
@@ -49,64 +69,67 @@ async function findAll() {
 }
 
 async function findById(id_mascota, { transaction } = {}) {
-  const mascota = await Mascota.findByPk(id_mascota, {
-    include: [
-      { model: Raza, attributes: ['id_raza', 'nombre'] },
-      {
-        model: Usuario,
-        attributes: ['id_usuario', 'nombre', 'apellidos', 'telefono', 'correo'],
-        through: { attributes: [] },
-        required: false,
+  const client = transaction || prisma;
+  const m = await client.mascota.findUnique({
+    where: { id_mascota: Number(id_mascota) },
+    include: {
+      raza: { select: { id_raza: true, nombre: true } },
+      propietarios: {
+        select: {
+          usuario: { select: camposUsuario },
+        },
       },
-    ],
-    transaction,
+    },
   });
 
-  if (!mascota) return null;
-
-  const plano = mascota.get({ plain: true });
+  if (!m) return null;
 
   return {
-    id_mascota: plano.id_mascota,
-    mascota: plano.nombre,
-    fecha_nacimiento: plano.fecha_nacimiento,
-    especie: plano.especie,
-    genero: plano.genero,
+    id_mascota: m.id_mascota,
+    mascota: m.nombre,
+    fecha_nacimiento: fechaComoDia(m.fecha_nacimiento),
+    especie: m.especie,
+    genero: m.genero,
     raza: {
-      id_raza: plano.Raza ? plano.Raza.id_raza : null,
-      nombre: plano.Raza ? plano.Raza.nombre : null,
+      id_raza: m.raza ? m.raza.id_raza : null,
+      nombre: m.raza ? m.raza.nombre : null,
     },
-    propietarios: (plano.Usuarios || []).map((u) => ({
-      id_usuario: u.id_usuario,
-      nombre: u.nombre,
-      apellidos: u.apellidos,
-      telefono: u.telefono,
-      correo: u.correo,
+    propietarios: m.propietarios.map(({ usuario }) => ({
+      id_usuario: usuario.id_usuario,
+      nombre: usuario.nombre,
+      apellidos: usuario.apellidos,
+      telefono: usuario.telefono,
+      correo: usuario.correo,
     })),
   };
 }
 
 async function perteneceAUsuario(id_mascota, id_usuario) {
-  const count = await UsuarioMascota.count({ where: { id_mascota, id_usuario } });
-  return count > 0;
+  const asociacion = await prisma.usuarioMascota.findFirst({
+    where: { id_mascota: Number(id_mascota), id_usuario },
+    select: { id_mascota: true },
+  });
+  return Boolean(asociacion);
 }
 
-// ============================================================
-// Crear mascota + asociarla al usuario dueño (transacción)
-// ============================================================
 async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_raza, id_usuario }) {
-  return sequelize.transaction(async (t) => {
-    const nuevaMascota = await Mascota.create(
-      { nombre, fecha_nacimiento, especie, genero, id_raza },
-      { transaction: t }
-    );
+  return prisma.$transaction(async (transaction) => {
+    const nuevaMascota = await transaction.mascota.create({
+      data: {
+        nombre,
+        fecha_nacimiento: fechaParaPrisma(fecha_nacimiento),
+        especie,
+        genero,
+        id_raza: Number(id_raza),
+      },
+      select: { id_mascota: true },
+    });
 
-    await UsuarioMascota.create(
-      { id_usuario, id_mascota: nuevaMascota.id_mascota },
-      { transaction: t }
-    );
+    await transaction.usuarioMascota.create({
+      data: { id_usuario, id_mascota: nuevaMascota.id_mascota },
+    });
 
-    return findById(nuevaMascota.id_mascota, { transaction: t });
+    return findById(nuevaMascota.id_mascota, { transaction });
   });
 }
 

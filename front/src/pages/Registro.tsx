@@ -31,6 +31,11 @@ function Registro() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje("");
+    if (/\s/u.test(form.contrasena)) {
+      setExito(false);
+      setMensaje("La contraseña no puede contener espacios.");
+      return;
+    }
     setCargando(true);
 
     try {

@@ -81,6 +81,26 @@ describe('Disponibilidad - /api/disponibilidad', () => {
       expect(res.body.data.length).toBeGreaterThan(20);
     });
 
+    it('futuras=true no devuelve franjas vencidas en America/Bogota', async () => {
+      const res = await get('/api/disponibilidad?estado=disponible&futuras=true');
+
+      expect(res.status).toBe(200);
+      res.body.data.forEach((franja) => {
+        expect(`${franja.fecha}T${franja.hora}` > '2026-08-18T12:00:00').toBe(true);
+      });
+    });
+
+    it('futuras=true mantiene el filtro y los conteos al paginar', async () => {
+      const res = await get('/api/disponibilidad?estado=disponible&futuras=true&page=1&limit=10');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBeLessThanOrEqual(10);
+      expect(res.body.meta.total).toBeGreaterThanOrEqual(res.body.data.length);
+      res.body.data.forEach((franja) => {
+        expect(`${franja.fecha}T${franja.hora}` > '2026-08-18T12:00:00').toBe(true);
+      });
+    });
+
     it('con limit devuelve solo esa cantidad y trae meta de paginación', async () => {
       const res = await get('/api/disponibilidad?id_usuario=ESP001&limit=5');
 
@@ -312,6 +332,20 @@ describe('Disponibilidad - /api/disponibilidad', () => {
       expect(res.status).toBe(201);
     });
 
+    it('rechaza crear una franja de hoy cuya hora ya pasó en Bogotá', async () => {
+      const res = await request(app)
+        .post('/api/disponibilidad')
+        .set('Authorization', `Bearer ${tokenRecepcionista}`)
+        .send({
+          id_usuario: 'ESP001',
+          fecha: '2026-08-18',
+          hora: '11:59:00',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('No se pueden crear franjas en el pasado');
+    });
+
     it.each(['usuario', 'especialista'])(
       'rol %s no puede crear (403)',
       async (rol) => {
@@ -408,6 +442,16 @@ describe('Disponibilidad - /api/disponibilidad', () => {
         .send({ fecha: '2027-01-01' });
 
       expect(res.status).toBe(409);
+    });
+
+    it('rechaza mover una franja libre a una fecha y hora pasadas', async () => {
+      const res = await request(app)
+        .put('/api/disponibilidad/5')
+        .set('Authorization', `Bearer ${tokenRecepcionista}`)
+        .send({ fecha: '2026-08-18', hora: '11:00:00' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.message).toContain('No se pueden crear franjas en el pasado');
     });
 
     it('body vacío devuelve 400', async () => {

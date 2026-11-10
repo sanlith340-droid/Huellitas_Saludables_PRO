@@ -6,9 +6,18 @@
 
 import disponibilidadModel from '../models/disponibilidad.model.js';
 import usuarioModel from '../models/usuario.model.js';
-import { Cita } from '../models/index.js';
+import { prisma } from '../config/prisma.js';
 import AppError from '../utils/AppError.js';
 import { LIMITE_POR_DEFECTO } from '../schemas/disponibilidad.schema.js';
+import { esFechaHoraPasada } from '../utils/fechaHora.js';
+
+const MENSAJE_FECHA_PASADA = 'No se pueden crear franjas en el pasado. Selecciona una fecha y hora futuras (hora de Colombia).';
+
+function validarFranjaFutura(fecha, hora) {
+  if (esFechaHoraPasada(fecha, hora)) {
+    throw AppError.badRequest(MENSAJE_FECHA_PASADA);
+  }
+}
 
 /**
  * Arma el bloque "meta" de paginación que acompaña a la lista.
@@ -119,6 +128,8 @@ async function crear(datos) {
     throw AppError.conflict('El especialista ya tiene una disponibilidad para esa fecha y hora');
   }
 
+  validarFranjaFutura(datos.fecha, datos.hora);
+
   // 3. Crear la disponibilidad
   try {
     return await disponibilidadModel.create({
@@ -129,7 +140,7 @@ async function crear(datos) {
     });
   } catch (error) {
     // Si por alguna razón se escapa el duplicado, la BD lo detecta (unique constraint)
-    if (error.code === '23505') {
+    if (error.code === 'P2002' || error.code === '23505') {
       throw AppError.conflict('Ya existe una disponibilidad para ese especialista, fecha y hora');
     }
     throw error;
@@ -144,6 +155,10 @@ async function actualizar(id, cambios) {
     throw AppError.conflict('No se puede modificar fecha, hora o especialista de una disponibilidad ocupada');
   }
 
+  if (cambios.fecha !== undefined || cambios.hora !== undefined) {
+    validarFranjaFutura(cambios.fecha ?? actual.fecha, cambios.hora ?? actual.hora);
+  }
+
   if (cambios.id_usuario) {
     const especialista = await usuarioModel.findByIdAndRol(cambios.id_usuario, 'especialista');
     if (!especialista) {
@@ -151,7 +166,14 @@ async function actualizar(id, cambios) {
     }
   }
 
-  return disponibilidadModel.update(id, cambios);
+  try {
+    return await disponibilidadModel.update(id, cambios);
+  } catch (error) {
+    if (error.code === 'P2002' || error.code === '23505') {
+      throw AppError.conflict('Ya existe una disponibilidad para ese especialista, fecha y hora');
+    }
+    throw error;
+  }
 }
 
 async function eliminar(id) {
@@ -163,9 +185,9 @@ async function eliminar(id) {
 
   // Una cita (incluso cancelada) conserva la referencia para proteger el
   // historial. Se comprueba antes del DELETE para no depender del mensaje
-  // que PostgreSQL/Sequelize pueda encapsular en la excepción.
-  const citasAsociadas = await Cita.count({
-    where: { id_disponibilidad: id },
+  // técnico de la restricción de clave foránea.
+  const citasAsociadas = await prisma.cita.count({
+    where: { id_disponibilidad: Number(id) },
   });
   if (citasAsociadas > 0) {
     throw AppError.conflict(
@@ -176,11 +198,8 @@ async function eliminar(id) {
   try {
     return await disponibilidadModel.remove(id);
   } catch (error) {
-    // Sequelize expone el código PostgreSQL en parent/original. Una cita
-    // conserva la disponibilidad para proteger el historial y PostgreSQL
-    // rechaza su borrado con una restricción de clave foránea (23503).
-    const codigoPostgres = error.code || error.parent?.code || error.original?.code;
-    if (codigoPostgres === '23503') {
+    // Prisma señala la restricción de clave foránea con P2003.
+    if (error.code === 'P2003') {
       throw AppError.conflict(
         'No se puede eliminar esta disponibilidad porque tiene una cita asociada. Cancela o elimina primero la cita.'
       );

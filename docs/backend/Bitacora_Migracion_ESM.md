@@ -26,17 +26,17 @@ Realizar la migración del backend del proyecto HUELLITAS SALUDABLES desde el si
 | 06/11/2026 | 7:00 p. m. | Se inició el análisis de la estructura del backend, identificando los directorios de configuración, controladores, middlewares, modelos, rutas, esquemas, servicios y utilidades. |
 | 06/11/2026 | 7:30 p. m. | Se revisaron los archivos de configuración, migraciones, seeders y pruebas automatizadas para identificar dependencias del sistema CommonJS. |
 | 06/11/2026 | 8:00 p. m. | Se identificaron aproximadamente 279 usos de `require`, `module.exports` y `__dirname` en el backend y sus pruebas. |
-| 06/11/2026 | 8:30 p. m. | Se analizaron los casos especiales de configuración de Sequelize, importaciones dinámicas y referencias a directorios que requerían ajustes durante la migración. |
+| 06/11/2026 | 8:30 p. m. | Se analizaron los casos especiales de configuración de ORM anterior, importaciones dinámicas y referencias a directorios que requerían ajustes durante la migración. |
 | 07/11/2026 | 7:00 p. m. | Se modificó `back/package.json`, cambiando la configuración del proyecto a `"type": "module"`, conservando los comandos de inicio y desarrollo. |
 | 07/11/2026 | 7:30 p. m. | Se inició la conversión de los archivos JavaScript de `back/app`, reemplazando las importaciones CommonJS por `import`. |
 | 07/11/2026 | 8:00 p. m. | Se adaptaron las exportaciones utilizando `export` y `export default`, según las necesidades de cada módulo. |
 | 07/11/2026 | 8:30 p. m. | Se agregaron extensiones `.js` a las importaciones locales y se ajustaron las importaciones de dependencias CommonJS para mantener su compatibilidad. |
-| 07/11/2026 | 9:00 p. m. | Se modificó `auth.model.js`, reemplazando la importación dinámica de Sequelize por una importación estática al inicio del archivo. |
-| 07/11/2026 | 9:30 p. m. | Se adaptó `config.js` para exportar su configuración mediante `export default`, conservando la compatibilidad con Sequelize CLI. |
+| 07/11/2026 | 9:00 p. m. | Se modificó `auth.model.js`, reemplazando la importación dinámica de ORM anterior por una importación estática al inicio del archivo. |
+| 07/11/2026 | 9:30 p. m. | Se adaptó `config.js` para exportar su configuración mediante `export default`, conservando la compatibilidad con ORM anterior CLI. |
 | 07/11/2026 | 10:00 p. m. | Se convirtió `server.js` al sistema ESM y se verificó que el servidor conservara su configuración y funcionamiento. |
 | 07/11/2026 | 10:30 p. m. | Se migraron las 7 migraciones de base de datos y los 5 seeders al sistema de módulos ESM. |
-| 07/11/2026 | 11:00 p. m. | Se ajustaron las importaciones de los seeders, incluyendo la función `hashContrasena`, y se conservó el archivo `.sequelizerc`. |
-| 07/11/2026 | 11:30 p. m. | Se adaptó la configuración de Jest, renombrando `jest.config.js` a `jest.config.cjs` para mantener su compatibilidad con CommonJS. |
+| 07/11/2026 | 11:00 p. m. | Se ajustaron las importaciones de los seeders, incluyendo la función `hashContrasena`, y se conservó el archivo `.ORM anteriorrc`. |
+| 07/11/2026 | 11:30 p. m. | Se adaptó la configuración de Jest, renombrando `vitest.config.js` a `vitest.config.js` para mantener su compatibilidad con CommonJS. |
 | 08/11/2026 | 12:00 a. m. | Se conservaron los archivos de configuración de Babel con extensión `.cjs` y se revisaron las dependencias necesarias para ejecutar las pruebas. |
 | 08/11/2026 | 12:30 a. m. | Se adaptaron los archivos de pruebas al nuevo sistema de módulos y se ajustaron las referencias de directorios utilizadas durante su ejecución. |
 | 08/11/2026 | 1:00 a. m. | Se verificó que no existieran usos de `require`, `module.exports` o `__dirname` dentro de `back/app`. |
@@ -56,14 +56,14 @@ Realizar la migración del backend del proyecto HUELLITAS SALUDABLES desde el si
 - 7 archivos de migraciones.
 - 5 archivos de seeders.
 - Archivos de pruebas automatizadas.
-- `jest.config.cjs`.
+- `vitest.config.js`.
 - `babel.config.cjs`.
 - Archivos de configuración y documentación relacionados.
 
 ### 5. Resultados obtenidos
 
 - Migración del backend al sistema nativo ES Modules.
-- Compatibilidad conservada con Sequelize CLI.
+- Compatibilidad conservada con ORM anterior CLI.
 - Migraciones y seeders adaptados correctamente.
 - Servidor funcional con `npm start` y `npm run dev`.
 - 11 suites de pruebas ejecutadas correctamente.

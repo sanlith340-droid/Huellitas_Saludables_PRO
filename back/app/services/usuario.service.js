@@ -1,6 +1,5 @@
 // app/services/usuario.service.js
 /**
- * services/usuario.service.js
  * Lógica de negocio de usuarios.
  */
 
@@ -58,11 +57,18 @@ async function eliminarCuenta(id_usuario) {
   }
 
   try {
-    await usuarioModel.eliminar(id_usuario);
+    const eliminadas = await usuarioModel.eliminar(id_usuario);
+    if (eliminadas === 0) {
+      throw AppError.notFound(`No existe un usuario con ID ${id_usuario}`);
+    }
   } catch (error) {
-    // Una cita pudo crearse justo entre la verificación y el borrado
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
+    if (error?.code === 'P2003') {
+      // Una cita pudo crearse justo entre la verificación y el borrado.
       throw AppError.conflict(mensajeConCitas('varias'));
+    }
+    if (error?.code === 'P2025') {
+      // La cuenta pudo ser eliminada por otra operación concurrente.
+      throw AppError.notFound(`No existe un usuario con ID ${id_usuario}`);
     }
     throw error;
   }

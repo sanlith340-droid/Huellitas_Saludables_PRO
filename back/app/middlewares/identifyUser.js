@@ -10,7 +10,7 @@
  * ya verificado, no de headers sueltos.
  */
 
-import { Usuario } from '../models/index.js';
+import usuarioModel from '../models/usuario.model.js';
 import { verificarToken } from '../utils/jwt.js';
 import { mensajeSinPermiso, nombreRol } from '../utils/roleMessages.js';
 import AppError from '../utils/AppError.js';
@@ -53,13 +53,13 @@ const identifyUser = asyncHandler(async (req, _res, next) => {
     throw AppError.unauthorized('Token inválido o expirado. Inicia sesión nuevamente.');
   }
 
-  const usuarioEncontrado = await Usuario.findByPk(String(payload.id).trim(), {
-    attributes: ['id_usuario', 'rol'],
-  });
+  const usuarioEncontrado = await usuarioModel.findById(String(payload.id).trim());
   if (!usuarioEncontrado) throw AppError.unauthorized('El usuario del token ya no existe.');
 
-  const usuario = usuarioEncontrado.get({ plain: true });
-  req.user = { id: usuario.id_usuario, rol: String(usuario.rol).trim().toLowerCase() };
+  req.user = {
+    id: usuarioEncontrado.id_usuario,
+    rol: String(usuarioEncontrado.rol).trim().toLowerCase(),
+  };
   return next();
 });
 

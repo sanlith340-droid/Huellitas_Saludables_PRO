@@ -1,143 +1,55 @@
 # Despliegue Docker de Huellitas Saludables
 
-## Requisitos
+## Requisitos y arranque
 
-Se necesita Docker Engine con Docker Compose v2 (`docker compose`). El proyecto queda dividido en tres contenedores: PostgreSQL, API Express y frontend React/Vite servido por Nginx.
-
-## Arranque rápido
-
-Desde la raíz del proyecto:
+Se necesita Docker Engine con Docker Compose v2. Desde la raíz del repositorio:
 
 ```bash
 cp .env.docker.example .env
-# Edita .env y cambia, como mínimo, DB_PASSWORD y JWT_SECRET.
+# Cambia al menos DB_PASSWORD y JWT_SECRET.
 docker compose up -d --build
 ```
 
-La aplicación queda disponible en `http://localhost:8080`. También se publican, mediante el proxy de Nginx:
-
-- `http://localhost:8080/health`: salud de la API y conexión a PostgreSQL.
-- `http://localhost:8080/api-docs`: documentación Swagger.
-- `http://localhost:8080/api/...`: endpoints del backend.
-
-Para ver el arranque y las migraciones:
-
-```bash
-docker compose logs -f backend
-```
-
-Para comprobar el estado:
+La app queda en `http://localhost:8080`; Swagger en `/api-docs` y la salud de API/PostgreSQL en `/health`.
 
 ```bash
 docker compose ps
+docker compose logs -f backend
 curl http://localhost:8080/health
 ```
 
-Para detener los servicios sin borrar los datos:
+`docker compose down` detiene servicios y conserva el volumen de PostgreSQL. `docker compose down -v` también elimina ese volumen y todos sus datos.
 
-```bash
-docker compose down
-```
+## Qué hace el backend
 
-Para borrar también la base de datos persistida y empezar desde cero —**esto elimina los datos del volumen**—:
+El servicio `backend` instala el cliente Prisma ESM, espera a PostgreSQL, ejecuta `npm run migrate` y arranca `npm start`. La migración `0_init` conserva los siete modelos, claves, checks, el índice parcial de citas activas y los triggers. La detección inicial solo registra como aplicado el baseline de una base existente si su estructura coincide; si no coincide, aborta sin alterar filas. Haz un respaldo antes de actualizar.
 
-```bash
-docker compose down -v
-```
+Los datos demo son opcionales: `DB_SEED=true` ejecuta `npm run seed` únicamente fuera de producción y cuando todavía no existen usuarios. Las contraseñas de demo son conocidas (`123456`) y nunca deben cargarse en producción.
 
-## Cómo funciona
+Nginx sirve la SPA y hace proxy de `/api`, `/health` y `/api-docs`. El frontend usa `/api` como `VITE_API_URL` en Docker.
 
-`db` usa la imagen oficial `postgres:16-alpine`. La base se guarda en el volumen Docker `postgres_data`, por lo que reiniciar o recrear los contenedores no elimina los datos.
+## Pruebas automatizadas en Docker
 
-`backend` se construye desde `back/Dockerfile`. Su entrypoint espera hasta que PostgreSQL acepte conexiones, ejecuta `npx sequelize-cli db:migrate` y finalmente inicia `node server.js`. Los seeders son opcionales: se ejecutan cuando `DB_SEED=true`. Las migraciones son idempotentes porque Sequelize registra las ya aplicadas en `SequelizeMeta`.
-
-`frontend` usa una construcción multi-stage. En la primera etapa, Node instala las dependencias y ejecuta `npm run build`; en la segunda, Nginx sirve los archivos estáticos resultantes. Nginx también hace proxy de `/api`, `/health` y `/api-docs` al servicio interno `backend`, evitando que el navegador tenga que conocer el nombre de red Docker.
-
-La variable `VITE_API_URL` se inserta durante el build de Vite. Su valor predeterminado es `/api`, que es la opción recomendada cuando frontend y backend se sirven detrás del mismo Nginx.
-
-## Tests automatizados dentro de Docker
-
-El archivo `docker-compose.test.yml` define un flujo separado para Jest. Levanta un PostgreSQL de pruebas (`db-test`) con almacenamiento temporal (`tmpfs`) y un contenedor `tests` que reutiliza la imagen del backend, pero reemplaza el entrypoint normal por `npm test -- --runInBand`.
-
-La suite actual ya contiene pruebas unitarias y de integración con Jest y Supertest. Sus hooks crean `proyectohs_test`, ejecutan las migraciones y seeders, y eliminan la base al terminar. En Docker, `DB_HOST=db-test` hace que esos hooks se conecten al servicio correcto en lugar de intentar usar `localhost`.
-
-Para ejecutar todos los tests:
+`docker-compose.test.yml` levanta PostgreSQL temporal (tmpfs) y ejecuta Vitest con `NODE_ENV=test`. El setup aplica las migraciones Prisma y la semilla sobre `DB_NAME_TEST`; al final elimina exclusivamente esa base desechable.
 
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
-```
-
-El comando devuelve código `0` si todas las pruebas pasan y un código distinto de cero si alguna falla. Después de una ejecución normal, se pueden eliminar los contenedores de prueba con:
-
-```bash
 docker compose -f docker-compose.test.yml down -v
 ```
 
-En CI/CD, el primer comando debe ser el paso de validación. Por ejemplo, un pipeline puede construir las imágenes, ejecutar ese comando y solamente después ejecutar `docker compose up -d` para desplegar. La base de pruebas está separada de la base de desarrollo/producción y se destruye al finalizar, de modo que las pruebas no modifican los datos de la aplicación.
-
-## Archivos agregados
-
-| Archivo | Función |
-|---|---|
-| `docker-compose.yml` | Orquesta PostgreSQL, backend y frontend, redes implícitas, volumen, puertos y healthchecks. |
-| `back/Dockerfile` | Construye la imagen de Node para la API. |
-| `back/docker-entrypoint.sh` | Espera la base, corre migraciones y opcionalmente seeders. |
-| `front/Dockerfile` | Compila React/Vite y crea la imagen final de Nginx. |
-| `front/nginx.conf` | Sirve la SPA, resuelve rutas de React y proxifica la API. |
-| `.env.docker.example` | Plantilla de configuración para Docker sin incluir secretos reales. |
-| `docker-compose.test.yml` | Ejecuta Jest en un contenedor contra un PostgreSQL efímero de pruebas. |
-| `.dockerignore` y variantes | Evitan enviar `.env`, `node_modules`, `dist` y logs al contexto de build. |
-
-## Notas de seguridad
-
-No se deben copiar los archivos `.env` reales a una imagen ni subirlos al repositorio. En un servidor real, crea `.env` fuera del control de versiones, usa un `JWT_SECRET` aleatorio y restringe `CORS_ORIGIN` al dominio del frontend. Para producción con HTTPS, coloca un proxy TLS externo delante de este stack o termina TLS en Nginx.
+El primer comando devuelve 0 si pasan las pruebas. El entorno de test debe usar una base cuyo nombre termine en `_test`, distinta de `DB_NAME`.
 
 ## Comandos útiles
 
 ```bash
-# Reconstruir después de modificar código
 docker compose up -d --build
-
-# Entrar a la API
+docker compose exec backend npm run migrate:status
+docker compose exec backend npm run migrate
+docker compose exec backend npm run seed
 docker compose exec backend sh
-
-# Ejecutar migraciones manualmente
-docker compose exec backend npx sequelize-cli db:migrate
-
-# Cargar datos demo
-docker compose exec backend npx sequelize-cli db:seed:all
-
-# Ver logs de todos los servicios
 docker compose logs -f
 ```
 
-## RECORDATORIO DE COMANDOS
-# Levantar todo
-docker compose up -d
+## Seguridad
 
-# Ver estado
-docker compose ps
-
-# Logs en vivo
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f db
-
-# Ejecutar comandos dentro de un contenedor
-docker compose exec backend sh
-docker compose exec backend npx sequelize-cli db:migrate
-docker compose exec backend npx sequelize-cli db:seed:all
-docker compose exec db psql -U postgres -d proyectohs
-
-# Reconstruir tras cambiar código/Dockerfile
-docker compose up -d --build backend
-docker compose up -d --build frontend
-
-# Reiniciar sin reconstruir
-docker compose restart backend
-
-# Detener todo
-docker compose down
-
-# Detener y borrar la DB ⚠️
-docker compose down -v
+No copies archivos `.env` reales a imágenes ni al repositorio. Usa secretos propios y `JWT_SECRET` aleatorio; restringe `CORS_ORIGIN` al origen del frontend. En producción, sirve por HTTPS y planifica respaldos de PostgreSQL.

@@ -21,9 +21,14 @@ vi.mock('../../../app/utils/jwt.js', () => ({
   generarToken: vi.fn(() => 'token-de-prueba'),
 }));
 
+vi.mock('../../../app/utils/logger.js', () => ({
+  default: { error: vi.fn() },
+}));
+
 import authModel from '../../../app/models/auth.model.js';
 import { hashContrasena, verificarContrasena, esHashScrypt } from '../../../app/utils/password.js';
 import authService from '../../../app/services/auth.service.js';
+import logger from '../../../app/utils/logger.js';
 
 const HASH = `scrypt$16384$8$1$${'A'.repeat(24)}$${'B'.repeat(88)}`;
 
@@ -91,7 +96,6 @@ describe('services/auth.service - seguridad de contraseñas', () => {
     });
 
     it('permite el login aunque falle la actualización del hash', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       authModel.findByEmail.mockResolvedValue({ ...USUARIO, contrasena: 'antigua' });
       verificarContrasena.mockResolvedValue(true);
       esHashScrypt.mockReturnValue(false);
@@ -101,14 +105,14 @@ describe('services/auth.service - seguridad de contraseñas', () => {
         authService.login({ correo: USUARIO.correo, contrasena: 'antigua' })
       ).resolves.toBeDefined();
 
-      expect(errorSpy).toHaveBeenCalledWith(
-        '[auth.service] No se pudo migrar la contraseña a hash'
+      expect(logger.error).toHaveBeenCalledWith(
+        { event: 'auth.password_hash_migration_failed' },
+        'No se pudo migrar el hash de contraseña'
       );
-      expect(errorSpy.mock.calls.flat().join(' ')).not.toContain('antigua');
+      expect(JSON.stringify(logger.error.mock.calls)).not.toContain('antigua');
     });
 
     it('no informa una migración exitosa si updatePassword no actualiza', async () => {
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       authModel.findByEmail.mockResolvedValue({ ...USUARIO, contrasena: 'antigua' });
       verificarContrasena.mockResolvedValue(true);
       esHashScrypt.mockReturnValue(false);
@@ -118,8 +122,9 @@ describe('services/auth.service - seguridad de contraseñas', () => {
         authService.login({ correo: USUARIO.correo, contrasena: 'antigua' })
       ).resolves.toBeDefined();
 
-      expect(errorSpy).toHaveBeenCalledWith(
-        '[auth.service] No se pudo migrar la contraseña a hash'
+      expect(logger.error).toHaveBeenCalledWith(
+        { event: 'auth.password_hash_migration_failed' },
+        'No se pudo migrar el hash de contraseña'
       );
     });
   });

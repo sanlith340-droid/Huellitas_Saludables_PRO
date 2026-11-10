@@ -4,14 +4,16 @@
 **Base de comparación:** presentación *Planeación Técnica: De la Visión a la Ejecución Escalar* (5 dimensiones, 5 fases, 4 entregables y matriz de trazabilidad).
 **Rama revisada:** `sistema-filtraciones` (último commit: `768dfb3`).
 
+> **Nota de vigencia:** esta revisión es histórica y sus hallazgos de contraseñas, CORS, registros y errores HTTP no describen la entrega actual. Para el estado vigente, consulta el README raíz y `back/Readme.md`.
+
 ---
 
 ## 1. Resumen ejecutivo
 
-El proyecto está **bien construido en lo técnico** (capas claras, migraciones con restricciones reales, autorización por rol, 112 casos de prueba, Docker con *healthchecks*) pero **mal comunicado y con deuda de seguridad importante**.
+En la revisión histórica, el proyecto tenía capas claras, migraciones, autorización por rol y 112 casos de prueba, además de deuda de seguridad importante. La entrega actual evolucionó desde esa base.
 
 - **El README no mostraba lo que el PDF considera esencial:** tecnologías, decisiones, modelo de datos, estrategia de pruebas, infraestructura y pendientes. La información existía, pero dispersa en 8 archivos, con enlaces rotos y varios documentos obsoletos. El nuevo `Readme.md` la consolida siguiendo las 5 dimensiones del PDF.
-- **Hay 3 problemas que bloquean cualquier despliegue real:** contraseñas en texto plano, secretos expuestos en un archivo versionado y CORS abierto.
+- En la fecha de la revisión se señalaron contraseñas en texto plano, secretos de configuración y CORS abierto. El hashing de contraseñas y la lista CORS se corrigieron después; la gestión/rotación de secretos sigue siendo un pendiente.
 - **Falta el entregable "Pipeline de CI/CD configurado"** del PDF: no hay ningún flujo de integración continua.
 
 ---
@@ -24,7 +26,7 @@ El proyecto está **bien construido en lo técnico** (capas claras, migraciones 
 | Integridad de datos | Migraciones con `FOREIGN KEY ... RESTRICT`, `UNIQUE` y `CHECK`; *trigger* que marca la franja como `ocupado`; una cita por franja y una historia por cita garantizadas en BD |
 | Autorización | Rol **re-leído desde la base de datos** en cada petición, no confiado al token |
 | Validación | Esquemas Joi por dominio con middleware común |
-| Pruebas | 8 archivos / 112 casos; base aislada; modo serial; opción Docker |
+| Pruebas | En la revisión original: 8 archivos / 112 casos; actualmente la suite Vitest tiene 16 archivos / 233 casos y una base de pruebas aislada |
 | Docker | Build multi-etapa del frontend, `depends_on: service_healthy`, entrypoint que espera la BD y migra |
 | Documentación de decisiones | Registro DT-001…DT-012 honesto: distingue lo observado de lo inferido y declara sus propios riesgos |
 | Dependencias | `npm audit --omit=dev` → **0 vulnerabilidades** en `back/` y `front/` |
@@ -38,9 +40,9 @@ El proyecto está **bien construido en lo técnico** (capas claras, migraciones 
 
 | # | Hallazgo | Evidencia | Acción recomendada |
 |---|---|---|---|
-| C1 | **Contraseñas en texto plano.** Se comparan con `===` y se guardan tal cual; `bcrypt` ni siquiera está en las dependencias. Los *seeders* usan una contraseña trivial compartida por todas las cuentas. | `back/app/services/auth.service.js` (líneas con `NOTA: En producción usar bcrypt`) · `back/seeders/20240101000000-demo-usuarios.js` | Agregar `bcrypt`, hashear en `registro` y `registroAdmin`, comparar con `bcrypt.compare`, hashear los seeders y ajustar las pruebas |
-| C2 | **Secretos con aspecto de reales en un archivo versionado.** `back/.env.example` tiene un `DB_PASSWORD` de 37 caracteres y un `JWT_SECRET` de 115 caracteres (no son placeholders). Fue incorporado al historial en el commit `b97a8dd` y existen ramas remotas. Además el archivo está **corrupto**: la línea del `JWT_SECRET` termina con un fragmento de texto suelto (`…PostgreSQL local.`) y `CORS_ORIGIN` queda fuera de lugar. *(No reproduzco los valores aquí.)* | `back/.env.example` | 1) Considerar ambos valores comprometidos y **rotarlos**. 2) Reemplazarlos por placeholders. 3) Si el repositorio es o será público, purgar el historial (`git filter-repo`) y forzar la actualización de todas las ramas |
-| C3 | **CORS abierto con credenciales.** El callback acepta cualquier origen y `credentials: true`. `CORS_ORIGIN` se define en `.env` y Compose pero **nunca se lee**. | `back/app/app.js` | Leer `CORS_ORIGIN` (lista separada por comas) y rechazar el resto |
+| C1 | **Resuelto en la entrega actual.** El backend almacena contraseñas con scrypt y verifica el hash; la semilla Prisma corresponde a datos de demostración y no debe usarse en producción. | `back/app/utils/password.js` · `back/prisma/seed.js` | Mantener hash y credenciales demo solo en entornos no productivos |
+| C2 | **Valores antiguos en la historia del repositorio.** Los archivos de ejemplo actuales fueron reemplazados por placeholders, pero valores previos pudieron estar versionados. | Historial Git del proyecto | Rotar cualquier secreto que haya sido real y, si el repositorio es público, evaluar limpieza coordinada del historial |
+| C3 | **Resuelto en la entrega actual.** CORS lee `CORS_ORIGIN` como lista de orígenes permitidos y rechaza los no incluidos. | `back/app/app.js` | Configurar la lista exacta en cada entorno de despliegue |
 | C4 | **`JWT_SECRET` con *fallback* en el código** (`'huellitas_saludables_dev_secret_change_me'`) y `change-this-secret-in-production` en Compose. Si falta la variable, el sistema arranca firmando con un secreto público. | `back/app/utils/jwt.js` · `docker-compose.yml` | Si `NODE_ENV=production` y falta el secreto (o es el de ejemplo), **abortar el arranque** |
 
 ### 🟠 Altos
@@ -49,7 +51,7 @@ El proyecto está **bien construido en lo técnico** (capas claras, migraciones 
 |---|---|---|---|
 | A1 | **No existe CI/CD.** El PDF lo lista como entregable explícito ("Pipeline de CI/CD configurado"). No hay `.github/` ni equivalente. | raíz del repo | GitHub Actions: `install → lint → type-check → test (con servicio PostgreSQL) → build` en cada PR |
 | A2 | **`npm run lint` falla.** El script llama a `eslint .` pero ESLint no está en `devDependencies` ni hay configuración. | `front/package.json` | Instalar ESLint + `typescript-eslint` + reglas de React, o quitar el script |
-| A3 | **Logs excesivos con `console.log`** (≈40 en el backend), incluyendo el payload del token y el resultado de consultas de usuario en cada petición. Los errores `500` devuelven `error.message` al cliente. | `back/app/middlewares/identifyUser.js` y servicios | Logger con niveles (p. ej. `pino`), silenciar en producción y devolver mensaje genérico en `500` |
+| A3 | **Resuelto en la entrega actual.** Pino aplica niveles por entorno y redacción; el errorHandler central devuelve mensajes genéricos para 500 y no registra datos dinámicos en producción. | `back/app/utils/logger.js` · `back/app/middlewares/errorHandler.js` | Mantener pruebas de regresión para logs y respuestas 500 |
 | A4 | **Sin protección contra fuerza bruta ni cabeceras de seguridad.** | `back/app/app.js` | `helmet` + `express-rate-limit` sobre `/api/auth/login` y `/registro` |
 | A5 | **Esquema real ≠ borrador del modelo ER.** Ver sección 5. | — | Usar el ER del nuevo README como referencia única |
 
@@ -69,7 +71,7 @@ El proyecto está **bien construido en lo técnico** (capas claras, migraciones 
 |---|---|---|
 | H1 | **Enlaces rotos** en el README raíz: apuntan a `docs/DESARROLLO.md`, `docs/API.md` y `docs/ARQUITECTURA.md`, pero los archivos están en `docs/backend/`. Lo mismo en `Huellitas Saludables Backend.md` e `Implemetar_ORM.md`. | Corregidos en el README nuevo; actualizar esos dos archivos o eliminarlos |
 | H2 | **Secuencia de Docker incorrecta en el README antiguo:** ejecutaba `docker compose exec … db:seed:undo:all` y `db:migrate:undo:all` *antes* de `up`, cuando aún no hay contenedores; y repite migrar/sembrar a mano aunque el *entrypoint* ya migra. Había además un bloque de código mal cerrado. | Corregido: `cp` → editar `.env` → `up -d --build` (con `DB_SEED=true` si quieres datos demo) |
-| H3 | **`back/Readme.md` obsoleto:** describe "SQL puro con `pg`, sin ORM", autenticación "por headers", estructura `src/`, un nombre de repositorio de ejemplo, y mezcla una chuleta de comandos Git. | Reemplazar por un README corto que apunte al raíz, o eliminarlo |
+| H3 | **Resuelto.** `back/Readme.md` documenta Prisma 7 ESM, migraciones, semilla, pruebas y configuración actual. | `back/Readme.md` | Mantener la guía alineada con `package.json` y `prisma/schema.prisma` |
 | H4 | **`front/readme.md`** son dos líneas de `npm install …`. | Reemplazar por un README del frontend (scripts, variables, estructura) |
 | H5 | **`package.json` en la raíz duplicado y desactualizado:** se llama `huellitas-saludables-front`, sin TypeScript ni `type-check`, y con otras versiones. Confunde herramientas y a quien clona. | Eliminarlo (junto con su `package-lock.json`) o convertirlo en un *workspace* real |
 | H6 | **Tres configuraciones de Vite** en `front/`: `vite.config.js`, `vite.config.ts` y `vite.config.d.ts`. | Dejar solo `vite.config.ts` |
@@ -77,7 +79,7 @@ El proyecto está **bien construido en lo técnico** (capas claras, migraciones 
 | H8 | **`.env.example` y `.env.docker.example` son idénticos** en la raíz. | Dejar uno y documentarlo |
 | H9 | **`ARQUITECTURA.md` menciona `database/data_jesus/`**, carpeta que no existe; los scripts viven en `database/`. | Corregir la ruta |
 | H10 | **Nombre del registro de decisiones:** `Decisiones Técnicas — Huellitas Saludables (Backend).md` (acentos, raya y paréntesis) se corrompe al comprimir y complica los enlaces. | Renombrar a `docs/backend/DECISIONES_TECNICAS.md` (el README nuevo ya enlaza con ese nombre) |
-| H11 | **`DT-006` afirma que el servicio "registra el valor recibido sin hash"**. En el código actual los *logs* registran el correo, no la contraseña. El riesgo real (texto plano en BD) se mantiene. | Ajustar el texto |
+| H11 | **Resuelto.** El documento de decisiones actualizado describe el hash scrypt y los logs de producción sin datos personales. | `docs/backend/Decisiones Técnicas — Huellitas Saludables (Backend).md` | Mantener la documentación sincronizada con el código |
 | H12 | `Implemetar_ORM.md` (errata) y `Huellitas Saludables Backend.md` son *stubs* de redirección. | Eliminar o fusionar en `docs/` |
 | H13 | `database/*.sql` es el esquema histórico (coincide con las migraciones actuales). Puede confundir sobre cuál es la fuente de verdad. | Mover a `database/legacy/` con una nota, o eliminarlo |
 

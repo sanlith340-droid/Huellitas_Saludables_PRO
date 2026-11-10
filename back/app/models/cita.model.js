@@ -1,75 +1,105 @@
 // app/models/cita.model.js
-/**
- * models/cita.model.js
- * Consultas de citas usando Sequelize (ORM).
- *
- * NOTA IMPORTANTE sobre el trigger de la BD original
- * (trg_actualizar_disponibilidad_cita): con SQL puro, ese trigger
- * era el que ponía la disponibilidad en estado 'ocupado' al crear
- * una cita. Con el ORM ese trigger se recrea también en la migración
- * (ver migrations/*-create-cita.js), pero además se replica aquí de
- * forma explícita dentro de la transacción, para que la lógica de
- * negocio no dependa silenciosamente de algo que vive solo en la BD.
- */
+import { prisma } from '../config/prisma.js';
+import { esFechaHoraPasada } from '../utils/fechaHora.js';
 
-import sequelizePkg from 'sequelize';
-const { Op } = sequelizePkg;
-import { sequelize, Cita, Mascota, Disponibilidad, Usuario, UsuarioMascota } from './index.js';
-
-const INCLUDE_BASE = [
-  {
-    model: Mascota,
-    as: 'Mascota',
-    attributes: ['nombre', 'especie', 'genero'],
-    // Dueño(s) de la mascota, para que el especialista sepa a quién atiende
-    include: [
-      {
-        model: Usuario,
-        attributes: ['nombre', 'apellidos', 'telefono'],
-        through: { attributes: [] },
+const INCLUDE_CITA = {
+  mascota: {
+    select: {
+      nombre: true,
+      especie: true,
+      genero: true,
+      propietarios: {
+        orderBy: { id_usuario: 'asc' },
+        take: 1,
+        select: {
+          usuario: { select: { nombre: true, apellidos: true, telefono: true } },
+        },
       },
-    ],
+    },
   },
-  {
-    model: Disponibilidad,
-    attributes: ['fecha', 'hora', 'estado', 'id_usuario'],
-    include: [{ model: Usuario, as: 'Especialista', attributes: ['nombre', 'apellidos', 'especializacion'] }],
+  disponibilidad: {
+    select: {
+      fecha: true,
+      hora: true,
+      estado: true,
+      id_usuario: true,
+      especialista: { select: { nombre: true, apellidos: true, especializacion: true } },
+    },
   },
-  { model: Usuario, as: 'Recepcionista', attributes: ['nombre', 'apellidos'] },
-];
+  recepcionista: { select: { nombre: true, apellidos: true } },
+  cancelacion: true,
+};
 
-function aplanar(c) {
-  const p = c.get({ plain: true });
-  const disponibilidad = p.Disponibilidad || {};
-  const especialista = disponibilidad.Especialista || {};
+function comoIsoFecha(value) {
+  if (value == null) return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value).slice(0, 10) : date.toISOString().slice(0, 10);
+}
 
-  const propietarios = (p.Mascota && p.Mascota.Usuarios) || [];
-  const propietario = propietarios[0] || {};
+function comoHora(value) {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return [value.getUTCHours(), value.getUTCMinutes(), value.getUTCSeconds()]
+      .map((part) => String(part).padStart(2, '0'))
+      .join(':');
+  }
+  const match = String(value).match(/^(\d{2}:\d{2}:\d{2})/);
+  return match ? match[1] : String(value);
+}
+
+function aplanar(cita) {
+  const disponibilidad = cita.disponibilidad ?? {};
+  const especialista = disponibilidad.especialista ?? {};
+  const mascota = cita.mascota ?? {};
+  const propietario = mascota.propietarios?.[0]?.usuario ?? {};
+  const recepcionista = cita.recepcionista ?? {};
 
   return {
-    id_cita: p.id_cita,
-    id_recepcionista: p.id_recepcionista,
-    id_mascota: p.id_mascota,
-    id_disponibilidad: p.id_disponibilidad,
-    motivo: p.motivo,
-    estado: p.estado,
-    mascota_nombre: p.Mascota ? p.Mascota.nombre : null,
-    mascota_especie: p.Mascota ? p.Mascota.especie : null,
-    mascota_genero: p.Mascota ? p.Mascota.genero : null,
+    id_cita: cita.id_cita,
+    id_recepcionista: cita.id_recepcionista,
+    id_mascota: cita.id_mascota,
+    id_disponibilidad: cita.id_disponibilidad,
+    motivo: cita.motivo,
+    estado: cita.estado,
+    mascota_nombre: mascota.nombre ?? null,
+    mascota_especie: mascota.especie ?? null,
+    mascota_genero: mascota.genero ?? null,
     propietario_nombre: propietario.nombre
       ? `${propietario.nombre} ${propietario.apellidos || ''}`.trim()
       : null,
     propietario_telefono: propietario.telefono ?? null,
-    fecha_cita: disponibilidad.fecha ?? null,
-    hora_cita: disponibilidad.hora ?? null,
+    fecha_cita: comoIsoFecha(disponibilidad.fecha),
+    hora_cita: comoHora(disponibilidad.hora),
     disponibilidad_estado: disponibilidad.estado ?? null,
     id_especialista: disponibilidad.id_usuario ?? null,
     especialista_nombre: especialista.nombre ?? null,
     especialista_apellidos: especialista.apellidos ?? null,
     especializacion: especialista.especializacion ?? null,
-    recepcionista_nombre: p.Recepcionista ? p.Recepcionista.nombre : null,
-    recepcionista_apellidos: p.Recepcionista ? p.Recepcionista.apellidos : null,
+    recepcionista_nombre: recepcionista.nombre ?? null,
+    recepcionista_apellidos: recepcionista.apellidos ?? null,
+    cancelacion: cita.cancelacion
+      ? {
+          id_usuario_actor: cita.cancelacion.id_usuario_actor,
+          rol_actor: cita.cancelacion.rol_actor,
+          origen: cita.cancelacion.origen,
+          motivo: cita.cancelacion.motivo,
+          cancelada_en: cita.cancelacion.cancelada_en?.toISOString?.() ?? null,
+        }
+      : null,
   };
+}
+
+function errorDominio(code, message = code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
+function fechaPrisma(value) {
+  if (value == null) return value;
+  if (value instanceof Date) return value;
+  return new Date(`${String(value).slice(0, 10)}T00:00:00.000Z`);
 }
 
 async function findAll({
@@ -81,37 +111,39 @@ async function findAll({
   id_especialista,
 } = {}) {
   const where = {};
-  if (id_mascota) where.id_mascota = id_mascota;
+  if (id_mascota) where.id_mascota = Number(id_mascota);
   if (estado) where.estado = estado;
 
-  const includeDisponibilidad = { ...INCLUDE_BASE[1] };
-  if (fecha || fecha_desde || fecha_hasta || id_especialista) {
-    includeDisponibilidad.where = {};
-    if (fecha) {
-      includeDisponibilidad.where.fecha = fecha;
-    } else if (fecha_desde || fecha_hasta) {
-      includeDisponibilidad.where.fecha = {};
-      if (fecha_desde) includeDisponibilidad.where.fecha[Op.gte] = fecha_desde;
-      if (fecha_hasta) includeDisponibilidad.where.fecha[Op.lte] = fecha_hasta;
-    }
-    if (id_especialista) includeDisponibilidad.where.id_usuario = id_especialista;
-    includeDisponibilidad.required = true;
+  const filtroDisponibilidad = {};
+  if (fecha) {
+    filtroDisponibilidad.fecha = fechaPrisma(fecha);
+  } else if (fecha_desde || fecha_hasta) {
+    filtroDisponibilidad.fecha = {};
+    if (fecha_desde) filtroDisponibilidad.fecha.gte = fechaPrisma(fecha_desde);
+    if (fecha_hasta) filtroDisponibilidad.fecha.lte = fechaPrisma(fecha_hasta);
+  }
+  if (id_especialista) filtroDisponibilidad.id_usuario = id_especialista;
+  if (Object.keys(filtroDisponibilidad).length) {
+    where.disponibilidad = { is: filtroDisponibilidad };
   }
 
-  const citas = await Cita.findAll({
+  const citas = await prisma.cita.findMany({
     where,
-    include: [INCLUDE_BASE[0], includeDisponibilidad, INCLUDE_BASE[2]],
-    order: [
-      [Disponibilidad, 'fecha', 'DESC'],
-      [Disponibilidad, 'hora', 'DESC'],
+    include: INCLUDE_CITA,
+    orderBy: [
+      { disponibilidad: { fecha: 'desc' } },
+      { disponibilidad: { hora: 'desc' } },
     ],
   });
-
   return citas.map(aplanar);
 }
 
 async function findById(id_cita, { transaction } = {}) {
-  const cita = await Cita.findByPk(id_cita, { include: INCLUDE_BASE, transaction });
+  const db = transaction ?? prisma;
+  const cita = await db.cita.findUnique({
+    where: { id_cita: Number(id_cita) },
+    include: INCLUDE_CITA,
+  });
   return cita ? aplanar(cita) : null;
 }
 
@@ -120,153 +152,314 @@ async function findByEspecialista(id_especialista, filtros = {}) {
 }
 
 async function obtenerPrimerRecepcionista() {
-  const recepcionista = await Usuario.findOne({
+  const recepcionista = await prisma.usuario.findFirst({
     where: { rol: 'recepcionista' },
-    order: [['id_usuario', 'ASC']],
+    orderBy: { id_usuario: 'asc' },
+    select: { id_usuario: true },
   });
-  return recepcionista ? recepcionista.id_usuario : null;
+  return recepcionista?.id_usuario ?? null;
 }
 
-async function crearConTransaccion({ id_mascota, id_disponibilidad, id_recepcionista, motivo }) {
-  return sequelize.transaction(async (t) => {
-    const disponibilidad = await Disponibilidad.findByPk(id_disponibilidad, {
-      transaction: t,
-      lock: t.LOCK.UPDATE,
+async function bloquearDisponibilidad(tx, id_disponibilidad, ahora = null) {
+  const rows = await tx.$queryRaw`
+    SELECT id_disponibilidad, estado,
+      (fecha + hora) > (
+        COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+      ) AS futura
+    FROM disponibilidad
+    WHERE id_disponibilidad = ${Number(id_disponibilidad)}
+    FOR UPDATE
+  `;
+  return rows[0] ?? null;
+}
+
+async function bloquearDisponibilidades(tx, ids, ahora = null) {
+  const ordenados = [...new Set(ids.map(Number))].sort((a, b) => a - b);
+  if (ordenados.length < 2) {
+    const fila = await bloquearDisponibilidad(tx, ordenados[0], ahora);
+    return fila ? [fila] : [];
+  }
+  return tx.$queryRaw`
+    SELECT id_disponibilidad, estado,
+      (fecha + hora) > (
+        COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+      ) AS futura
+    FROM disponibilidad
+    WHERE id_disponibilidad = ${ordenados[0]}
+       OR id_disponibilidad = ${ordenados[1]}
+    ORDER BY id_disponibilidad
+    FOR UPDATE
+  `;
+}
+
+async function bloquearCita(tx, id_cita) {
+  const rows = await tx.$queryRaw`
+    SELECT id_cita, id_disponibilidad, estado
+    FROM cita
+    WHERE id_cita = ${Number(id_cita)}
+    FOR UPDATE
+  `;
+  return rows[0] ?? null;
+}
+
+function normalizarError(error, contexto) {
+  if (error?.code === 'P2025') {
+    return errorDominio(contexto.cita ? 'CITA_NO_EXISTE' : 'REFERENCIA_NO_EXISTE', 'No se encontró el registro requerido');
+  }
+  if (error?.code === 'P2003') {
+    if (contexto.disponibilidadNueva) {
+      return errorDominio('NUEVA_DISPONIBILIDAD_NO_EXISTE', 'La nueva disponibilidad ya no existe');
+    }
+    if (contexto.disponibilidad) {
+      return errorDominio('DISPONIBILIDAD_NO_EXISTE', 'La disponibilidad ya no existe');
+    }
+    return errorDominio('REFERENCIA_NO_EXISTE', 'Una referencia requerida ya no existe');
+  }
+  if (error?.code === 'P2002') {
+    if (contexto.disponibilidadNueva) {
+      return errorDominio('NUEVA_DISPONIBILIDAD_NO_LIBRE', 'La nueva disponibilidad ya está reservada');
+    }
+    if (contexto.disponibilidad) {
+      return errorDominio('DISPONIBILIDAD_NO_LIBRE', 'La disponibilidad ya está reservada');
+    }
+  }
+  return error;
+}
+
+async function crearConTransaccion({ id_mascota, id_disponibilidad, id_recepcionista, motivo, ahora = null }) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const disponibilidad = await bloquearDisponibilidad(tx, id_disponibilidad, ahora);
+      if (!disponibilidad) throw errorDominio('DISPONIBILIDAD_NO_EXISTE');
+      if (disponibilidad.estado !== 'disponible') throw errorDominio('DISPONIBILIDAD_NO_LIBRE');
+      if (!disponibilidad.futura) throw errorDominio('DISPONIBILIDAD_PASADA');
+
+      const nuevaCita = await tx.cita.create({
+        data: {
+          id_recepcionista,
+          id_mascota: Number(id_mascota),
+          id_disponibilidad: Number(id_disponibilidad),
+          motivo,
+          estado: 'pendiente',
+        },
+        select: { id_cita: true },
+      });
+      // El trigger de la base de datos reserva la disponibilidad al insertar Cita.
+      return findById(nuevaCita.id_cita, { transaction: tx });
     });
-
-    if (!disponibilidad) {
-      const error = new Error('DISPONIBILIDAD_NO_EXISTE');
-      error.code = 'DISPONIBILIDAD_NO_EXISTE';
-      throw error;
-    }
-    if (disponibilidad.estado !== 'disponible') {
-      const error = new Error('DISPONIBILIDAD_NO_LIBRE');
-      error.code = 'DISPONIBILIDAD_NO_LIBRE';
-      throw error;
-    }
-
-    const nuevaCita = await Cita.create(
-      { id_recepcionista, id_mascota, id_disponibilidad, motivo, estado: 'pendiente' },
-      { transaction: t }
-    );
-
-    // Replica el trigger original: al crear la cita, la disponibilidad
-    // usada queda 'ocupado'.
-    disponibilidad.estado = 'ocupado';
-    await disponibilidad.save({ transaction: t });
-
-    return findById(nuevaCita.id_cita, { transaction: t });
-  });
+  } catch (error) {
+    throw normalizarError(error, { disponibilidad: true });
+  }
 }
 
-async function cancelarConTransaccion(id_cita) {
-  return sequelize.transaction(async (t) => {
-    const cita = await Cita.findByPk(id_cita, { transaction: t, lock: t.LOCK.UPDATE });
-    if (!cita) {
-      const error = new Error('CITA_NO_EXISTE');
-      error.code = 'CITA_NO_EXISTE';
-      throw error;
-    }
-
-    cita.estado = 'cancelado';
-    await cita.save({ transaction: t });
-
-    await Disponibilidad.update(
-      { estado: 'disponible' },
-      { where: { id_disponibilidad: cita.id_disponibilidad }, transaction: t }
-    );
-
-    return findById(id_cita, { transaction: t });
-  });
+async function cancelarConTransaccion(id_cita, auditoria = {}) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const filaCita = await bloquearCita(tx, id_cita);
+      if (!filaCita) throw errorDominio('CITA_NO_EXISTE');
+      await bloquearDisponibilidad(tx, filaCita.id_disponibilidad);
+      if (filaCita.estado === 'cancelado') throw errorDominio('CITA_YA_CANCELADA');
+      const horario = await tx.disponibilidad.findUnique({
+        where: { id_disponibilidad: filaCita.id_disponibilidad },
+        select: { fecha: true, hora: true },
+      });
+      await tx.cita.update({
+        where: { id_cita: Number(id_cita) },
+        data: { estado: 'cancelado' },
+      });
+      await tx.citaCancelacion.create({
+        data: {
+          id_cita: Number(id_cita),
+          id_usuario_actor: auditoria.idUsuarioActor ?? null,
+          rol_actor: auditoria.rolActor ?? 'sistema',
+          origen: auditoria.origen ?? 'manual',
+          motivo: auditoria.motivo ?? 'Cancelada manualmente.',
+        },
+      });
+      if (horario && !esFechaHoraPasada(horario.fecha, horario.hora)) {
+        await tx.disponibilidad.update({
+          where: { id_disponibilidad: filaCita.id_disponibilidad },
+          data: { estado: 'disponible' },
+        });
+      }
+      return findById(id_cita, { transaction: tx });
+    });
+  } catch (error) {
+    throw normalizarError(error, { cita: true });
+  }
 }
 
 /**
  * Decisión del especialista: marcar la cita como 'atendido' o 'cancelado'.
- *  - atendido : el horario permanece 'ocupado' (la consulta ya ocurrió).
- *  - cancelado: si liberarHorario es true, el horario vuelve a 'disponible';
- *               si es false, queda 'ocupado' (el especialista no lo ofrece de nuevo).
+ * Si se cancela y liberarHorario es true, el horario vuelve a estar disponible.
  */
-async function cambiarEstadoConTransaccion(id_cita, estado, { liberarHorario = true } = {}) {
-  return sequelize.transaction(async (t) => {
-    const cita = await Cita.findByPk(id_cita, { transaction: t, lock: t.LOCK.UPDATE });
-    if (!cita) {
-      const error = new Error('CITA_NO_EXISTE');
-      error.code = 'CITA_NO_EXISTE';
-      throw error;
-    }
-
-    cita.estado = estado;
-    await cita.save({ transaction: t });
-
-    if (estado === 'cancelado' && liberarHorario) {
-      await Disponibilidad.update(
-        { estado: 'disponible' },
-        { where: { id_disponibilidad: cita.id_disponibilidad }, transaction: t }
-      );
-    }
-
-    return findById(id_cita, { transaction: t });
-  });
+async function cambiarEstadoConTransaccion(id_cita, estado, {
+  liberarHorario = true,
+  auditoria = {},
+} = {}) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const filaCita = await bloquearCita(tx, id_cita);
+      if (!filaCita) throw errorDominio('CITA_NO_EXISTE');
+      if (estado === 'cancelado' && filaCita.estado === 'cancelado') {
+        throw errorDominio('CITA_YA_CANCELADA');
+      }
+      let horario = null;
+      if (estado === 'cancelado' && liberarHorario) {
+        await bloquearDisponibilidad(tx, filaCita.id_disponibilidad);
+        horario = await tx.disponibilidad.findUnique({
+          where: { id_disponibilidad: filaCita.id_disponibilidad },
+          select: { fecha: true, hora: true },
+        });
+      }
+      await tx.cita.update({ where: { id_cita: Number(id_cita) }, data: { estado } });
+      if (estado === 'cancelado') {
+        await tx.citaCancelacion.create({
+          data: {
+            id_cita: Number(id_cita),
+            id_usuario_actor: auditoria.idUsuarioActor ?? null,
+            rol_actor: auditoria.rolActor ?? 'sistema',
+            origen: auditoria.origen ?? 'manual',
+            motivo: auditoria.motivo ?? 'Cancelada manualmente.',
+          },
+        });
+      }
+      if (estado === 'cancelado' && liberarHorario && horario
+        && !esFechaHoraPasada(horario.fecha, horario.hora)) {
+        await tx.disponibilidad.update({
+          where: { id_disponibilidad: filaCita.id_disponibilidad },
+          data: { estado: 'disponible' },
+        });
+      }
+      return findById(id_cita, { transaction: tx });
+    });
+  } catch (error) {
+    throw normalizarError(error, { cita: true });
+  }
 }
 
-async function editarConTransaccion(id_cita, cambios) {
-  return sequelize.transaction(async (t) => {
-    const cita = await Cita.findByPk(id_cita, { transaction: t, lock: t.LOCK.UPDATE });
-    if (!cita) {
-      const error = new Error('CITA_NO_EXISTE');
-      error.code = 'CITA_NO_EXISTE';
-      throw error;
-    }
+/** Cancela en bloques citas pendientes/confirmadas cuyo horario local ya venció. */
+async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100 } = {}) {
+  return prisma.$transaction(async (tx) => {
+    const vencidas = await tx.$queryRaw`
+      SELECT c.id_cita
+      FROM cita c
+      JOIN disponibilidad d ON d.id_disponibilidad = c.id_disponibilidad
+      WHERE c.estado IN ('pendiente', 'confirmado')
+        AND (d.fecha + d.hora) <= (
+          COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+        )
+      ORDER BY d.fecha ASC, d.hora ASC, c.id_cita ASC
+      LIMIT ${limite}
+      FOR UPDATE OF c SKIP LOCKED
+    `;
 
-    if (cambios.id_disponibilidad && cambios.id_disponibilidad !== cita.id_disponibilidad) {
-      const nueva = await Disponibilidad.findByPk(cambios.id_disponibilidad, {
-        transaction: t,
-        lock: t.LOCK.UPDATE,
+    for (const { id_cita } of vencidas) {
+      await tx.cita.update({
+        where: { id_cita },
+        data: { estado: 'cancelado' },
       });
-
-      if (!nueva) {
-        throw new Error('NUEVA_DISPONIBILIDAD_NO_EXISTE');
-      }
-      if (nueva.estado !== 'disponible') {
-        throw new Error('NUEVA_DISPONIBILIDAD_NO_LIBRE');
-      }
-
-      await Disponibilidad.update(
-        { estado: 'disponible' },
-        { where: { id_disponibilidad: cita.id_disponibilidad }, transaction: t }
-      );
-      nueva.estado = 'ocupado';
-      await nueva.save({ transaction: t });
+      await tx.citaCancelacion.create({
+        data: {
+          id_cita,
+          id_usuario_actor: null,
+          rol_actor: 'sistema',
+          origen: 'automatico',
+          motivo: 'Cancelada automáticamente porque la fecha y hora de la cita ya pasaron.',
+        },
+      });
     }
 
-    const camposPermitidos = ['id_mascota', 'id_disponibilidad', 'motivo'];
-    let huboCambios = false;
-    for (const campo of camposPermitidos) {
-      if (cambios[campo] !== undefined) {
-        cita[campo] = cambios[campo];
-        huboCambios = true;
-      }
-    }
-    if (huboCambios) {
-      await cita.save({ transaction: t });
-    }
-
-    return findById(id_cita, { transaction: t });
-  });
+    return vencidas.length;
+  }, { timeout: 30000 });
 }
 
-// ============================================================
-// Verifica si una cita pertenece (a través de su mascota) a un usuario
-// ============================================================
+async function editarConTransaccion(id_cita, cambios, { ahora = null } = {}) {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const filaCita = await bloquearCita(tx, id_cita);
+      if (!filaCita) throw errorDominio('CITA_NO_EXISTE');
+
+      const moverHorario = cambios.id_disponibilidad !== undefined
+        && Number(cambios.id_disponibilidad) !== Number(filaCita.id_disponibilidad);
+      if (moverHorario) {
+        const horarios = await bloquearDisponibilidades(tx, [
+          filaCita.id_disponibilidad,
+          cambios.id_disponibilidad,
+        ], ahora);
+        const nueva = horarios.find((horario) =>
+          Number(horario.id_disponibilidad) === Number(cambios.id_disponibilidad));
+        if (!nueva) throw errorDominio('NUEVA_DISPONIBILIDAD_NO_EXISTE');
+        if (nueva.estado !== 'disponible') throw errorDominio('NUEVA_DISPONIBILIDAD_NO_LIBRE');
+        if (!nueva.futura) throw errorDominio('NUEVA_DISPONIBILIDAD_PASADA');
+
+        // Se actualiza la cita y los dos horarios en una sola transacción.
+        await tx.cita.update({
+          where: { id_cita: Number(id_cita) },
+          data: { id_disponibilidad: Number(cambios.id_disponibilidad) },
+        });
+        await tx.disponibilidad.update({
+          where: { id_disponibilidad: filaCita.id_disponibilidad },
+          data: { estado: 'disponible' },
+        });
+        await tx.disponibilidad.update({
+          where: { id_disponibilidad: Number(cambios.id_disponibilidad) },
+          data: { estado: 'ocupado' },
+        });
+      }
+
+      const data = {};
+      for (const campo of ['id_mascota', 'motivo']) {
+        if (cambios[campo] !== undefined) data[campo] = cambios[campo];
+      }
+      if (!moverHorario && cambios.id_disponibilidad !== undefined) {
+        data.id_disponibilidad = Number(cambios.id_disponibilidad);
+      }
+      if (Object.keys(data).length) {
+        await tx.cita.update({ where: { id_cita: Number(id_cita) }, data });
+      }
+      return findById(id_cita, { transaction: tx });
+    });
+  } catch (error) {
+    throw normalizarError(error, { cita: true, disponibilidadNueva: true });
+  }
+}
+
 async function perteneceAUsuario(id_cita, id_usuario) {
-  const cita = await Cita.findByPk(id_cita, { attributes: ['id_mascota'] });
-  if (!cita) return false;
-
-  const count = await UsuarioMascota.count({
-    where: { id_mascota: cita.id_mascota, id_usuario },
+  const cita = await prisma.cita.findUnique({
+    where: { id_cita: Number(id_cita) },
+    select: { id_mascota: true },
   });
-  return count > 0;
+  if (!cita) return false;
+  const propietario = await prisma.usuarioMascota.findUnique({
+    where: { id_usuario_id_mascota: { id_usuario, id_mascota: cita.id_mascota } },
+    select: { id_usuario: true },
+  });
+  return Boolean(propietario);
 }
 
-export { findAll, findById, findByEspecialista, obtenerPrimerRecepcionista, crearConTransaccion, editarConTransaccion, cancelarConTransaccion, cambiarEstadoConTransaccion, perteneceAUsuario };
-export default { findAll, findById, findByEspecialista, obtenerPrimerRecepcionista, crearConTransaccion, editarConTransaccion, cancelarConTransaccion, cambiarEstadoConTransaccion, perteneceAUsuario };
+export {
+  findAll,
+  findById,
+  findByEspecialista,
+  obtenerPrimerRecepcionista,
+  crearConTransaccion,
+  cancelarConTransaccion,
+  cambiarEstadoConTransaccion,
+  cancelarVencidasAutomaticamente,
+  editarConTransaccion,
+  perteneceAUsuario,
+};
+
+export default {
+  findAll,
+  findById,
+  findByEspecialista,
+  obtenerPrimerRecepcionista,
+  crearConTransaccion,
+  cancelarConTransaccion,
+  cambiarEstadoConTransaccion,
+  cancelarVencidasAutomaticamente,
+  editarConTransaccion,
+  perteneceAUsuario,
+};

@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { errorHandler } from '../../../app/middlewares/errorHandler.js';
 import validate from '../../../app/middlewares/validate.js';
+import { mensajeValidacion } from '../../../app/middlewares/validate.js';
 
 function responseMock() {
   return {
@@ -18,6 +19,18 @@ function responseMock() {
 }
 
 describe('manejo central de errores', () => {
+  it('no expone el mensaje ni los valores originales de un error Joi no clasificado', () => {
+    const mensaje = mensajeValidacion({
+      path: ['campo'],
+      type: 'custom.unknown',
+      message: 'campo contiene TOKEN_PRIVADO y datos@example.invalid',
+    });
+
+    expect(mensaje).toBe('campo no es válido.');
+    expect(mensaje).not.toContain('TOKEN_PRIVADO');
+    expect(mensaje).not.toContain('datos@example.invalid');
+  });
+
   it('responde los 500 con un formato estable y sin el mensaje interno', () => {
     const res = responseMock();
     const detalleInterno = 'falló con token eyJhbGciOiJub25l.eyJpZCI6InVzZXIifQ.abc y correo persona@ejemplo.com';
@@ -43,14 +56,14 @@ describe('validación y normalización de espacios', () => {
     contrasena: Joi.string().required(),
   });
 
-  it('recorta espacios externos sin modificar una contraseña', () => {
-    const req = { body: { nombre: '  Luna  ', edad: '7', contrasena: '  clave segura  ' } };
+  it('recorta espacios externos en datos y conserva una contraseña sin espacios', () => {
+    const req = { body: { nombre: '  Luna  ', edad: '7', contrasena: 'claveSegura123' } };
     const next = vi.fn();
 
     validate(schema)(req, {}, next);
 
     expect(next).toHaveBeenCalledWith();
-    expect(req.body).toEqual({ nombre: 'Luna', edad: 7, contrasena: '  clave segura  ' });
+    expect(req.body).toEqual({ nombre: 'Luna', edad: 7, contrasena: 'claveSegura123' });
   });
 
   it('devuelve un mensaje claro cuando un campo tiene tipo incorrecto', () => {
@@ -71,11 +84,21 @@ describe('validación y normalización de espacios', () => {
     expect(error.message).toContain('nombre no puede estar vacío.');
   });
 
-  it('rechaza contraseñas formadas solo por espacios sin alterar contraseñas válidas', () => {
-    const req = { body: { nombre: 'Luna', edad: 7, contrasena: '    ' } };
-    let error;
-    validate(schema)(req, {}, (nextError) => { error = nextError; });
-
-    expect(error.message).toContain('contrasena no puede contener solo espacios.');
+  it('usa mensajes naturales para contraseñas obligatorias o vacías', () => {
+    expect(mensajeValidacion({ path: ['contrasena'], type: 'any.required' }))
+      .toBe('La contraseña es obligatoria.');
+    expect(mensajeValidacion({ path: ['contrasena'], type: 'string.empty' }))
+      .toBe('La contraseña no puede estar vacía.');
   });
+
+  it.each(['clave segura', ' clave', 'clave ', 'clave\tsegura', 'clave\nsegura', 'clave\u00a0segura', '    '])(
+    'rechaza contraseñas con cualquier tipo de whitespace: %j',
+    (contrasena) => {
+      const req = { body: { nombre: 'Luna', edad: 7, contrasena } };
+      let error;
+      validate(schema)(req, {}, (nextError) => { error = nextError; });
+
+      expect(error.message).toBe('La contraseña no puede contener espacios.');
+    }
+  );
 });

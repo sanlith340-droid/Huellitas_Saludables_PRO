@@ -48,7 +48,7 @@ Realizar la migración del framework de pruebas automatizadas Jest a Vitest, ada
 | 08/11/2026 | 4:15 a. m. | Se ejecutaron las pruebas con Vitest, obteniendo 11 archivos de pruebas y 179 pruebas aprobadas, sin pruebas omitidas. |
 | 08/11/2026 | 4:45 a. m. | Se ejecutó nuevamente `npm ci` y posteriormente `npm test` para comprobar que la instalación limpia no afectara los resultados. |
 | 08/11/2026 | 5:15 a. m. | Se generó el informe de cobertura mediante `npm run test:coverage`, verificando los porcentajes de sentencias, ramas, funciones y líneas. |
-| 08/11/2026 | 5:45 a. m. | Se comprobó el cierre de las conexiones de Sequelize y la finalización del proceso de pruebas sin necesidad de utilizar `forceExit`. |
+| 08/11/2026 | 5:45 a. m. | Se comprobó el cierre de las conexiones de ORM anterior y la finalización del proceso de pruebas sin necesidad de utilizar `forceExit`. |
 | 08/11/2026 | 6:15 a. m. | Se verificó el inicio del backend y el funcionamiento del endpoint `/health`, además de una respuesta HTTP 401 al consultar el perfil sin token. |
 | 08/11/2026 | 6:45 a. m. | Se verificó la autenticación desde el frontend, la redirección al dashboard y las consultas de mascotas, citas, razas y disponibilidad. |
 | 08/11/2026 | 7:15 a. m. | Se compararon los archivos del frontend y del backend para confirmar que la migración del framework de pruebas no hubiera modificado la lógica funcional de la aplicación. |

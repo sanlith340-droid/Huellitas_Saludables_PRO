@@ -1,0 +1,118 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../app/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id_usuario             String           @id @db.VarChar(10)
+  nombre                 String           @db.VarChar(100)
+  apellidos              String           @db.VarChar(150)
+  telefono               String?          @db.VarChar(20)
+  correo                 String           @unique(map: "usuario_correo_key") @db.VarChar(150)
+  direccion              String           @db.VarChar(150)
+  contrasena             String           @db.VarChar(255)
+  especializacion        String?          @db.VarChar(100)
+  tipo                   String?          @db.VarChar(20)
+  rol                    String           @default("usuario") @db.VarChar(20)
+  fecha_registro         DateTime         @default(now()) @db.Timestamptz(6)
+  mascotas               UsuarioMascota[]
+  disponibilidades       Disponibilidad[]
+  citasComoRecepcionista Cita[]           @relation("CitaRecepcionista")
+
+  @@map("usuario")
+}
+
+model Raza {
+  id_raza        Int       @id @default(autoincrement())
+  nombre         String    @db.VarChar(200)
+  fecha_registro DateTime  @default(now()) @db.Timestamptz(6)
+  mascotas       Mascota[]
+
+  @@map("raza")
+}
+
+model Mascota {
+  id_mascota       Int              @id @default(autoincrement())
+  nombre           String           @db.VarChar(200)
+  fecha_nacimiento DateTime         @db.Date
+  especie          String           @db.VarChar(50)
+  genero           String           @db.VarChar(20)
+  id_raza          Int
+  fecha_registro   DateTime         @default(now()) @db.Timestamptz(6)
+  raza             Raza             @relation(fields: [id_raza], references: [id_raza], onUpdate: Cascade, onDelete: Restrict)
+  propietarios     UsuarioMascota[]
+  citas            Cita[]
+
+  @@map("mascota")
+}
+
+model UsuarioMascota {
+  id_usuario String  @db.VarChar(10)
+  id_mascota Int
+  usuario    Usuario @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
+  mascota    Mascota @relation(fields: [id_mascota], references: [id_mascota], onUpdate: Cascade, onDelete: Cascade)
+
+  @@id([id_usuario, id_mascota])
+  @@map("usuario_mascota")
+}
+
+model Disponibilidad {
+  id_disponibilidad Int      @id @default(autoincrement())
+  id_usuario        String   @db.VarChar(10)
+  fecha             DateTime @db.Date
+  hora              DateTime @db.Time(6)
+  estado            String   @default("disponible") @db.VarChar(20)
+  especialista      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
+  citas             Cita[]
+
+  @@unique([id_usuario, fecha, hora], map: "uq_disponibilidad_usuario_fecha_hora")
+  @@map("disponibilidad")
+}
+
+model Cita {
+  id_cita           Int              @id @default(autoincrement())
+  id_recepcionista  String           @db.VarChar(10)
+  id_mascota        Int
+  id_disponibilidad Int
+  motivo            String           @db.VarChar(200)
+  estado            String           @default("pendiente") @db.VarChar(20)
+  recepcionista     Usuario          @relation("CitaRecepcionista", fields: [id_recepcionista], references: [id_usuario], onUpdate: Cascade, onDelete: Restrict)
+  mascota           Mascota          @relation(fields: [id_mascota], references: [id_mascota], onUpdate: Cascade, onDelete: Restrict)
+  disponibilidad    Disponibilidad   @relation(fields: [id_disponibilidad], references: [id_disponibilidad], onUpdate: Cascade, onDelete: Restrict)
+  historiaClinica   HistoriaClinica?
+  cancelacion       CitaCancelacion?
+
+  @@map("cita")
+}
+
+model CitaCancelacion {
+  id_cancelacion   Int      @id @default(autoincrement())
+  id_cita          Int      @unique(map: "cita_cancelacion_id_cita_key")
+  id_usuario_actor String?  @db.VarChar(10)
+  rol_actor        String   @db.VarChar(20)
+  origen           String   @db.VarChar(20)
+  motivo           String   @db.VarChar(255)
+  cancelada_en     DateTime @default(now()) @db.Timestamptz(6)
+  cita             Cita     @relation(fields: [id_cita], references: [id_cita], onUpdate: Cascade, onDelete: Restrict)
+
+  @@index([cancelada_en], map: "cita_cancelacion_cancelada_en_idx")
+  @@map("cita_cancelacion")
+}
+
+model HistoriaClinica {
+  id_historia_clinica Int      @id @default(autoincrement())
+  id_cita             Int      @unique(map: "historia_clinica_id_cita_key")
+  peso                Decimal? @db.Decimal(5, 2)
+  diagnostico         String   @db.VarChar(200)
+  tratamiento         String   @db.VarChar(200)
+  observaciones       String?  @db.VarChar(500)
+  fecha_registro      DateTime @default(now()) @db.Timestamptz(6)
+  cita                Cita     @relation(fields: [id_cita], references: [id_cita], onUpdate: Cascade, onDelete: Restrict)
+
+  @@map("historia_clinica")
+}

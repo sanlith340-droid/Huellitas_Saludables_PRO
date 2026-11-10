@@ -32,6 +32,29 @@ function toISODate(date) {
   return `${y}-${m}-${d}`;
 }
 
+function ahoraEnBogota() {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date())
+      .filter((parte) => parte.type !== "literal")
+      .map(({ type, value }) => [type, value])
+  );
+  return {
+    fecha: `${partes.year}-${partes.month}-${partes.day}`,
+    hora: `${partes.hour}:${partes.minute}`,
+    clave: `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}:${partes.second}`,
+  };
+}
+
 function getMonday(date) {
   const d = new Date(date);
   const dia = d.getDay();
@@ -176,6 +199,15 @@ function Disponibilidad() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensajeForm("");
+    const ahora = ahoraEnBogota();
+    if (!form.fecha || !form.hora) {
+      setMensajeForm("Selecciona una fecha y una hora para la franja.");
+      return;
+    }
+    if (`${form.fecha}T${form.hora}:00` <= ahora.clave) {
+      setMensajeForm("No se pueden crear franjas en el pasado. Selecciona una fecha y hora futuras (hora de Colombia).");
+      return;
+    }
     setEnviando(true);
 
     try {
@@ -273,6 +305,7 @@ function Disponibilidad() {
                 name="fecha"
                 value={form.fecha}
                 onChange={handleChange}
+                min={ahoraEnBogota().fecha}
                 required
               />
             </div>
@@ -285,6 +318,7 @@ function Disponibilidad() {
                 name="hora"
                 value={form.hora}
                 onChange={handleChange}
+                min={form.fecha === ahoraEnBogota().fecha ? ahoraEnBogota().hora : undefined}
                 required
               />
             </div>

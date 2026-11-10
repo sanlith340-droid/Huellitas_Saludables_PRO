@@ -3,5 +3,6 @@ node_modules
 .env.*
 !.env.example
 coverage
+app/generated/prisma
 *.log
 .git

@@ -1,116 +1,113 @@
 // app/models/usuario.model.js
 /**
- * models/usuario.model.js
- * Consultas de usuarios usando Sequelize (ORM).
+ * Consultas de usuarios usando Prisma.
  */
 
-import sequelizePkg from 'sequelize';
-const { Op } = sequelizePkg;
-import { sequelize, Usuario, Cita, Disponibilidad } from './index.js';
+import { prisma } from '../config/prisma.js';
 
 const ROLES_PERSONAL = ['admin', 'especialista', 'recepcionista'];
 
-const ATTRS_PUBLICOS = [
-  'id_usuario',
-  'nombre',
-  'apellidos',
-  'telefono',
-  'correo',
-  'direccion',
-  'especializacion',
-  'tipo',
-  'rol',
-  'fecha_registro',
-];
+const ATTRS_PUBLICOS = {
+  id_usuario: true,
+  nombre: true,
+  apellidos: true,
+  telefono: true,
+  correo: true,
+  direccion: true,
+  especializacion: true,
+  tipo: true,
+  rol: true,
+  fecha_registro: true,
+};
 
 async function findById(id_usuario) {
-  const usuario = await Usuario.findByPk(id_usuario, { attributes: ATTRS_PUBLICOS });
-  return usuario ? usuario.get({ plain: true }) : null;
+  return prisma.usuario.findUnique({
+    where: { id_usuario },
+    select: ATTRS_PUBLICOS,
+  });
 }
 
 async function findByIdAndRol(id_usuario, rol) {
-  const usuario = await Usuario.findOne({
+  return prisma.usuario.findFirst({
     where: { id_usuario, rol },
-    attributes: ATTRS_PUBLICOS,
+    select: ATTRS_PUBLICOS,
   });
-  return usuario ? usuario.get({ plain: true }) : null;
 }
 
 async function findByDocumento(documento) {
-  const usuario = await Usuario.findByPk(documento, { attributes: ATTRS_PUBLICOS });
-  return usuario ? usuario.get({ plain: true }) : null;
+  return prisma.usuario.findUnique({
+    where: { id_usuario: documento },
+    select: ATTRS_PUBLICOS,
+  });
 }
 
 async function findEspecialistas() {
-  const especialistas = await Usuario.findAll({
+  return prisma.usuario.findMany({
     where: { rol: 'especialista' },
-    attributes: ['id_usuario', 'nombre', 'apellidos', 'telefono', 'correo', 'especializacion', 'tipo', 'rol'],
-    order: [['nombre', 'ASC']],
+    select: {
+      id_usuario: true,
+      nombre: true,
+      apellidos: true,
+      telefono: true,
+      correo: true,
+      especializacion: true,
+      tipo: true,
+      rol: true,
+    },
+    orderBy: { nombre: 'asc' },
   });
-  return especialistas.map((u) => u.get({ plain: true }));
 }
 
-/**
- * Personal de la clínica (admin, especialista, recepcionista), sin contraseña.
- */
+/** Personal de la clínica (admin, especialista, recepcionista), sin contraseña. */
 async function findPersonal() {
-  const personal = await Usuario.findAll({
-    where: { rol: { [Op.in]: ROLES_PERSONAL } },
-    attributes: ATTRS_PUBLICOS,
-    order: [
-      ['rol', 'ASC'],
-      ['nombre', 'ASC'],
-      ['apellidos', 'ASC'],
-    ],
+  return prisma.usuario.findMany({
+    where: { rol: { in: ROLES_PERSONAL } },
+    select: ATTRS_PUBLICOS,
+    orderBy: [{ rol: 'asc' }, { nombre: 'asc' }, { apellidos: 'asc' }],
   });
-  return personal.map((u) => u.get({ plain: true }));
 }
 
 /**
- * Cantidad de citas asociadas a cada cuenta del personal:
- *  - especialista  : citas sobre sus horarios
- *  - recepcionista : citas que registró
- * Devuelve un Map { id_usuario -> total }.
+ * Cuenta las citas vinculadas a cada cuenta del personal:
+ * - especialista: citas sobre sus disponibilidades
+ * - recepcionista: citas que registró
+ * Devuelve un Map { id_usuario -> total } con ambos conteos combinados.
  */
 async function contarCitasPorPersonal() {
-  const [porEspecialista] = await sequelize.query(`
-    SELECT d.id_usuario AS id, COUNT(c.id_cita)::int AS total
-    FROM disponibilidad d
-    JOIN cita c ON c.id_disponibilidad = d.id_disponibilidad
-    GROUP BY d.id_usuario
-  `);
-  const [porRecepcionista] = await sequelize.query(`
-    SELECT id_recepcionista AS id, COUNT(*)::int AS total
-    FROM cita
-    GROUP BY id_recepcionista
-  `);
+  const citas = await prisma.cita.findMany({
+    select: {
+      id_recepcionista: true,
+      disponibilidad: { select: { id_usuario: true } },
+    },
+  });
 
   const mapa = new Map();
-  [...porEspecialista, ...porRecepcionista].forEach((fila) => {
-    mapa.set(fila.id, (mapa.get(fila.id) || 0) + Number(fila.total));
-  });
+  for (const cita of citas) {
+    const idEspecialista = cita.disponibilidad.id_usuario;
+    mapa.set(idEspecialista, (mapa.get(idEspecialista) || 0) + 1);
+
+    const idRecepcionista = cita.id_recepcionista;
+    mapa.set(idRecepcionista, (mapa.get(idRecepcionista) || 0) + 1);
+  }
   return mapa;
 }
 
 async function contarCitasDe(id_usuario, rol) {
   if (rol === 'especialista') {
-    return Cita.count({
-      include: [{ model: Disponibilidad, where: { id_usuario }, required: true, attributes: [] }],
+    return prisma.cita.count({
+      where: { disponibilidad: { is: { id_usuario } } },
     });
   }
   if (rol === 'recepcionista') {
-    return Cita.count({ where: { id_recepcionista: id_usuario } });
+    return prisma.cita.count({ where: { id_recepcionista: id_usuario } });
   }
   return 0;
 }
 
-/**
- * Elimina la cuenta. Los horarios (disponibilidad) del especialista se
- * borran en cascada por la FK de la base de datos. Si aún existen citas,
- * la base de datos lo impide (RESTRICT) y se lanza un error de FK.
- */
+/** Elimina la cuenta; la base de datos impide borrarla si quedan citas. */
 async function eliminar(id_usuario) {
-  return Usuario.destroy({ where: { id_usuario } });
+  const result = await prisma.usuario.deleteMany({ where: { id_usuario } });
+  return result.count;
 }
 
 export {

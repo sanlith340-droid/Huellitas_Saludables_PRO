@@ -20,7 +20,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['app/**/*.js'],
-      exclude: ['app/config/swagger.js', 'app/models/index.js', 'app/app.js', 'app/server.js'],
+      exclude: ['app/config/swagger.js', 'app/app.js', 'app/server.js'],
       reporter: ['text', 'html', 'lcov'],
     },
   },

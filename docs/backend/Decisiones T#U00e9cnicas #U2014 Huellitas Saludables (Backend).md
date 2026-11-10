@@ -1,7 +1,7 @@
 # Decisiones Técnicas — Huellitas Saludables (Backend)
 
-> **Versión**: 1.1  
-> **Alcance**: API, persistencia, autenticación, pruebas y ejecución del backend  
+> **Versión**: 1.1
+> **Alcance**: API, persistencia, autenticación, pruebas y ejecución del backend
 ---
 
 ## Índice
@@ -13,13 +13,13 @@
    - [DT-001: Node.js y JavaScript para el servidor](#dt-001)
    - [DT-002: Express para la API HTTP](#dt-002)
    - [DT-003: PostgreSQL para los datos relacionales](#dt-003)
-   - [DT-004: Sequelize como ORM](#dt-004)
-   - [DT-005: Migraciones, seeders y restricciones de base de datos](#dt-005)
+   - [DT-004: Prisma ORM como capa de datos](#dt-004)
+   - [DT-005: Migraciones, semilla y restricciones de base de datos](#dt-005)
    - [DT-006: JWT para autenticar solicitudes](#dt-006)
    - [DT-007: Autorización de backend por roles](#dt-007)
    - [DT-008: Joi para validar entradas](#dt-008)
    - [DT-009: Organización del backend por capas](#dt-009)
-   - [DT-010: Jest, Supertest y base aislada para tests](#dt-010)
+   - [DT-010: Vitest, Supertest y base aislada para tests](#dt-010)
    - [DT-011: OpenAPI y Swagger UI para documentar la API](#dt-011)
    - [DT-012: Configuración y ejecución del backend](#dt-012)
 5. [Buenas prácticas y pendientes identificados](#buenas-prácticas-y-pendientes-identificados)
@@ -50,14 +50,14 @@ No es una guía de instalación ni un registro histórico de reuniones. El códi
 | Área | Tecnología observada | Para qué se usa |
 |---|---|---|
 | Runtime | **Node.js 22** (imagen Docker `node:22-alpine`) | Ejecutar el servidor |
-| Lenguaje | **JavaScript, CommonJS** | Rutas, controladores, servicios y configuración |
+| Lenguaje | **JavaScript, ES Modules (ESM)** | Rutas, controladores, servicios y configuración |
 | Framework HTTP | **Express 4** | API, rutas y middlewares |
 | Base de datos | **PostgreSQL 16** en Compose | Usuarios, mascotas, razas, horarios, citas e historias clínicas |
-| ORM | **Sequelize 6** | Modelos, asociaciones y consultas |
-| Migraciones | **sequelize-cli** | Versionar y aplicar cambios de esquema |
+| ORM | **Prisma ORM 7 ESM** | Modelos, asociaciones y consultas |
+| Migraciones | **Prisma CLI** | Versionar y aplicar cambios de esquema |
 | Autenticación | **jsonwebtoken 9 (JWT)** | Firmar y verificar tokens |
 | Validación | **Joi 17** | Validar y normalizar entradas HTTP |
-| Pruebas | **Jest 30 y Supertest 7** | Pruebas unitarias y de integración de la API |
+| Pruebas | **Vitest 4 y Supertest 7** | Pruebas unitarias y de integración de la API |
 | Documentación API | **swagger-jsdoc y swagger-ui-express** | Generar y servir documentación OpenAPI |
 | Configuración | **dotenv y cross-env** | Cargar variables de entorno y configurar scripts de prueba |
 | Empaquetado | **Docker** | Construir y ejecutar el servicio backend |
@@ -67,29 +67,29 @@ No es una guía de instalación ni un registro histórico de reuniones. El códi
 ## Las decisiones
 
 ### DT-001
-**Node.js y JavaScript para el servidor**  
+**Node.js y JavaScript para el servidor**
 **Estado**: Implementada
 
 #### Contexto
 El backend debe atender solicitudes HTTP para autenticación y operaciones sobre usuarios, mascotas, razas, disponibilidad, citas e historias clínicas.
 
 #### Decisión
-Ejecutar la API con **Node.js** y escribir el backend en **JavaScript con módulos CommonJS**.
+Ejecutar la API con **Node.js** y escribir el backend en **JavaScript con módulos ES Modules (ESM)**.
 
 #### Evidencia y justificación técnica
 - `back/package.json` define `server.js` como punto de entrada y scripts para iniciar el servidor.
-- `back/Dockerfile` parte de `node:22-alpine` y ejecuta `node server.js`.
-- Los archivos del backend usan `require()` y `module.exports`.
+- `back/Dockerfile` parte de `node:22-alpine`; el script `start` ejecuta `tsx server.js` para usar el cliente Prisma ESM generado.
+- Los módulos del backend usan `import` y `export`, con `type: module` en `back/package.json`.
 - El backend es una API de gestión con operaciones HTTP y acceso a PostgreSQL; el perfil que muestra el repositorio es principalmente I/O, no una carga de cálculo científico o procesamiento intensivo de CPU.
 - El modelo asíncrono de Node.js puede atender otras operaciones mientras solicitudes esperan I/O no bloqueante. No es una garantía automática de más rendimiento: callbacks largos o trabajo de CPU bloqueante pueden frenar el event loop y deben evitarse o trasladarse a workers/servicios especializados.
 
 #### Consecuencias
-**A favor:** el runtime y el ecosistema npm cubren el servidor, el driver de PostgreSQL, las pruebas y la documentación de API.  
+**A favor:** el runtime y el ecosistema npm cubren el servidor, el driver de PostgreSQL, las pruebas y la documentación de API.
 **A considerar:** JavaScript no impone tipos estáticos por defecto. La validación de datos, las pruebas y las reglas de base de datos son importantes para detectar errores de contrato y de ejecución.
 
 #### ¿Por qué Node.js/Express y no Python o Java?
 
-La elección se justifica por **adecuación al backend existente y al tipo de trabajo**, no porque Python o Java sean opciones inferiores. El repositorio ya contiene una API funcional basada en Node.js, Express, Sequelize, Joi, Jest y PostgreSQL. Mantener ese stack evita reescribir el servidor y sus capas para resolver el mismo conjunto de operaciones.
+La elección se justifica por **adecuación al backend existente y al tipo de trabajo**, no porque Python o Java sean opciones inferiores. El repositorio ya contiene una API funcional basada en Node.js, Express, Prisma ORM, Joi, Vitest y PostgreSQL. Mantener ese stack evita reescribir el servidor y sus capas para resolver el mismo conjunto de operaciones.
 
 | Criterio | Node.js + Express (actual) | Python + FastAPI | Java + Spring Boot |
 |---|---|---|---|
@@ -118,7 +118,7 @@ Python con FastAPI y Java con Spring Boot siguen siendo alternativas válidas. E
 ---
 
 ### DT-002
-**Express para la API HTTP**  
+**Express para la API HTTP**
 **Estado**: Implementada
 
 #### Contexto
@@ -134,7 +134,7 @@ Usar **Express** como framework HTTP del backend.
 - Express permite componer el procesamiento de solicitudes mediante middlewares y mantener el servidor separado de la lógica de cada operación.
 
 #### Consecuencias
-**A favor:** integra el enrutamiento de la API con middlewares reutilizables y tiene un ecosistema ampliamente conocido.  
+**A favor:** integra el enrutamiento de la API con middlewares reutilizables y tiene un ecosistema ampliamente conocido.
 **A considerar:** Express es flexible y no impone una estructura única. El equipo debe mantener convenciones claras para validación, autenticación, errores y separación de responsabilidades.
 
 #### Otras opciones posibles
@@ -143,7 +143,7 @@ Fastify o NestJS son alternativas del ecosistema Node.js con distintos niveles d
 ---
 
 ### DT-003
-**PostgreSQL para los datos relacionales**  
+**PostgreSQL para los datos relacionales**
 **Estado**: Implementada
 
 #### Contexto
@@ -159,7 +159,7 @@ Usar **PostgreSQL 16** en los entornos definidos por Docker Compose.
 - Las transacciones y restricciones relacionales son adecuadas para evitar referencias inválidas y proteger operaciones como la asignación de citas.
 
 #### Consecuencias
-**A favor:** el motor puede hacer cumplir integridad relacional y soporta transacciones para operaciones que deben completarse de forma consistente.  
+**A favor:** el motor puede hacer cumplir integridad relacional y soporta transacciones para operaciones que deben completarse de forma consistente.
 **A considerar:** el despliegue requiere gestionar copias de seguridad, permisos, actualizaciones y persistencia del volumen. La versión que muestra el proyecto es PostgreSQL 16; no debe documentarse como PostgreSQL 17.
 
 #### Otras opciones posibles
@@ -168,23 +168,23 @@ MySQL/MariaDB también pueden modelar relaciones y restricciones. Una base docum
 ---
 
 ### DT-004
-**Sequelize como ORM**  
+**Prisma ORM como capa de datos**
 **Estado**: Implementada
 
 #### Contexto
 La API necesita consultar PostgreSQL desde JavaScript y representar asociaciones entre usuarios, mascotas, citas, horarios e historias clínicas.
 
 #### Decisión
-Usar **Sequelize 6** como ORM y `sequelize-cli` para tareas de esquema y datos.
+Usar **Prisma ORM 7 ESM** como ORM y `Prisma CLI` para tareas de esquema y datos.
 
 #### Evidencia y justificación técnica
-- `back/package.json` declara `sequelize`, `pg` y `sequelize-cli`.
-- `back/app/models/index.js` define entidades y asociaciones `belongsTo`, `hasMany`, `belongsToMany` y `hasOne`.
-- `back/app/config/database.js` configura la conexión, el pool y el logging de SQL en desarrollo.
+- `back/package.json` declara `Prisma Client`, `pg` y `Prisma CLI`.
+- `back/prisma/schema.prisma` define entidades y asociaciones `belongsTo`, `hasMany`, `belongsToMany` y `hasOne`.
+- `back/app/config/prisma.js` configura la conexión, el pool y el logging de SQL en desarrollo.
 - El ORM expresa consultas y relaciones desde JavaScript, mientras PostgreSQL mantiene las restricciones persistentes.
 
 #### Consecuencias
-**A favor:** centraliza modelos y asociaciones que usan los servicios del backend y facilita trabajar con el esquema relacional desde JavaScript.  
+**A favor:** centraliza modelos y asociaciones que usan los servicios del backend y facilita trabajar con el esquema relacional desde JavaScript.
 **A considerar:** el ORM no garantiza por sí solo consultas eficientes ni sustituye las restricciones de base de datos. Las consultas complejas pueden requerir SQL explícito y revisión de rendimiento.
 
 #### Otras opciones posibles
@@ -193,32 +193,32 @@ Prisma, Knex o SQL parametrizado directamente podrían ser adecuados según las 
 ---
 
 ### DT-005
-**Migraciones, seeders y restricciones de base de datos**  
+**Migraciones, semilla y restricciones de base de datos**
 **Estado**: Implementada
 
 #### Contexto
 El esquema evoluciona con el código y debe poder prepararse en los distintos entornos. El flujo de citas también requiere impedir que una misma franja de disponibilidad se asigne a más de una cita.
 
 #### Decisión
-Versionar cambios de esquema mediante **migraciones**, cargar datos de demostración mediante **seeders** y aplicar reglas de integridad en PostgreSQL cuando corresponda.
+Versionar cambios de esquema mediante **migraciones**, cargar datos de demostración mediante la **semilla Prisma** y aplicar reglas de integridad en PostgreSQL cuando corresponda.
 
 #### Evidencia y justificación técnica
-- `back/migrations/` contiene los cambios de esquema versionados.
-- `back/seeders/` contiene los datos de demostración.
-- `back/docker-entrypoint.sh` aplica migraciones al iniciar el servicio y ejecuta seeders solo cuando `DB_SEED=true` y no hay usuarios.
-- La migración de citas crea una restricción única para `id_disponibilidad` y un trigger que cambia el estado de la disponibilidad al insertar una cita.
+- `back/prisma/migrations/` contiene los cambios de esquema versionados.
+- `back/prisma/seed.js` contiene los datos de demostración.
+- `back/docker-entrypoint.sh` aplica migraciones al iniciar el servicio y ejecuta `prisma/seed.js` solo cuando `DB_SEED=true`, el entorno no es producción y no hay usuarios.
+- La migración inicial conserva las restricciones CHECK, el índice único parcial para citas activas y los triggers PostgreSQL que mantienen sincronizado el estado de disponibilidad.
 
 #### Consecuencias
-**A favor:** el esquema y los datos iniciales se pueden preparar de manera reproducible; las restricciones en la base de datos protegen integridad aunque una escritura no pase por una ruta específica.  
+**A favor:** el esquema y los datos iniciales se pueden preparar de manera reproducible; las restricciones en la base de datos protegen integridad aunque una escritura no pase por una ruta específica.
 **A considerar:** una migración ya compartida no debería modificarse para representar un cambio nuevo; se crea una migración posterior. La lógica duplicada entre base de datos y aplicación debe probarse y mantenerse coordinada.
 
 #### Otras opciones posibles
-SQL versionado manualmente puede funcionar con controles equivalentes. `sequelize.sync()` puede ayudar en prototipos, pero no sustituye un historial explícito de cambios para entornos compartidos.
+SQL versionado manualmente puede funcionar con controles equivalentes. `empujar cambios sin una migración versionada` puede ayudar en prototipos, pero no sustituye un historial explícito de cambios para entornos compartidos.
 
 ---
 
 ### DT-006
-**JWT para autenticar solicitudes**  
+**JWT para autenticar solicitudes**
 **Estado**: Implementada; requiere correcciones de seguridad antes de producción
 
 #### Contexto
@@ -233,9 +233,9 @@ Usar **JWT** mediante `jsonwebtoken`. El backend emite tokens con identificador 
 - La consulta vuelve a obtener el rol actual desde la base de datos, de modo que la autorización no depende únicamente del rol que tenía el token al emitirse.
 
 #### Consecuencias y riesgos observados
-**A favor:** no se mantiene una sesión de servidor individual por token y la API puede verificar la identidad en cada solicitud.  
-**Riesgo alto — contraseñas:** `back/app/services/auth.service.js` compara contraseñas como texto y registra el valor recibido sin hash. Los comentarios del código indican que debería usarse bcrypt en producción, pero no está implementado. **No debe exponerse el backend con este manejo de contraseñas.** Añadir hashing apropiado y probar el flujo antes de producción.  
-**Riesgo alto — secreto JWT:** el código y Compose contienen valores de fallback de desarrollo para `JWT_SECRET`. En producción, el backend debería fallar al arrancar si falta un secreto fuerte gestionado fuera del repositorio; no debe usar el valor predeterminado.  
+**A favor:** no se mantiene una sesión de servidor individual por token y la API puede verificar la identidad en cada solicitud.
+**Contraseñas:** el backend utiliza scrypt y guarda hashes, no contraseñas en texto plano. Las credenciales de demostración deben limitarse a desarrollo/pruebas y sustituirse antes de cualquier despliegue público.
+**Riesgo alto — secreto JWT:** el código y Compose contienen valores de fallback de desarrollo para `JWT_SECRET`. En producción, el backend debería fallar al arrancar si falta un secreto fuerte gestionado fuera del repositorio; no debe usar el valor predeterminado.
 **Riesgo a considerar — expiración y revocación:** la expiración limita la vida del token, pero no existe en el código revisado un mecanismo general de revocación inmediata. Definir cómo se invalidarán tokens cuando sea necesario.
 
 #### Otras opciones posibles
@@ -244,7 +244,7 @@ Sesiones con cookies del servidor o un proveedor de identidad externo podrían s
 ---
 
 ### DT-007
-**Autorización de backend por roles**  
+**Autorización de backend por roles**
 **Estado**: Implementada
 
 #### Contexto
@@ -259,7 +259,7 @@ Aplicar autorización en la API mediante el usuario verificado por `identifyUser
 - `docs/backend/API.md` documenta roles y rutas; esta guía describe el contrato del backend, no sustituye las verificaciones en tiempo de ejecución.
 
 #### Consecuencias
-**A favor:** autenticación y autorización son controles distintos: tener un token válido no concede automáticamente acceso a todas las operaciones.  
+**A favor:** autenticación y autorización son controles distintos: tener un token válido no concede automáticamente acceso a todas las operaciones.
 **A considerar:** cada ruta nueva o modificada debe recibir una política de autorización revisada. Las reglas aplicadas en el servidor son la frontera de seguridad; no deben confiar en datos de rol enviados libremente por el cliente.
 
 #### Otras opciones posibles
@@ -268,7 +268,7 @@ Permisos granulares por recurso o políticas centralizadas pueden ser necesarios
 ---
 
 ### DT-008
-**Joi para validar entradas**  
+**Joi para validar entradas**
 **Estado**: Implementada
 
 #### Contexto
@@ -283,7 +283,7 @@ Usar **Joi** para definir esquemas y un middleware común para validar las propi
 - `back/app/middlewares/validate.js` acumula errores, descarta propiedades desconocidas y asigna a la solicitud el valor validado.
 
 #### Consecuencias
-**A favor:** las reglas de entrada quedan explícitas y se reutiliza el middleware para responder a datos inválidos antes de ejecutar la operación.  
+**A favor:** las reglas de entrada quedan explícitas y se reutiliza el middleware para responder a datos inválidos antes de ejecutar la operación.
 **A considerar:** cada ruta debe conectar el esquema adecuado. La validación HTTP complementa —no reemplaza— las restricciones de PostgreSQL, la autorización ni el manejo seguro de errores.
 
 #### Otras opciones posibles
@@ -292,7 +292,7 @@ Zod, express-validator o validaciones manuales centralizadas son alternativas po
 ---
 
 ### DT-009
-**Organización del backend por capas**  
+**Organización del backend por capas**
 **Estado**: Implementada
 
 #### Contexto
@@ -306,20 +306,20 @@ back/app/
 ├── config/        # Configuración y conexión
 ├── controllers/   # Adaptación entre HTTP y servicios
 ├── middlewares/   # Autenticación, validación, errores y auditoría
-├── models/        # Modelos Sequelize y asociaciones
+├── models/        # Modelos Prisma ORM y asociaciones
 ├── routes/        # Rutas HTTP por dominio
 ├── schemas/       # Esquemas Joi
 ├── services/      # Lógica de negocio
 └── utils/         # Errores y funciones compartidas
 ```
 
-Las migraciones, los seeders y las pruebas están fuera de `app/`, bajo `back/`.
+El esquema, las migraciones y la semilla están bajo `back/prisma/`; las pruebas están bajo `back/tests/`.
 
 #### Evidencia y justificación técnica
 La estructura real separa `controllers`, `services`, `models`, `routes`, `middlewares`, `schemas` y `config`. Las rutas delegan operaciones a controladores y servicios en lugar de concentrar toda la lógica en `server.js`.
 
 #### Consecuencias
-**A favor:** permite ubicar responsabilidades y probar partes del backend con distintos niveles de integración.  
+**A favor:** permite ubicar responsabilidades y probar partes del backend con distintos niveles de integración.
 **A considerar:** hay que evitar duplicar reglas entre controladores, servicios, modelos y base de datos. Si aumentan los dominios, se puede evaluar agrupar por módulo funcional conservando responsabilidades claras.
 
 #### Otras opciones posibles
@@ -328,24 +328,24 @@ Una estructura por feature puede acercar archivos de un mismo dominio; una estru
 ---
 
 ### DT-010
-**Jest, Supertest y base aislada para tests**  
+**Vitest, Supertest y base aislada para tests**
 **Estado**: Implementada; la suite recrea y elimina la base configurada
 
 #### Contexto
 La API requiere pruebas repetibles de autenticación, validación, permisos y operaciones persistentes. Las pruebas no deben compartir accidentalmente la base de desarrollo.
 
 #### Decisión
-Usar **Jest** como runner y **Supertest** para probar la API HTTP. La suite configura `NODE_ENV=test`, ejecuta Jest en serie y prepara una base de datos específica para pruebas.
+Usar **Vitest** como runner y **Supertest** para probar la API HTTP. La suite configura `NODE_ENV=test`, ejecuta Vitest en serie y prepara una base de datos específica para pruebas.
 
 #### Evidencia y justificación técnica
-- `back/package.json` declara Jest y Supertest; el script `test` usa `cross-env NODE_ENV=test jest --runInBand`.
-- `back/jest.config.js` conecta `globalSetup`, `globalTeardown` y la configuración de cada suite.
-- `back/tests/setup/globalSetup.js` ejecuta `DROP DATABASE IF EXISTS ... WITH (FORCE)`, crea la base, aplica migraciones y seeders.
-- `back/tests/setup/globalTeardown.js` intenta eliminar la base de pruebas al finalizar.
+- `back/package.json` declara Vitest y Supertest; el script `test` ejecuta `cross-env NODE_ENV=test vitest run` y las suites usan ejecución serial.
+- `back/vitest.config.js` conecta `globalSetup`, `globalTeardown` y la configuración de cada suite.
+- `back/tests/setup/globalSetup.js` crea una base de prueba aislada, aplica las migraciones y ejecuta la semilla; `testDbConfig.js` exige que el nombre termine en `_test`.
+- `back/tests/setup/globalTeardown.js` elimina únicamente la base de pruebas cuyo nombre termina en `_test`.
 - `docker-compose.test.yml` prepara un PostgreSQL temporal con almacenamiento `tmpfs`.
 
 #### Consecuencias
-**A favor:** las pruebas de integración ejercitan Express y PostgreSQL; el modo serial evita que varias suites manipulen simultáneamente la misma base. El Compose de pruebas separa la base temporal de la base normal del servicio.  
+**A favor:** las pruebas de integración ejercitan Express y PostgreSQL; el modo serial evita que varias suites manipulen simultáneamente la misma base. El Compose de pruebas separa la base temporal de la base normal del servicio.
 **Riesgo operativo:** el setup elimina por la fuerza el nombre configurado en `DB_NAME_TEST`. Un valor equivocado puede borrar datos ajenos a las pruebas. Verificar la variable antes de ejecutar la suite; no usar nombres de bases de desarrollo o producción. El usuario PostgreSQL necesita permisos para crear y eliminar bases.
 
 #### Otras opciones posibles
@@ -354,7 +354,7 @@ Una base temporal por suite o transacciones con rollback pueden reducir interfer
 ---
 
 ### DT-011
-**OpenAPI y Swagger UI para documentar la API**  
+**OpenAPI y Swagger UI para documentar la API**
 **Estado**: Implementada
 
 #### Contexto
@@ -369,7 +369,7 @@ Configurar **OpenAPI** con `swagger-jsdoc` y servir una interfaz con `swagger-ui
 - `docs/backend/API.md` resume rutas y roles del backend.
 
 #### Consecuencias
-**A favor:** el contrato puede consultarse desde navegador y compartirse con quienes consumen la API.  
+**A favor:** el contrato puede consultarse desde navegador y compartirse con quienes consumen la API.
 **A considerar:** las anotaciones deben mantenerse en sincronía con rutas y esquemas Joi; publicar Swagger no garantiza por sí solo que la especificación esté completa ni que existan pruebas de contrato.
 
 #### Otras opciones posibles
@@ -378,7 +378,7 @@ Un archivo OpenAPI mantenido por separado, documentación Markdown o colecciones
 ---
 
 ### DT-012
-**Configuración y ejecución del backend**  
+**Configuración y ejecución del backend**
 **Estado**: Implementada; requiere endurecimiento antes de producción
 
 #### Contexto
@@ -388,18 +388,18 @@ La API necesita credenciales y configuración distintas según el entorno, y deb
 Usar **dotenv** para cargar configuración local, **cross-env** para definir el entorno en scripts multiplataforma y un contenedor Node.js para ejecutar el backend. Compose coordina el backend con PostgreSQL.
 
 #### Evidencia y justificación técnica
-- `back/app/config/database.js` y `back/app/config/config.js` cargan variables de entorno.
+- `back/app/config/prisma.js` y `back/prisma.config.ts` cargan variables de entorno.
 - `back/package.json` usa `cross-env` en los scripts de test.
 - `back/Dockerfile` usa `node:22-alpine`, instala dependencias con `npm ci` y ejecuta `server.js`.
-- `back/docker-entrypoint.sh` espera a que PostgreSQL responda, aplica migraciones y carga seeders solo bajo la condición configurada.
+- `back/docker-entrypoint.sh` espera PostgreSQL, aplica migraciones Prisma y carga la semilla únicamente bajo las condiciones configuradas; en producción los mensajes informativos del entrypoint quedan suprimidos.
 - `docker-compose.yml` define el servicio `backend`, la conexión al servicio de base de datos y healthchecks.
 
 #### Consecuencias
-**A favor:** la configuración puede cambiar entre entornos sin codificar cada valor en el servidor y el inicio del contenedor ordena dependencias esenciales del backend.  
+**A favor:** la configuración puede cambiar entre entornos sin codificar cada valor en el servidor y el inicio del contenedor ordena dependencias esenciales del backend.
 **A considerar:** los archivos `.env` reales no deben versionarse ni compartirse; los valores de ejemplo no son adecuados como credenciales de producción. Las operaciones de migración al inicio deben coordinarse cuidadosamente al escalar a varias réplicas.
 
 #### Riesgos de configuración observados
-- `CORS_ORIGIN` se pasa desde Compose, pero `back/app/app.js` no lo usa para restringir orígenes: el callback CORS acepta cualquier origen y además habilita credenciales. Configurar y probar una lista de orígenes permitidos antes de exponer la API.
+- `back/app/app.js` usa `CORS_ORIGIN` como lista de orígenes permitidos y habilita credenciales. Configurar la lista exacta de dominios en cada entorno; un origen no incluido es rechazado.
 - Los defaults de `JWT_SECRET` y de las credenciales PostgreSQL son valores de desarrollo. La API debería rechazar el arranque de producción si no recibe secretos seguros de la plataforma de despliegue.
 - Mantener secretos en un gestor o mecanismo de secretos del entorno; no incorporarlos a la imagen, al repositorio ni a paquetes compartidos.
 
@@ -411,21 +411,21 @@ Secretos gestionados por la plataforma de despliegue, migraciones ejecutadas com
 ## Buenas prácticas y pendientes identificados
 
 1. **No documentar versiones distintas a las que muestra el backend.** Compose usa PostgreSQL 16 y la imagen Node 22.
-2. **Reemplazar el almacenamiento de contraseñas en texto plano por hashing apropiado** antes de cualquier despliegue expuesto a usuarios reales.
+2. **Mantener el hashing scrypt y revisar la migración de credenciales heredadas** antes de exponer el servicio a usuarios reales.
 3. **Eliminar defaults de secretos para producción** y fallar al iniciar si faltan credenciales seguras.
-4. **Restringir CORS a orígenes concretos** y hacer que la aplicación lea la configuración destinada a esa restricción.
+4. **Configurar `CORS_ORIGIN` con la lista exacta de orígenes** en cada despliegue.
 5. **Proteger la base de datos de pruebas:** verificar `DB_NAME_TEST`; el setup y teardown eliminan esa base.
 6. **No incluir archivos `.env` reales en Git ni en archivos ZIP compartidos.** El ZIP recibido contiene archivos con nombre `.env`; no se copiaron valores ni credenciales a esta documentación. Si el archivo se compartió fuera del equipo, revisar y rotar los secretos que pudiera contener.
 7. Mantener modelos, asociaciones, migraciones, restricciones, triggers y documentación OpenAPI coordinados.
 8. Revisar autenticación y autorización en cada ruta nueva o modificada; un JWT válido no concede permiso automáticamente para cualquier operación.
-9. Mantener los seeders de demostración separados de datos y credenciales reales.
+9. Mantener la semilla de demostración separada de datos y credenciales reales.
 10. Registrar cambios de diseño futuros como nuevas entradas en lugar de reescribir silenciosamente su historia.
 
 ---
 
 ## Conclusión
 
-El backend de Huellitas Saludables está construido como una API Node.js/Express que usa PostgreSQL y Sequelize, con validación Joi, autenticación JWT, autorización por roles, pruebas Jest/Supertest, documentación OpenAPI y ejecución en Docker.
+El backend de Huellitas Saludables está construido como una API Node.js/Express que usa PostgreSQL y Prisma ORM, con validación Joi, autenticación JWT, autorización por roles, pruebas Vitest/Supertest, documentación OpenAPI y ejecución en Docker.
 
-Este registro describe exclusivamente componentes del backend y distingue lo que confirma el repositorio de las razones inferidas. También identifica riesgos concretos —en especial contraseñas sin hash, secretos por defecto, CORS permisivo y la eliminación de la base configurada para tests— para que no se confundan con recomendaciones de producción.
+Este registro describe exclusivamente componentes del backend y distingue lo que confirma el repositorio de las razones inferidas. Entre los riesgos que requieren atención antes de producción están los secretos por defecto y la protección de la base configurada para tests; el hash scrypt, CORS configurable y el manejo seguro de errores ya están implementados.
 

@@ -1,66 +1,37 @@
-# Cómo está armado el proyecto
+# Arquitectura de Huellitas Saludables
 
-## La idea general
+## Vista general
 
 ```text
-Navegador
-   │ Frontend: React + TypeScript
-   │ Axios manda peticiones a /api con el JWT
+Navegador (React + TypeScript)
+   │ Axios envía peticiones HTTP con JWT
    ▼
-Backend: Express ── Sequelize ── PostgreSQL
+Express (Node.js ESM) ── Prisma ORM 7 ESM ── PostgreSQL
 ```
 
-Cuando usas Docker, Nginx muestra el frontend y también pasa las llamadas a `/api`, `/health` y `/api-docs` hacia el backend. En ese caso, `VITE_API_URL=/api`. Para desarrollar, Vite corre por separado y normalmente habla con `http://localhost:3000/api`.
+En Docker, Nginx sirve el frontend y envía `/api`, `/health` y `/api-docs` al backend. En desarrollo, Vite corre separado y consume `http://localhost:3000/api`.
 
-## Carpetas importantes
+## Fuente de verdad y componentes
 
-- `front/src/`: las pantallas, componentes, rutas y conexión del frontend.
-- `back/app/`: la API, sus rutas, controladores, servicios y modelos.
-- `back/migrations/`: archivos que crean o cambian las tablas.
-- `back/seeders/`: datos de demostración.
-- `back/tests/`: pruebas automáticas.
-- `database/data_jesus/`: scripts SQL antiguos/de referencia; la app actual usa Sequelize.
-- `docker-compose.yml`: levanta base de datos, API y frontend.
-- `docker-compose.test.yml`: corre pruebas con una base temporal.
+- `back/prisma/schema.prisma`: siete modelos y relaciones.
+- `back/prisma/migrations/`: migraciones Prisma versionadas, con SQL personalizado para CHECKs, índice parcial y triggers.
+- `back/prisma/seed.js`: datos demo idempotentes.
+- `back/app/models/`: consultas Prisma y adaptación a los objetos que consume la API.
+- `back/app/services/`: reglas de negocio y transacciones.
+- `back/app/controllers/` y `back/app/routes/`: transporte HTTP y rutas.
+- `back/app/middlewares/`: JWT, roles, validación, auditoría y un error handler común.
 
-## Cómo se relacionan los datos
+## Relaciones y reglas de datos
 
-Las tablas y relaciones están en `back/app/models/index.js`; las migraciones crean las tablas reales.
-
-- Un usuario puede estar relacionado con varias mascotas, y una mascota puede tener más de un usuario asociado. La relación pasa por `UsuarioMascota`.
+- `Usuario` y `Mascota` se relacionan de muchos a muchos mediante `UsuarioMascota`.
 - Cada mascota tiene una raza.
-- Un especialista puede tener varios horarios (`Disponibilidad`).
-- Cada horario puede tener como máximo una cita. La cita también se relaciona con la mascota y con quien la registró en recepción.
-- Una cita puede tener una historia clínica.
+- Un especialista puede definir varias disponibilidades.
+- Una disponibilidad puede tener citas canceladas históricas; un índice único parcial impide más de una cita activa por horario.
+- Una cita puede tener una historia clínica. Un trigger marca la cita como atendida al insertar la historia; otro trigger marca el horario como ocupado al insertar la cita.
+- PostgreSQL conserva además las claves foráneas y restricciones CHECK de roles, estados, especie, género y peso.
 
-Si vas a cambiar estas relaciones, revisa los modelos y las migraciones juntos.
+Antes de cambiar relaciones o tipos, actualiza `schema.prisma`, crea/revisa una migración y valida la migración contra una base de pruebas. No reemplaces ni borres el SQL personalizado sin verificar el comportamiento de triggers e índice parcial.
 
-## Pantallas y rutas
+## Frontend y seguridad
 
-Las rutas del frontend están en `front/src/routes/AppRoutes.tsx`.
-
-| Dirección | Qué muestra | Quién puede entrar |
-|---|---|---|
-| `/` | Inicio | Cualquiera |
-| `/login` | Iniciar sesión | Cualquiera |
-| `/registro` | Crear cuenta | Cualquiera |
-| `/dashboard` | Panel principal | Sesión iniciada |
-| `/mascotas` | Lista de mascotas | Sesión iniciada |
-| `/mascotas/nueva` | Registrar mascota | Sesión iniciada; la API revisa permisos |
-| `/citas/nueva` | Pedir una cita | Sesión iniciada |
-| `/disponibilidad` | Administrar horarios | `recepcionista` |
-| `/citas/especialista` | Ver citas asignadas y marcarlas como atendidas o canceladas | `especialista` |
-| `/admin` | Panel de administración (resumen del personal) | `admin` |
-| `/usuarios/admin` | Registrar personal y eliminar especialistas y recepcionistas | `admin` |
-
-Si alguien entra a una ruta que no existe, se muestra la página de no encontrado. Las reglas del frontend ayudan con la navegación, pero el backend también revisa los permisos antes de hacer cambios.
-
-## Qué pasa al iniciar sesión
-
-1. El usuario manda su correo y contraseña a `/api/auth/login`.
-2. La API devuelve un token JWT.
-3. El frontend lo guarda en `localStorage` y Axios lo incluye en las llamadas privadas.
-4. El backend verifica el token y comprueba que el usuario todavía esté en PostgreSQL.
-5. Si el token venció o no es válido, el frontend borra la sesión y vuelve a `/login`.
-
-Los headers `x-user-id` y `x-user-role` ya no se usan para iniciar sesión.
+Las rutas del frontend están en `front/src/routes/AppRoutes.tsx`. Las protecciones de navegación del cliente no sustituyen la autorización del backend. El backend verifica el JWT, consulta el rol vigente y deriva los errores al manejador central.

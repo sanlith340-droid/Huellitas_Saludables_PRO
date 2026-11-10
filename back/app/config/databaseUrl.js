@@ -1,49 +1,31 @@
 
-function decodificar(valor) {
-  try {
-    return decodeURIComponent(valor);
-  } catch {
-    return valor;
-  }
+function buildDatabaseUrl(env = process.env) {
+  const configuredUrl = env.NODE_ENV === 'test' ? '' : env.DATABASE_URL?.trim();
+  if (configuredUrl) return configuredUrl;
+
+  const database = env.NODE_ENV === 'test'
+    ? (env.DB_NAME_TEST || `${env.DB_NAME || 'proyectohs'}_test`)
+    : (env.DB_NAME || 'proyectohs');
+  const user = env.DB_USER || 'postgres';
+  const password = env.DB_PASSWORD || 'postgres';
+  const host = env.DB_HOST || 'localhost';
+  const port = Number(env.DB_PORT) || 5432;
+  const hostname = host.includes(':') && !host.startsWith('[') ? `[${host}]` : host;
+  const credentials = `${encodeURIComponent(user)}:${encodeURIComponent(password)}`;
+  const query = new URLSearchParams({ schema: env.DB_SCHEMA || 'public' }).toString();
+
+  return `postgresql://${credentials}@${hostname}:${port}/${encodeURIComponent(database)}?${query}`;
 }
 
-function parseDatabaseUrl(databaseUrl) {
-  if (!databaseUrl || typeof databaseUrl !== 'string') {
-    return null;
-  }
-
-  const valor = databaseUrl.trim();
-  if (!valor) {
-    return null;
-  }
-
-  const parsed = new URL(valor);
-  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) {
-    throw new TypeError('DATABASE_URL debe usar postgres:// o postgresql://');
-  }
-
-  const sslMode = (parsed.searchParams.get('sslmode') || '').toLowerCase();
-  const sslParam = (parsed.searchParams.get('ssl') || '').toLowerCase();
-
-  let ssl;
-  if (sslMode === 'disable' || sslParam === 'false' || sslParam === '0') {
-    ssl = false;
-  } else if (sslMode === 'no-verify') {
-    ssl = { rejectUnauthorized: false };
-  } else if (sslMode || sslParam === 'true' || sslParam === '1') {
-    ssl = true;
-  }
-
+function getTestDatabaseConfig(env = process.env) {
   return {
-    username: decodificar(parsed.username),
-    password: decodificar(parsed.password),
-    database: decodificar(parsed.pathname.replace(/^\//, '')),
-    host: parsed.hostname,
-    port: Number(parsed.port) || 5432,
-    dialect: 'postgres',
-    ...(ssl !== undefined ? { dialectOptions: { ssl } } : {}),
+    host: env.DB_HOST || 'localhost',
+    port: Number(env.DB_PORT) || 5432,
+    database: env.DB_NAME_TEST || `${env.DB_NAME || 'proyectohs'}_test`,
+    user: env.DB_USER || 'postgres',
+    password: env.DB_PASSWORD || 'postgres',
   };
 }
 
-export { parseDatabaseUrl };
-export default { parseDatabaseUrl };
+export { buildDatabaseUrl, getTestDatabaseConfig };
+export default { buildDatabaseUrl, getTestDatabaseConfig };

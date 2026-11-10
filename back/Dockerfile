@@ -3,6 +3,9 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package*.json .npmrc ./
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+COPY app/config/databaseUrl.js ./app/config/databaseUrl.js
 RUN npm ci
 
 COPY . .
@@ -14,4 +17,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["npm", "--silent", "start"]

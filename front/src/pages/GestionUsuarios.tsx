@@ -136,6 +136,8 @@ function GestionUsuarios() {
     if (form.rol === "especialista" && !form.especializacion.trim()) {
       return "La especialización es obligatoria para especialistas.";
     }
+    if (/\s/u.test(form.contrasena)) return "La contraseña no puede contener espacios.";
+    if (/\s/u.test(form.confirmar)) return "La confirmación no puede contener espacios.";
     if (form.contrasena.length < 4) return "La contraseña debe tener al menos 4 caracteres.";
     if (form.contrasena !== form.confirmar) return "Las contraseñas no coinciden.";
     return "";

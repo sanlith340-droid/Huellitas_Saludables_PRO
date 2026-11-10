@@ -14,7 +14,7 @@ import apiRoutes from './routes/index.js';
 import { identifyUser } from './middlewares/identifyUser.js';
 import auditLog from './middlewares/auditLog.js';
 import { notFoundHandler, errorHandler } from './middlewares/errorHandler.js';
-import { testConnection } from './config/database.js';
+import { testConnection } from './config/prisma.js';
 import { ok } from './utils/response.js';
 import AppError from './utils/AppError.js';
 import asyncHandler from './utils/asyncHandler.js';

@@ -243,6 +243,12 @@ describe('Citas - /api/citas', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data.estado).toBe('cancelado');
+      expect(res.body.data.cancelacion).toMatchObject({
+        id_usuario_actor: 'USU001',
+        rol_actor: 'usuario',
+        origen: 'manual',
+        motivo: 'Cancelada manualmente por el rol usuario.',
+      });
     });
 
     it('cancelar cita ya cancelada devuelve 409', async () => {

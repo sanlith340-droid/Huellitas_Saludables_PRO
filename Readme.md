@@ -10,11 +10,11 @@ Sistema web para la gestión de una veterinaria: registro de mascotas, agendamie
 | TECNOLOGIAS| |
 |---|---|
 | **Frontend** | React 18 · TypeScript · Vite · Nginx |
-| **Backend** | Node.js 22 · Express 4 · Sequelize 6 |
+| **Backend** | Node.js 22 · Express 4 · Prisma ORM 7 ESM |
 | **Base de datos** | PostgreSQL 16 |
 | **Autenticación** | JWT (`Authorization: Bearer <token>`) + autorización por roles |
 | **Despliegue** | Docker Compose (3 contenedores: Back, Front , BD )  |
-| **Documentación API** | Swagger / OpenAPI en `/api-dVocs` |
+| **Documentación API** | Swagger / OpenAPI en `/api-docs` |
 | **Estado** | En desarrollo · apto para entorno académico/demo, **no listo para producción** (ver [Seguridad](#9-seguridad-y-riesgos-conocidos)) |
 
 ---
@@ -55,9 +55,9 @@ Centraliza en una sola aplicación el flujo operativo de una veterinaria: el due
 |---|---|---|---|
 | RF07 | El dueño solicita citas según disponibilidad | `POST /api/citas` · `services/cita.service.js` | ✅ Implementado |
 | RF08 | Recepción gestiona disponibilidad y agenda | CRUD en `routes/disponibilidad.routes.js` | ✅ Implementado |
-| RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` | ⚠️ Stub: solo escribe en consola |
+| RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` | ⚠️ Stub: evento de registro genérico, sin envío real |
 | RF10 | El veterinario consulta sus citas asignadas | `GET /api/citas/especialista/:id` · pantalla `CitasEspecialista` | ✅ Implementado |
-| RF15 | Auditoría de acciones de admin/recepción | `middlewares/auditLog.js` | ⚠️ Solo log en consola, sin persistencia |
+| RF15 | Auditoría de acciones de admin/recepción | `middlewares/auditLog.js` | ⚠️ Registro estructurado; aún no persistido |
 
 ### Flujo principal
 
@@ -75,15 +75,15 @@ flowchart LR
 
 | Capa | Tecnología | Versión | Para qué se usa |
 |---|---|---|---|
-| Runtime | Node.js (CommonJS) | 22 (imagen `node:22-alpine`) | Ejecutar la API |
+| Runtime | Node.js ESM | 22 (imagen `node:22-alpine`) | Ejecutar la API y Prisma Client generado |
 | API | Express | ^4.18 | Rutas y middlewares |
-| ORM | Sequelize + `pg` | ^6.37 / ^8.23 | Modelos, asociaciones y consultas |
-| Migraciones | `sequelize-cli` | ^6.6 | Versionar el esquema y cargar *seeders* |
+| ORM | Prisma ORM + `@prisma/adapter-pg` | ^7.10 / ^8.23 | Modelos, relaciones y consultas |
+| Migraciones | Prisma Migrate | ^7.10 | Versionar el esquema PostgreSQL y ejecutar la semilla |
 | Base de datos | PostgreSQL | 16 (`postgres:16-alpine`) | Persistencia relacional |
 | Autenticación | `jsonwebtoken` | ^9 | Emitir y verificar JWT (expiración por defecto: 8 h) |
 | Validación | Joi | ^17.13 | Validar y normalizar entradas HTTP |
 | Docs API | `swagger-jsdoc` + `swagger-ui-express` | ^6.2 / ^5 | OpenAPI en `/api-docs` |
-| Pruebas | Jest + Supertest | ^30 / ^7 | Pruebas unitarias e integración del backend |
+| Pruebas | Vitest + Supertest | ^4 / ^7 | Pruebas unitarias e integración del backend |
 | Frontend | React + TypeScript | ^18.3 / ^5.7 | SPA |
 | Build/Dev | Vite | ^6 | Bundler y servidor de desarrollo |
 | Ruteo / HTTP | `react-router-dom` / `axios` | ^7 / ^1.7 | Navegación y consumo de la API |
@@ -102,7 +102,7 @@ flowchart LR
 flowchart LR
     U[Navegador] -->|HTTP :8080| N[Nginx\nSPA React]
     N -->|/api · /health · /api-docs| B[Backend\nExpress :3000]
-    B -->|Sequelize| P[(PostgreSQL 16)]
+    B -->|Prisma Client| P[(PostgreSQL 16)]
 ```
 
 - En **Docker**, Nginx sirve la SPA y reenvía `/api`, `/health` y `/api-docs` al backend (`VITE_API_URL=/api`).
@@ -112,7 +112,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    R[routes] --> V[middlewares:\nJWT · roles · Joi · auditoría] --> C[controllers] --> S[services\nreglas de negocio] --> M[models\nSequelize] --> D[(PostgreSQL)]
+    R[routes] --> V[middlewares:\nJWT · roles · Joi · auditoría] --> C[controllers] --> S[services\nreglas de negocio] --> M[models\nPrisma Client] --> D[(PostgreSQL)]
 ```
 
 | Capa | Carpeta | Responsabilidad |
@@ -121,7 +121,7 @@ flowchart LR
 | Middlewares | `back/app/middlewares/` | `identifyUser` (JWT), `validate` (Joi), `auditLog`, `errorHandler` |
 | Controladores | `back/app/controllers/` | Adaptan HTTP ↔ servicios |
 | Servicios | `back/app/services/` | Lógica de negocio (citas, disponibilidad, historias…) |
-| Modelos | `back/app/models/` | Tablas y asociaciones (fuente de verdad: `models/index.js`) |
+| Modelos | `back/app/models/` | Consultas Prisma; el schema fuente está en `back/prisma/schema.prisma` |
 | Esquemas | `back/app/schemas/` | Validaciones Joi por dominio |
 
 ### Frontend
@@ -150,7 +150,7 @@ Las rutas protegidas usan `PrivateRoute` y `RoleRoute`. **El frontend solo mejor
 
 ### Modelo entidad-relación
 
-> Fuente de verdad: `back/app/models/index.js` y `back/migrations/`.
+> Fuente de verdad: `back/prisma/schema.prisma` y `back/prisma/migrations/`.
 
 ```mermaid
 erDiagram
@@ -200,7 +200,7 @@ erDiagram
         int id_cita PK
         string id_recepcionista FK
         int id_mascota FK
-        int id_disponibilidad FK "UNIQUE"
+        int id_disponibilidad FK "única entre citas no canceladas"
         string motivo
         string estado "pendiente | confirmado | cancelado | atendido"
     }
@@ -217,7 +217,7 @@ erDiagram
 
 ### Reglas de integridad (en base de datos)
 
-- **Una franja, una cita:** `cita.id_disponibilidad` es `UNIQUE`; un *trigger* (`trg_actualizar_disponibilidad_cita`) marca la franja como `ocupado` al insertar la cita.
+- **Una franja, una cita activa:** un índice único parcial impide duplicar `id_disponibilidad` entre citas cuyo estado no sea `cancelado`; un *trigger* marca la franja como `ocupado` al insertar una cita.
 - **Sin franjas duplicadas:** `UNIQUE (id_usuario, fecha, hora)` en `disponibilidad`.
 - **Una historia por cita:** `historia_clinica.id_cita` es `UNIQUE`.
 - Claves foráneas con `ON DELETE RESTRICT` y restricciones `CHECK` para estados.
@@ -246,16 +246,16 @@ Lista completa con roles: [`docs/backend/API.md`](docs/backend/API.md). Códigos
 ```text
           ▲  E2E (navegador)        → no existe
          ╱ ╲
-        ╱   ╲ Integración (API+BD)  → 6 archivos · Jest + Supertest
+        ╱   ╲ Integración (API+BD)  → Vitest + Supertest
        ╱─────╲
-      ╱       ╲ Unitarias           → 2 archivos (jwt, auth.service)
+      ╱       ╲ Unitarias           → 7 archivos
      ╱─────────╲
 ```
 
 | Indicador | Valor |
 |---|---|
-| Archivos de prueba | 8 (en `back/tests/`) |
-| Casos `it()` declarados | 112 |
+| Archivos de prueba | 16 (en `back/tests/`) |
+| Casos de prueba | 241 (última ejecución completa) |
 | Cubre | Login/registro, JWT, `401`/`403`, citas, disponibilidad (filtros, paginación, conflictos), historias, mascotas, usuarios |
 | No cubre | Frontend (sin tests), pruebas E2E, pruebas de carga |
 | Aislamiento | Base temporal `proyectohs_test` recreada en cada ejecución |
@@ -344,7 +344,7 @@ Las migraciones se aplican solas al arrancar el backend. Abre:
 Si ya levantaste el sistema sin `DB_SEED` y quieres datos demo después:
 
 ```bash
-docker compose exec backend npx sequelize-cli db:seed:all
+docker compose exec backend npm run seed
 ```
 
 Detener sin perder datos: `docker compose down`.
@@ -378,15 +378,15 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
 ### Datos de demostración
-Los *seeders* (`back/seeders/`) crean usuarios de cada rol (`ADM001`, `REC001`, `USU001`, especialistas…), razas, mascotas, disponibilidad, citas e historias. **Son solo para desarrollo**: sus contraseñas están en el propio *seeder* y no deben existir en un entorno real.
+La semilla Prisma (`back/prisma/seed.js`) crean usuarios de cada rol (`ADM001`, `REC001`, `USU001`, especialistas…), razas, mascotas, disponibilidad, citas e historias. **Son solo para desarrollo**: sus contraseñas están en el propio *seeder* y no deben existir en un entorno real.
 
 ### Comandos útiles
 
 | Carpeta | Comando | Para qué sirve |
 |---|---|---|
 | `back/` | `npm run dev` / `npm start` | Iniciar la API (con recarga / normal) |
-| `back/` | `npm run migrate` · `migrate:undo` | Aplicar / revertir migraciones |
-| `back/` | `npm run seed` · `seed:undo` | Cargar / quitar datos demo |
+| `back/` | `npm run migrate` · `migrate:status` | Aplicar / consultar migraciones Prisma |
+| `back/` | `npm run seed` | Cargar datos demo de desarrollo |
 | `back/` | `npm run db:reset` | ⚠️ Borra y recrea todo |
 | `back/` | `npm test` · `npm run test:coverage` | Pruebas / cobertura |
 | `front/` | `npm run dev` | Servidor de desarrollo |
@@ -404,13 +404,13 @@ El registro completo (contexto, evidencia, consecuencias y alternativas) está e
 | DT-001 | Node.js + JavaScript | Backend ya implementado; carga de trabajo mayormente de I/O |
 | DT-002 | Express | Middlewares componibles para auth, validación y errores |
 | DT-003 | PostgreSQL 16 | Integridad referencial y transacciones para el dominio de citas |
-| DT-004 | Sequelize 6 | Modelos y asociaciones en JavaScript sobre el esquema relacional |
-| DT-005 | Migraciones + *seeders* + restricciones en BD | Esquema reproducible; la BD protege la integridad aunque falle la app |
+| DT-004 | Prisma ORM 7 ESM | Modelos y relaciones tipados sobre PostgreSQL |
+| DT-005 | Prisma Migrate + semilla + restricciones en BD | Esquema reproducible; la BD protege la integridad aunque falle la app |
 | DT-006 | JWT | Autenticación sin sesión de servidor; rol re-leído desde la BD |
 | DT-007 | Autorización por roles en el backend | Un token válido no concede acceso a todo |
 | DT-008 | Joi | Validación explícita en el borde HTTP |
 | DT-009 | Arquitectura por capas | Separa transporte, negocio y datos |
-| DT-010 | Jest + Supertest + BD aislada | Pruebas de integración repetibles |
+| DT-010 | Vitest + Supertest + BD aislada | Pruebas de integración repetibles |
 | DT-011 | OpenAPI / Swagger UI | Contrato consultable desde el navegador |
 | DT-012 | dotenv + Docker + entrypoint | Configuración por entorno; migra al iniciar |
 
@@ -424,12 +424,12 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 
 | # | Riesgo | Dónde | Estado |
 |---|---|---|---|
-| 1 | Contraseñas guardadas y comparadas **en texto plano** (no hay `bcrypt`) | `back/app/services/auth.service.js` · seeders | 🔴 Abierto |
+| 1 | Contraseñas procesadas con scrypt; credenciales demo conocidas no son apropiadas para producción | `back/app/utils/password.js` · `back/prisma/seed.js` | 🟡 Usar solo demo/test |
 | 2 | `JWT_SECRET` y credenciales de BD con valores por defecto de desarrollo | `utils/jwt.js` · `docker-compose.yml` | 🔴 Abierto |
-| 3 | CORS acepta cualquier origen con `credentials: true`; `CORS_ORIGIN` no se usa | `back/app/app.js` | 🔴 Abierto |
+| 3 | CORS depende de `CORS_ORIGIN`; restringirlo a los dominios reales de despliegue | `back/app/app.js` | 🟡 Configurar en producción |
 | 4 | Sin límite de intentos de login ni cabeceras de seguridad (`helmet`) | `back/app/app.js` | 🟠 Abierto |
 | 5 | Token en `localStorage` (expuesto ante XSS) | `front/src/services/api.ts` | 🟡 A evaluar |
-| 6 | Logs verbosos con `console.log` (payload del token, usuarios) y errores `500` que devuelven `error.message` | `middlewares/identifyUser.js` | 🟠 Abierto |
+| 6 | Pino limita producción a errores y redacta datos sensibles; los `500` responden un mensaje genérico | `back/app/utils/logger.js` · `errorHandler.js` | ✅ Corregido |
 | 7 | Sin revocación inmediata de tokens (solo expiración) | `utils/jwt.js` | 🟡 A evaluar |
 | 8 | La suite de pruebas elimina la base de `DB_NAME_TEST` | `tests/setup/globalSetup.js` | 🟡 Mitigado con aviso |
 
@@ -441,13 +441,13 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 
 | Prioridad | Tarea | Dimensión |
 |---|---|---|
-| 🔴 Alta | Hashear contraseñas con `bcrypt` y migrar las existentes/seeders | Seguridad |
+| 🟠 Media | Revisar rotación y política de credenciales demo antes de cualquier despliegue | Seguridad |
 | 🔴 Alta | Fallar al iniciar en producción si falta `JWT_SECRET`; quitar *fallbacks* | Seguridad |
-| 🔴 Alta | Leer `CORS_ORIGIN` y restringir orígenes | Seguridad |
+| 🟡 Baja | Revisar la lista `CORS_ORIGIN` por entorno en el despliegue real | Seguridad |
 | 🔴 Alta | Rotar secretos expuestos y limpiar `back/.env.example` | Seguridad |
 | 🟠 Media | Pipeline CI (GitHub Actions): install → lint → type-check → test → build | DevOps |
 | 🟠 Media | Instalar y configurar ESLint (hoy `npm run lint` falla) | Calidad |
-| 🟠 Media | Reemplazar `console.log` por un logger con niveles | Calidad |
+| 🟠 Media | Añadir alertas/monitorización de errores sin datos personales | Calidad |
 | 🟠 Media | `helmet` + *rate limiting* en login | Seguridad |
 | 🟠 Media | Notificaciones reales (RF09) y auditoría persistida (RF15) | Funcional |
 | 🟡 Baja | Pruebas de frontend (Vitest + Testing Library) y E2E (Playwright) | Calidad |
@@ -460,7 +460,7 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 - ✅ API por capas con validación Joi y autorización por rol
 - ✅ JWT con verificación del usuario en base de datos
 - ✅ Swagger en `/api-docs`
-- ✅ 112 casos de prueba de integración/unitarias del backend
+- ✅ 241 casos de prueba Vitest de integración/unitarias del backend
 - ✅ Docker Compose con *healthchecks* y entorno de pruebas aislado
 - ✅ Frontend con rutas protegidas por rol; compila con `tsc` sin errores
 
@@ -473,17 +473,16 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 | [`DOCKER.md`](DOCKER.md) | Despliegue con Docker en detalle |
 | [`docs/backend/ARQUITECTURA.md`](docs/backend/ARQUITECTURA.md) | Arquitectura, relaciones y pantallas |
 | [`docs/backend/API.md`](docs/backend/API.md) | Todas las rutas y roles |
-| [`docs/backend/DESARROLLO.md`](docs/backend/DESARROLLO.md) | Trabajar en el backend: migraciones, seeders, pruebas |
+| [`docs/backend/DESARROLLO.md`](docs/backend/DESARROLLO.md) | Trabajar en el backend: Prisma Migrate, semilla y pruebas |
 | [`docs/backend/DECISIONES_TECNICAS.md`](docs/backend/DECISIONES_TECNICAS.md) | Registro DT-001 … DT-012 |
 | [`docs/tests/PRUEBAS.md`](docs/tests/PRUEBAS.md) | Guía de la suite de pruebas |
 | [`MENSAJES_DE_ERROR_POR_ROL.md`](MENSAJES_DE_ERROR_POR_ROL.md) | Mensajes de permisos (backend y frontend) |
 
 ```text
 Huellitas_Saludables_PRO/
-├── back/                    # API Express + Sequelize
+├── back/                    # API Express + Prisma ORM 7
 │   ├── app/                 #   routes · controllers · services · models · schemas · middlewares
-│   ├── migrations/          #   esquema versionado
-│   ├── seeders/             #   datos demo
+│   ├── prisma/              #   schema, migraciones y semilla
 │   └── tests/               #   unit/ · integration/ · setup/
 ├── front/                   # SPA React + TypeScript + Vite
 │   └── src/                 #   pages · components · routes · context · services

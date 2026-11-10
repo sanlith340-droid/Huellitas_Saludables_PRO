@@ -1,7 +1,6 @@
-// Cierra el pool de Sequelize al terminar cada archivo de pruebas.
 import { afterAll } from 'vitest';
-import { sequelize } from '../../app/models/index.js';
+import { disconnect } from '../../app/config/prisma.js';
 
 afterAll(async () => {
-  await sequelize.close();
+  await disconnect();
 });

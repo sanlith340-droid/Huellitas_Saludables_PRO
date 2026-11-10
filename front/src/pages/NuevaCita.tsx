@@ -37,6 +37,25 @@ function formatearHora(horaStr) {
   return fecha.toLocaleTimeString("es-CO", { hour: "numeric", minute: "2-digit" });
 }
 
+function claveAhoraBogota() {
+  const partes = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date())
+      .filter((parte) => parte.type !== "literal")
+      .map(({ type, value }) => [type, value])
+  );
+  return `${partes.year}-${partes.month}-${partes.day}T${partes.hour}:${partes.minute}:${partes.second}`;
+}
+
 /**
  * Agrupa las franjas planas que devuelve el backend en una estructura
  * de 3 niveles (especialista -> fecha -> horas) para que el usuario
@@ -73,6 +92,7 @@ function NuevaCita() {
 
   const [mascotas, setMascotas] = useState([]);
   const [disponibilidad, setDisponibilidad] = useState([]);
+  const [ahoraBogota, setAhoraBogota] = useState(() => claveAhoraBogota());
   const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -96,7 +116,7 @@ function NuevaCita() {
     try {
       const [resMascotas, resDisponibilidad, resCitas] = await Promise.all([
         api.get("/mascotas"),
-        api.get("/disponibilidad", { params: { estado: "disponible" } }),
+        api.get("/disponibilidad", { params: { estado: "disponible", futuras: true } }),
         api.get("/citas"),
       ]);
 
@@ -126,10 +146,29 @@ function NuevaCita() {
     cargarDatos();
   }, [cargarDatos]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setAhoraBogota(claveAhoraBogota()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const especialistas = useMemo(
-    () => agruparPorEspecialista(disponibilidad),
-    [disponibilidad]
+    () => agruparPorEspecialista(
+      disponibilidad.filter((slot) => `${slot.fecha}T${slot.hora}` > ahoraBogota)
+    ),
+    [disponibilidad, ahoraBogota]
   );
+
+  useEffect(() => {
+    if (!idDisponibilidad) return;
+    const slotSigueVigente = disponibilidad.some(
+      (slot) => slot.id_disponibilidad === idDisponibilidad
+        && `${slot.fecha}T${slot.hora}` > ahoraBogota
+    );
+    if (!slotSigueVigente) {
+      setIdDisponibilidad(null);
+      setMensaje("El horario seleccionado ya pasó. Elige otra franja futura.");
+    }
+  }, [disponibilidad, idDisponibilidad, ahoraBogota]);
 
   const especialistaActivo = especialistas.find((e) => e.id_usuario === idEspecialista);
 

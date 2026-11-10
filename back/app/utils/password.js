@@ -15,7 +15,7 @@ const MAXIMO_CARACTERES_GUARDADO = 255;
 const BASE64_VALIDO = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 function esContrasenaValida(contrasena) {
-  if (typeof contrasena !== 'string' || contrasena.length === 0) {
+  if (typeof contrasena !== 'string' || contrasena.length === 0 || /\s/u.test(contrasena)) {
     return false;
   }
 
@@ -128,7 +128,7 @@ function compararTextoDeFormaSegura(a, b) {
 
 async function hashContrasena(contrasena) {
   if (!esContrasenaValida(contrasena)) {
-    throw new TypeError('La contraseña debe ser una cadena de texto no vacía y no superar 1024 bytes.');
+    throw new TypeError('La contraseña no puede contener espacios y debe ser texto no vacío de hasta 1024 bytes.');
   }
 
   const salt = crypto.randomBytes(PARAMETROS.saltBytes);

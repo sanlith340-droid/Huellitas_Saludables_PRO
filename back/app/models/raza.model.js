@@ -1,19 +1,16 @@
 // app/models/raza.model.js
 /**
- * models/raza.model.js
- * Consultas de razas usando Sequelize (ORM).
+ * Consultas de razas con Prisma.
  */
 
-import { Raza } from './index.js';
+import { prisma } from '../config/prisma.js';
 
 async function findById(id_raza) {
-  const raza = await Raza.findByPk(id_raza);
-  return raza ? raza.get({ plain: true }) : null;
+  return prisma.raza.findUnique({ where: { id_raza: Number(id_raza) } });
 }
 
 async function findAll() {
-  const razas = await Raza.findAll({ order: [['nombre', 'ASC']] });
-  return razas.map((r) => r.get({ plain: true }));
+  return prisma.raza.findMany({ orderBy: { nombre: 'asc' } });
 }
 
 export { findById, findAll };

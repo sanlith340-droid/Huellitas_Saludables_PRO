@@ -14,3 +14,6 @@ const BACK_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 dotenv.config({
   path: path.resolve(BACK_ROOT, '.env.test'),
 });
+
+// Fechas deterministas para fixtures legados (p. ej. disponibilidades de agosto de 2026).
+process.env.HUELLITAS_TEST_NOW ||= '2026-08-18T12:00:00-05:00';

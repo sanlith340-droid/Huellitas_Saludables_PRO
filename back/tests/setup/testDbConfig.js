@@ -1,25 +1,5 @@
-// tests/setup/testDbConfig.js
-// Configuración ÚNICA de la base de datos de pruebas.
-//
-// globalSetup y globalTeardown usan este archivo, así el nombre de la
-// base de datos ya no se repite (antes estaba escrito a mano en el teardown).
-//
-// Además protege la BD normal: si el nombre de la BD de pruebas no termina
-// en "_test" o es igual a la BD normal, las pruebas se detienen ANTES de
-// borrar nada.
-
 import './setupEnv.js';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import dotenv from 'dotenv';
-import sequelizeConfig from '../../app/config/config.js';
-
-// Raíz de back/, independiente del directorio de ejecución.
-const BACK_ROOT = fileURLToPath(new URL('../../', import.meta.url));
-
-// Carga .env.test con ruta absoluta (no depende de desde dónde se ejecute Vitest).
-// dotenv NO sobrescribe variables que ya existan (por ejemplo las de Docker Compose).
-dotenv.config({ path: path.resolve(BACK_ROOT, '.env.test') });
+import { getTestDatabaseConfig } from '../../app/config/databaseUrl.js';
 
 function obtenerConfigPruebas() {
   if (process.env.NODE_ENV !== 'test') {
@@ -29,14 +9,14 @@ function obtenerConfigPruebas() {
     );
   }
 
-  const config = sequelizeConfig.test;
-  const nombreBd = config.database;
+  const config = getTestDatabaseConfig();
   const nombreBdNormal = process.env.DB_NAME || 'proyectohs';
-
-  if (!/_test$/.test(nombreBd) || nombreBd === nombreBdNormal) {
+  if (!/^[a-zA-Z0-9_]+$/.test(config.database)
+    || !/_test$/.test(config.database)
+    || config.database === nombreBdNormal) {
     throw new Error(
-      `[test-setup] Por seguridad no se borra la base "${nombreBd}": ` +
-      'la BD de pruebas debe terminar en "_test" y ser distinta de DB_NAME. ' +
+      `[test-setup] Por seguridad no se borra la base "${config.database}": ` +
+      'la BD de pruebas debe ser un identificador seguro, terminar en "_test" y ser distinta de DB_NAME. ' +
       'Revisa DB_NAME_TEST.'
     );
   }
@@ -44,21 +24,21 @@ function obtenerConfigPruebas() {
   return config;
 }
 
-// Descripción del error SIN credenciales (nunca incluye usuario ni contraseña).
-// Incluye el mensaje real de PostgreSQL (Sequelize a veces lo deja vacío en el stack).
-function describirError(err) {
-  const codigo = err?.original?.code || err?.parent?.code || err?.code || err?.name || 'SIN_CODIGO';
-  const mensaje = err?.parent?.message || err?.original?.message || err?.message || '';
-  return `${err?.name || 'Error'} / ${codigo}${mensaje ? ` / ${mensaje}` : ''}`;
+function describirError(error) {
+  const codigo = error?.code || error?.name || 'SIN_CODIGO';
+  const mensaje = String(error?.message || '')
+    .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, 'postgresql://[REDACTADO]')
+    .replace(/password\s*[=:]\s*[^\s]+/gi, 'password=[REDACTADO]');
+  return `${error?.name || 'Error'} / ${codigo}${mensaje ? ` / ${mensaje}` : ''}`;
 }
 
-// Borra una base de datos si existe, compatible con PostgreSQL 12 en adelante.
-// ("DROP DATABASE ... WITH (FORCE)" solo existe desde PostgreSQL 13, por eso
-// primero se cierran las conexiones abiertas a esa base.)
 async function borrarBaseSiExiste(admin, nombreBd) {
+  if (!/^[a-zA-Z0-9_]+$/.test(nombreBd) || !nombreBd.endsWith('_test')) {
+    throw new Error('Se rechazó una operación destructiva sobre una base de datos que no es de pruebas.');
+  }
   await admin.query(
-    'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :nombreBd AND pid <> pg_backend_pid()',
-    { replacements: { nombreBd } }
+    'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = $1 AND pid <> pg_backend_pid()',
+    [nombreBd],
   );
   await admin.query(`DROP DATABASE IF EXISTS "${nombreBd}"`);
 }

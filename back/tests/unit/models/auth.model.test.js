@@ -1,24 +1,28 @@
 import { vi } from 'vitest';
 
+const { usuarioPrisma } = vi.hoisted(() => ({
+  usuarioPrisma: {
+    create: vi.fn(),
+    updateMany: vi.fn(),
+  },
+}));
+
+vi.mock('../../../app/config/prisma.js', () => ({
+  prisma: { usuario: usuarioPrisma },
+}));
+
 vi.mock('../../../app/utils/password.js', () => ({
   esHashScrypt: vi.fn(),
 }));
 
-import { Usuario } from '../../../app/models/index.js';
 import { esHashScrypt } from '../../../app/utils/password.js';
 import authModel from '../../../app/models/auth.model.js';
 
 const HASH = `scrypt$16384$8$1$${'A'.repeat(24)}$${'B'.repeat(88)}`;
 
-describe('models/auth.model - guardas de contraseña', () => {
+describe('models/auth.model - guardas de contraseña con Prisma', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(Usuario, 'create').mockResolvedValue({ get: () => ({}) });
-    vi.spyOn(Usuario, 'findByPk').mockResolvedValue(null);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
   });
 
   it('rechaza crear un usuario con un valor que no sea hash scrypt', async () => {
@@ -37,14 +41,12 @@ describe('models/auth.model - guardas de contraseña', () => {
       })
     ).rejects.toThrow(TypeError);
 
-    expect(Usuario.create).not.toHaveBeenCalled();
+    expect(usuarioPrisma.create).not.toHaveBeenCalled();
   });
 
-  it('permite crear un usuario con un hash scrypt válido y no lo devuelve', async () => {
+  it('permite crear un usuario con hash scrypt y excluye la contraseña del retorno', async () => {
     esHashScrypt.mockReturnValue(true);
-    Usuario.create.mockResolvedValue({
-      get: () => ({ id_usuario: 'USU998', contrasena: HASH }),
-    });
+    usuarioPrisma.create.mockResolvedValue({ id_usuario: 'USU998', nombre: 'Prueba' });
 
     const resultado = await authModel.create({
       id_usuario: 'USU998',
@@ -57,35 +59,30 @@ describe('models/auth.model - guardas de contraseña', () => {
       rol: 'usuario',
     });
 
-    expect(Usuario.create).toHaveBeenCalledWith(
-      expect.objectContaining({ contrasena: HASH })
-    );
+    expect(usuarioPrisma.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ contrasena: HASH }),
+      select: expect.not.objectContaining({ contrasena: true }),
+    }));
     expect(resultado).not.toHaveProperty('contrasena');
   });
 
   it('rechaza actualizar la contraseña con un valor arbitrario', async () => {
     esHashScrypt.mockReturnValue(false);
 
-    await expect(
-      authModel.updatePassword('USU999', 'texto plano')
-    ).rejects.toThrow(TypeError);
-
-    expect(Usuario.findByPk).not.toHaveBeenCalled();
+    await expect(authModel.updatePassword('USU999', 'texto plano')).rejects.toThrow(TypeError);
+    expect(usuarioPrisma.updateMany).not.toHaveBeenCalled();
   });
 
   it('acepta actualizar la contraseña con un hash scrypt válido', async () => {
-    const guardar = vi.fn();
-    Usuario.findByPk.mockResolvedValue({
-      id_usuario: 'USU999',
-      contrasena: 'anterior',
-      save: guardar,
-    });
     esHashScrypt.mockReturnValue(true);
+    usuarioPrisma.updateMany.mockResolvedValue({ count: 1 });
 
     const resultado = await authModel.updatePassword('USU999', HASH);
 
-    expect(Usuario.findByPk).toHaveBeenCalledWith('USU999');
-    expect(guardar).toHaveBeenCalledTimes(1);
+    expect(usuarioPrisma.updateMany).toHaveBeenCalledWith({
+      where: { id_usuario: 'USU999' },
+      data: { contrasena: HASH },
+    });
     expect(resultado).toEqual({ id_usuario: 'USU999' });
   });
 });

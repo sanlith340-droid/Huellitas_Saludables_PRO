@@ -4,6 +4,36 @@ import mascotaModel from '../models/mascota.model.js';
 import disponibilidadModel from '../models/disponibilidad.model.js';
 import usuarioModel from '../models/usuario.model.js';
 import AppError from '../utils/AppError.js';
+import { esFechaHoraPasada, obtenerAhora } from '../utils/fechaHora.js';
+
+function lanzarErrorDeCita(error, id_cita) {
+  switch (error?.code) {
+    case 'CITA_NO_EXISTE':
+    case 'P2025':
+      throw AppError.notFound(`No existe cita con id ${id_cita}`);
+    case 'DISPONIBILIDAD_NO_EXISTE':
+      throw AppError.notFound('La disponibilidad no existe');
+    case 'DISPONIBILIDAD_NO_LIBRE':
+      throw AppError.conflict('La disponibilidad ya está ocupada');
+    case 'DISPONIBILIDAD_PASADA':
+      throw AppError.badRequest('No se puede agendar una cita en una franja que ya pasó. Selecciona una fecha y hora futuras (hora de Colombia).');
+    case 'NUEVA_DISPONIBILIDAD_NO_EXISTE':
+      throw AppError.notFound('La nueva disponibilidad no existe');
+    case 'NUEVA_DISPONIBILIDAD_NO_LIBRE':
+      throw AppError.conflict('La nueva disponibilidad no está disponible');
+    case 'NUEVA_DISPONIBILIDAD_PASADA':
+      throw AppError.badRequest('No se puede cambiar la cita a una franja que ya pasó. Selecciona una fecha y hora futuras (hora de Colombia).');
+    case 'CITA_YA_CANCELADA':
+      throw AppError.conflict('La cita ya está cancelada');
+    case 'REFERENCIA_NO_EXISTE':
+    case 'P2003':
+      throw AppError.badRequest('No se pudo completar la operación porque falta un registro relacionado');
+    case 'P2002':
+      throw AppError.conflict('La disponibilidad ya está reservada');
+    default:
+      throw error;
+  }
+}
 
 async function listar(filtros) {
   return citaModel.findAll(filtros);
@@ -50,6 +80,9 @@ async function crear({ id_mascota, id_disponibilidad, motivo, solicitante }) {
   if (disponibilidad.estado !== 'disponible') {
     throw AppError.conflict('La disponibilidad seleccionada no está disponible');
   }
+  if (esFechaHoraPasada(disponibilidad.fecha, disponibilidad.hora)) {
+    throw AppError.badRequest('No se puede agendar una cita en una franja que ya pasó. Selecciona una fecha y hora futuras (hora de Colombia).');
+  }
 
   let id_recepcionista;
   if (solicitante.rol === 'recepcionista') {
@@ -67,16 +100,11 @@ async function crear({ id_mascota, id_disponibilidad, motivo, solicitante }) {
       id_mascota,
       id_disponibilidad,
       id_recepcionista,
-      motivo
+      motivo,
+      ahora: process.env.NODE_ENV === 'test' ? obtenerAhora() : null,
     });
   } catch (error) {
-    if (error.code === 'DISPONIBILIDAD_NO_EXISTE') {
-      throw AppError.notFound('La disponibilidad no existe');
-    }
-    if (error.code === 'DISPONIBILIDAD_NO_LIBRE') {
-      throw AppError.conflict('La disponibilidad ya está ocupada');
-    }
-    throw error;
+    lanzarErrorDeCita(error, null);
   }
 }
 
@@ -91,7 +119,9 @@ async function editar(id_cita, cambios, solicitante) {
     }
   }
 
-  if (cambios.id_disponibilidad && cambios.id_disponibilidad !== cita.id_disponibilidad) {
+  if (cambios.id_disponibilidad !== undefined
+    && cambios.id_disponibilidad !== null
+    && Number(cambios.id_disponibilidad) !== Number(cita.id_disponibilidad)) {
     const nuevaDisponibilidad = await disponibilidadModel.findById(cambios.id_disponibilidad);
     if (!nuevaDisponibilidad) {
       throw AppError.notFound('La nueva disponibilidad no existe');
@@ -99,9 +129,18 @@ async function editar(id_cita, cambios, solicitante) {
     if (nuevaDisponibilidad.estado !== 'disponible') {
       throw AppError.conflict('La nueva disponibilidad no está disponible');
     }
+    if (esFechaHoraPasada(nuevaDisponibilidad.fecha, nuevaDisponibilidad.hora)) {
+      throw AppError.badRequest('No se puede cambiar la cita a una franja que ya pasó. Selecciona una fecha y hora futuras (hora de Colombia).');
+    }
   }
 
-  return citaModel.editarConTransaccion(id_cita, cambios);
+  try {
+    return await citaModel.editarConTransaccion(id_cita, cambios, {
+      ahora: process.env.NODE_ENV === 'test' ? obtenerAhora() : null,
+    });
+  } catch (error) {
+    lanzarErrorDeCita(error, id_cita);
+  }
 }
 
 async function cancelar(id_cita, solicitante) {
@@ -119,7 +158,16 @@ async function cancelar(id_cita, solicitante) {
     throw AppError.conflict('La cita ya está cancelada');
   }
 
-  return citaModel.cancelarConTransaccion(id_cita);
+  try {
+    return await citaModel.cancelarConTransaccion(id_cita, {
+      idUsuarioActor: solicitante.id,
+      rolActor: solicitante.rol,
+      origen: 'manual',
+      motivo: `Cancelada manualmente por el rol ${solicitante.rol}.`,
+    });
+  } catch (error) {
+    lanzarErrorDeCita(error, id_cita);
+  }
 }
 
 /**
@@ -141,12 +189,29 @@ async function cambiarEstadoPorEspecialista(id_cita, { estado, liberar_horario }
     throw AppError.conflict('La cita ya fue atendida y no puede modificarse');
   }
 
-  return citaModel.cambiarEstadoConTransaccion(id_cita, estado, {
-    liberarHorario: liberar_horario !== false,
-  });
+  try {
+    return await citaModel.cambiarEstadoConTransaccion(id_cita, estado, {
+      liberarHorario: liberar_horario !== false,
+      auditoria: estado === 'cancelado'
+        ? {
+            idUsuarioActor: solicitante.id,
+            rolActor: solicitante.rol,
+            origen: 'manual',
+            motivo: `Cancelada manualmente por el rol ${solicitante.rol}.`,
+          }
+        : undefined,
+    });
+  } catch (error) {
+    lanzarErrorDeCita(error, id_cita);
+  }
+}
+
+async function cancelarVencidasAutomaticamente(opciones) {
+  return citaModel.cancelarVencidasAutomaticamente(opciones);
 }
 
 export {
+  cancelarVencidasAutomaticamente,
   cambiarEstadoPorEspecialista,
   listar,
   obtenerPorId,
@@ -156,6 +221,7 @@ export {
   cancelar,
 };
 export default {
+  cancelarVencidasAutomaticamente,
   cambiarEstadoPorEspecialista,
   listar,
   obtenerPorId,

@@ -25,6 +25,14 @@ describe('utils/password', () => {
       await expect(hashContrasena('')).rejects.toThrow(TypeError);
       await expect(hashContrasena('a'.repeat(1025))).rejects.toThrow(TypeError);
     });
+
+    it('rechaza espacios, tabulaciones, saltos de línea y espacios Unicode', async () => {
+      const valoresConEspacios = ['clave con espacios', 'clave\tcon tab', 'clave\ncon salto', 'clave\u00a0unicode'];
+      for (const valor of valoresConEspacios) {
+        await expect(hashContrasena(valor)).rejects.toThrow(/La contraseña no puede contener espacios/);
+        await expect(verificarContrasena(valor, 'hash heredado')).resolves.toBe(false);
+      }
+    });
   });
 
   describe('verificarContrasena', () => {

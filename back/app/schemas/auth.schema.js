@@ -13,10 +13,13 @@ import Joi from 'joi';
 // ============================================================
 const ROLES_ADMIN = ['admin', 'especialista', 'recepcionista'];
 const TIPOS_USUARIO = ['principal', 'acudiente'];
+const CONTRASENA_SIN_ESPACIOS = Joi.string().pattern(/^\S+$/u).messages({
+  'string.pattern.base': 'La contraseña no puede contener espacios.',
+});
 
 const loginSchema = Joi.object({
   correo: Joi.string().email().required(),
-  contrasena: Joi.string().min(4).required()
+  contrasena: CONTRASENA_SIN_ESPACIOS.min(4).required()
 });
 
 const registroSchema = Joi.object({
@@ -25,7 +28,7 @@ const registroSchema = Joi.object({
   telefono: Joi.string().max(20).required(),
   correo: Joi.string().email().max(150).required(),
   direccion: Joi.string().max(150).required(),
-  contrasena: Joi.string().min(4).max(255).required(),
+  contrasena: CONTRASENA_SIN_ESPACIOS.min(4).max(255).required(),
   tipo: Joi.string().valid(...TIPOS_USUARIO).default('principal')
 });
 
@@ -42,7 +45,7 @@ const registroAdminSchema = Joi.object({
   telefono: Joi.string().max(20).required(),
   correo: Joi.string().email().max(150).required(),
   direccion: Joi.string().max(150).required(),
-  contrasena: Joi.string().min(4).max(255).required(),
+  contrasena: CONTRASENA_SIN_ESPACIOS.min(4).max(255).required(),
   
   // ============================================================
   // ROL: Obligatorio - SOLO admin, especialista, recepcionista

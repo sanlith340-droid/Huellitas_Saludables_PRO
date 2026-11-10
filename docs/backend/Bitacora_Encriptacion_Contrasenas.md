@@ -2,7 +2,7 @@
 
 **Responsable:** Sara jasmin cruz calderon
 
-**Proyecto:** Huellitas Saludables — backend Node.js (ESM), Express, Sequelize y PostgreSQL.
+**Proyecto:** Huellitas Saludables — backend Node.js (ESM), Express, Prisma ORM 7 ESM y PostgreSQL.
 
 **Fecha de elaboración:** 08/11/2026 
 
@@ -60,7 +60,7 @@ Se usa en tres lugares:
 |---|---|
 | Registro de usuario | `auth.service.js` → `registro()` |
 | Registro por administrador | `auth.service.js` → `registroAdmin()` |
-| Datos de demostración | `seeders/20240101000000-demo-usuarios.js` |
+| Datos de demostración | `prisma/seed.js` |
 
 ### 4.2 Verificar al iniciar sesión (`verificarContrasena`)
 
@@ -144,8 +144,8 @@ Se ejecutan con Vitest (`npm test` en `back/`). Esta bitácora no incluye un res
 - `back/app/services/auth.service.js` — login, registro, registro admin y migración.
 - `back/app/models/auth.model.js` — guardas que exigen hash scrypt.
 - `back/app/schemas/auth.schema.js` — validación de entrada.
-- `back/seeders/20240101000000-demo-usuarios.js` — usuarios demo hasheados.
-- `back/migrations/20240101000000-create-usuario.js` — columna `contrasena STRING(255)`.
+- `back/prisma/seed.js` — usuarios demo hasheados.
+- `back/prisma/migrations/0_init/migration.sql` — columna `contrasena STRING(255)`.
 - `docs/backend/Decisiones Técnicas — Huellitas Saludables (Backend).md` — auditoría del estado anterior.
 
 Conclusion: Es adelanto, por lo tanto esta parte va en proceso.

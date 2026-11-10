@@ -1,49 +1,39 @@
 // app/models/auth.model.js
 /**
- * models/auth.model.js
- * Consultas de autenticación de usuarios, ahora usando Sequelize (ORM)
- * en lugar de SQL puro. Mantiene la misma firma y forma de retorno
- * que la versión anterior para no romper auth.service.js.
+ * Consultas de autenticación de usuarios con Prisma.
+ * Mantiene las firmas y formas de retorno que consume auth.service.js.
  */
 
-import { Usuario } from './index.js';
+import { prisma } from '../config/prisma.js';
 import { esHashScrypt } from '../utils/password.js';
-import sequelizePkg from 'sequelize';
-const { Op } = sequelizePkg;
 
-const ATTRS_PUBLICOS = [
-  'id_usuario',
-  'nombre',
-  'apellidos',
-  'telefono',
-  'correo',
-  'direccion',
-  'especializacion',
-  'tipo',
-  'rol',
-  'fecha_registro',
-];
+const ATTRS_PUBLICOS = {
+  id_usuario: true,
+  nombre: true,
+  apellidos: true,
+  telefono: true,
+  correo: true,
+  direccion: true,
+  especializacion: true,
+  tipo: true,
+  rol: true,
+  fecha_registro: true,
+};
 
-/**
- * Busca un usuario por su correo electrónico (incluye contraseña,
- * se usa solo para el login).
- */
+/** Busca un usuario por correo (incluye contraseña, solo para login). */
 async function findByEmail(correo) {
-  const usuario = await Usuario.findOne({ where: { correo } });
-  return usuario ? usuario.get({ plain: true }) : null;
+  return prisma.usuario.findUnique({ where: { correo } });
 }
 
-/**
- * Busca un usuario por su ID (sin contraseña)
- */
+/** Busca un usuario por su ID sin incluir contraseña. */
 async function findById(id_usuario) {
-  const usuario = await Usuario.findByPk(id_usuario, { attributes: ATTRS_PUBLICOS });
-  return usuario ? usuario.get({ plain: true }) : null;
+  return prisma.usuario.findUnique({
+    where: { id_usuario },
+    select: ATTRS_PUBLICOS,
+  });
 }
 
-/**
- * Crea un nuevo usuario
- */
+/** Crea un usuario y devuelve únicamente sus datos públicos. */
 async function create(usuarioData) {
   const {
     id_usuario,
@@ -62,43 +52,40 @@ async function create(usuarioData) {
     throw new TypeError('La contraseña debe ser un hash scrypt válido');
   }
 
-  const nuevo = await Usuario.create({
-    id_usuario,
-    nombre,
-    apellidos,
-    telefono,
-    correo,
-    direccion,
-    contrasena,
-    especializacion: especializacion || null,
-    tipo: tipo || null,
-    rol: rol || 'usuario',
+  return prisma.usuario.create({
+    data: {
+      id_usuario,
+      nombre,
+      apellidos,
+      telefono,
+      correo,
+      direccion,
+      contrasena,
+      especializacion: especializacion || null,
+      tipo: tipo || null,
+      rol: rol || 'usuario',
+    },
+    select: ATTRS_PUBLICOS,
   });
-
-  const plano = nuevo.get({ plain: true });
-  const { contrasena: _omit, ...sinPassword } = plano;
-  return sinPassword;
 }
 
-/**
- * Verifica si un ID de usuario ya existe
- */
+/** Verifica si un ID de usuario ya existe. */
 async function existsById(id_usuario) {
-  const count = await Usuario.count({ where: { id_usuario } });
-  return count > 0;
+  return (await prisma.usuario.findUnique({
+    where: { id_usuario },
+    select: { id_usuario: true },
+  })) !== null;
 }
 
-/**
- * Verifica si un correo ya está registrado
- */
+/** Verifica si un correo ya está registrado. */
 async function existsByEmail(correo) {
-  const count = await Usuario.count({ where: { correo } });
-  return count > 0;
+  return (await prisma.usuario.findUnique({
+    where: { correo },
+    select: { id_usuario: true },
+  })) !== null;
 }
 
-/**
- * Genera el siguiente ID de usuario basado en el rol
- */
+/** Genera el siguiente ID de usuario basado en el rol. */
 async function generarIdUsuario(rol) {
   const prefixMap = {
     usuario: 'USU',
@@ -106,63 +93,73 @@ async function generarIdUsuario(rol) {
     recepcionista: 'REC',
     admin: 'ADM',
   };
-
   const prefix = prefixMap[rol] || 'USU';
 
-
-  const ultimo = await Usuario.findOne({
-    where: { id_usuario: { [Op.like]: `${prefix}%` } },
-    order: [['id_usuario', 'DESC']],
+  const ultimo = await prisma.usuario.findFirst({
+    where: { id_usuario: { startsWith: prefix } },
+    orderBy: { id_usuario: 'desc' },
+    select: { id_usuario: true },
   });
 
-  if (!ultimo) {
-    return `${prefix}001`;
-  }
+  if (!ultimo) return `${prefix}001`;
 
   const num = parseInt(ultimo.id_usuario.replace(prefix, ''), 10) + 1;
   return `${prefix}${String(num).padStart(3, '0')}`;
 }
 
-/**
- * Actualiza el tipo de usuario (principal/acudiente)
- */
+/** Actualiza el tipo de usuario (principal/acudiente). */
 async function updateTipo(id_usuario, tipo) {
-  const usuario = await Usuario.findByPk(id_usuario);
-  if (!usuario) return null;
-  usuario.tipo = tipo;
-  await usuario.save();
-  const plano = usuario.get({ plain: true });
-  const { contrasena: _omit, ...sinPassword } = plano;
-  return sinPassword;
+  const result = await prisma.usuario.updateMany({
+    where: { id_usuario },
+    data: { tipo },
+  });
+  if (result.count === 0) return null;
+  return findById(id_usuario);
 }
 
-/**
- * Actualiza la especialización de un especialista
- */
+/** Actualiza la especialización de un especialista. */
 async function updateEspecializacion(id_usuario, especializacion) {
-  const usuario = await Usuario.findByPk(id_usuario);
-  if (!usuario) return null;
-  usuario.especializacion = especializacion;
-  await usuario.save();
-  const plano = usuario.get({ plain: true });
-  const { contrasena: _omit, ...sinPassword } = plano;
-  return sinPassword;
+  const result = await prisma.usuario.updateMany({
+    where: { id_usuario },
+    data: { especializacion },
+  });
+  if (result.count === 0) return null;
+  return findById(id_usuario);
 }
 
-/**
- * Cambia la contraseña de un usuario
- */
+/** Cambia la contraseña de un usuario. */
 async function updatePassword(id_usuario, nuevaContrasena) {
   if (!esHashScrypt(nuevaContrasena)) {
     throw new TypeError('La contraseña debe ser un hash scrypt válido');
   }
 
-  const usuario = await Usuario.findByPk(id_usuario);
-  if (!usuario) return null;
-  usuario.contrasena = nuevaContrasena;
-  await usuario.save();
-  return { id_usuario: usuario.id_usuario };
+  const result = await prisma.usuario.updateMany({
+    where: { id_usuario },
+    data: { contrasena: nuevaContrasena },
+  });
+  if (result.count === 0) return null;
+  return { id_usuario };
 }
 
-export { findByEmail, findById, create, existsById, existsByEmail, generarIdUsuario, updateTipo, updateEspecializacion, updatePassword };
-export default { findByEmail, findById, create, existsById, existsByEmail, generarIdUsuario, updateTipo, updateEspecializacion, updatePassword };
+export {
+  findByEmail,
+  findById,
+  create,
+  existsById,
+  existsByEmail,
+  generarIdUsuario,
+  updateTipo,
+  updateEspecializacion,
+  updatePassword,
+};
+export default {
+  findByEmail,
+  findById,
+  create,
+  existsById,
+  existsByEmail,
+  generarIdUsuario,
+  updateTipo,
+  updateEspecializacion,
+  updatePassword,
+};

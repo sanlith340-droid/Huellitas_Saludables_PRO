@@ -7,24 +7,41 @@
 import authModel from '../models/auth.model.js';
 import AppError from '../utils/AppError.js';
 import { generarToken } from '../utils/jwt.js';
-import { hashContrasena, verificarContrasena, esHashScrypt } from '../utils/password.js';
+import {
+  hashContrasena,
+  verificarContrasena,
+  simularVerificacion,
+  necesitaRehash,
+  clasificarContrasenaGuardada,
+} from '../utils/password.js';
 import logger from '../utils/logger.js';
 
 async function login({ correo, contrasena }) {
   const usuario = await authModel.findByEmail(correo);
 
   if (!usuario) {
+    // Mismo costo que una verificación real para no revelar si el correo existe.
+    await simularVerificacion(contrasena);
     throw AppError.unauthorized('Credenciales inválidas. Verifica tu correo y contraseña.');
   }
 
+  // bcrypt.compare() (o verificación scrypt heredada); nunca texto plano.
   const passwordMatch = await verificarContrasena(contrasena, usuario.contrasena);
 
   if (!passwordMatch) {
+    if (clasificarContrasenaGuardada(usuario.contrasena) === 'texto_plano') {
+      // Registro sin datos sensibles: indica que falta ejecutar la migración a bcrypt.
+      logger.error(
+        { event: 'auth.password_plaintext_pending_migration' },
+        'Contraseña almacenada sin hash: ejecutar npm run passwords:migrate'
+      );
+    }
     throw AppError.unauthorized('Credenciales inválidas. Verifica tu correo y contraseña.');
   }
 
-  // Migración best-effort: un fallo no debe bloquear un login ya verificado.
-  if (!esHashScrypt(usuario.contrasena)) {
+  // Migración best-effort a bcrypt (hash scrypt heredado o rondas insuficientes).
+  // Un fallo no debe bloquear un login ya verificado.
+  if (necesitaRehash(usuario.contrasena)) {
     try {
       const nuevoHash = await hashContrasena(contrasena);
       const actualizado = await authModel.updatePassword(usuario.id_usuario, nuevoHash);

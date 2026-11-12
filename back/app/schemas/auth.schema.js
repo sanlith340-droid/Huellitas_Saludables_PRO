@@ -17,6 +17,10 @@ const CONTRASENA_SIN_ESPACIOS = Joi.string().pattern(/^\S+$/u).messages({
   'string.pattern.base': 'La contraseña no puede contener espacios.',
 });
 
+// bcrypt solo procesa los primeros 72 bytes: se limita en bytes UTF-8 para que
+// dos contraseñas distintas nunca generen el mismo hash.
+const CONTRASENA_NUEVA = CONTRASENA_SIN_ESPACIOS.min(4).max(72, 'utf8').required();
+
 const loginSchema = Joi.object({
   correo: Joi.string().email().required(),
   contrasena: CONTRASENA_SIN_ESPACIOS.min(4).required()
@@ -28,7 +32,7 @@ const registroSchema = Joi.object({
   telefono: Joi.string().max(20).required(),
   correo: Joi.string().email().max(150).required(),
   direccion: Joi.string().max(150).required(),
-  contrasena: CONTRASENA_SIN_ESPACIOS.min(4).max(255).required(),
+  contrasena: CONTRASENA_NUEVA,
   tipo: Joi.string().valid(...TIPOS_USUARIO).default('principal')
 });
 
@@ -45,7 +49,7 @@ const registroAdminSchema = Joi.object({
   telefono: Joi.string().max(20).required(),
   correo: Joi.string().email().max(150).required(),
   direccion: Joi.string().max(150).required(),
-  contrasena: CONTRASENA_SIN_ESPACIOS.min(4).max(255).required(),
+  contrasena: CONTRASENA_NUEVA,
   
   // ============================================================
   // ROL: Obligatorio - SOLO admin, especialista, recepcionista

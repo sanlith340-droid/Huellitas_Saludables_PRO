@@ -4,6 +4,7 @@
  */
 
 import { prisma } from '../config/prisma.js';
+import { aIdEntero } from '../utils/sqlSeguro.js';
 
 const INCLUDE_BASE = {
   cita: {
@@ -151,7 +152,8 @@ async function findByIdConTransaccion(id_historia_clinica, tx) {
 }
 
 async function crearConTransaccion({ id_cita, peso, diagnostico, tratamiento, observaciones, especialistaId }) {
-  const idCita = comoIdNumerico(id_cita);
+  // Se valida antes de usarse como parámetro de la consulta cruda.
+  const idCita = aIdEntero(id_cita, 'id_cita');
   try {
     return await prisma.$transaction(async (tx) => {
       const citas = await tx.$queryRaw`
@@ -197,7 +199,8 @@ async function crearConTransaccion({ id_cita, peso, diagnostico, tratamiento, ob
 }
 
 async function actualizar(id_historia_clinica, cambios, especialistaId) {
-  const idHistoria = comoIdNumerico(id_historia_clinica);
+  // Se valida antes de usarse como parámetro de la consulta cruda.
+  const idHistoria = aIdEntero(id_historia_clinica, 'id_historia_clinica');
   return prisma.$transaction(async (tx) => {
     const bloqueadas = await tx.$queryRaw`
       SELECT id_historia_clinica

@@ -11,7 +11,7 @@ const { Router } = expressPkg;
 import controller from '../controllers/historia.controller.js';
 import validate from '../middlewares/validate.js';
 import { requireRole } from '../middlewares/identifyUser.js';
-import { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema } from '../schemas/historia.schema.js';
+import { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascotaParamSchema, idCitaParamSchema, listarHistoriaQuerySchema } from '../schemas/historia.schema.js';
 
 const router = Router();
 
@@ -48,6 +48,7 @@ router.get(
 router.get(
   '/mascota/:id_mascota',
   requireRole('especialista'),
+  validate(idMascotaParamSchema, 'params'),
   controller.obtenerPorMascota
 );
 
@@ -58,6 +59,7 @@ router.get(
 router.get(
   '/cita/:id_cita',
   requireRole('especialista'),
+  validate(idCitaParamSchema, 'params'),
   controller.obtenerPorCita
 );
 

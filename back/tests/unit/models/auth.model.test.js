@@ -12,21 +12,21 @@ vi.mock('../../../app/config/prisma.js', () => ({
 }));
 
 vi.mock('../../../app/utils/password.js', () => ({
-  esHashScrypt: vi.fn(),
+  esHashBcrypt: vi.fn(),
 }));
 
-import { esHashScrypt } from '../../../app/utils/password.js';
+import { esHashBcrypt } from '../../../app/utils/password.js';
 import authModel from '../../../app/models/auth.model.js';
 
-const HASH = `scrypt$16384$8$1$${'A'.repeat(24)}$${'B'.repeat(88)}`;
+const HASH = `$2b$12$${'A'.repeat(53)}`;
 
 describe('models/auth.model - guardas de contraseña con Prisma', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('rechaza crear un usuario con un valor que no sea hash scrypt', async () => {
-    esHashScrypt.mockReturnValue(false);
+  it('rechaza crear un usuario con un valor que no sea hash bcrypt', async () => {
+    esHashBcrypt.mockReturnValue(false);
 
     await expect(
       authModel.create({
@@ -44,8 +44,8 @@ describe('models/auth.model - guardas de contraseña con Prisma', () => {
     expect(usuarioPrisma.create).not.toHaveBeenCalled();
   });
 
-  it('permite crear un usuario con hash scrypt y excluye la contraseña del retorno', async () => {
-    esHashScrypt.mockReturnValue(true);
+  it('permite crear un usuario con hash bcrypt y excluye la contraseña del retorno', async () => {
+    esHashBcrypt.mockReturnValue(true);
     usuarioPrisma.create.mockResolvedValue({ id_usuario: 'USU998', nombre: 'Prueba' });
 
     const resultado = await authModel.create({
@@ -67,14 +67,14 @@ describe('models/auth.model - guardas de contraseña con Prisma', () => {
   });
 
   it('rechaza actualizar la contraseña con un valor arbitrario', async () => {
-    esHashScrypt.mockReturnValue(false);
+    esHashBcrypt.mockReturnValue(false);
 
     await expect(authModel.updatePassword('USU999', 'texto plano')).rejects.toThrow(TypeError);
     expect(usuarioPrisma.updateMany).not.toHaveBeenCalled();
   });
 
-  it('acepta actualizar la contraseña con un hash scrypt válido', async () => {
-    esHashScrypt.mockReturnValue(true);
+  it('acepta actualizar la contraseña con un hash bcrypt válido', async () => {
+    esHashBcrypt.mockReturnValue(true);
     usuarioPrisma.updateMany.mockResolvedValue({ count: 1 });
 
     const resultado = await authModel.updatePassword('USU999', HASH);

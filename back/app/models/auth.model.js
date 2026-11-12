@@ -5,7 +5,7 @@
  */
 
 import { prisma } from '../config/prisma.js';
-import { esHashScrypt } from '../utils/password.js';
+import { esHashBcrypt } from '../utils/password.js';
 
 const ATTRS_PUBLICOS = {
   id_usuario: true,
@@ -48,8 +48,8 @@ async function create(usuarioData) {
     rol,
   } = usuarioData;
 
-  if (!esHashScrypt(contrasena)) {
-    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  if (!esHashBcrypt(contrasena)) {
+    throw new TypeError('La contraseña debe ser un hash bcrypt válido');
   }
 
   return prisma.usuario.create({
@@ -127,10 +127,10 @@ async function updateEspecializacion(id_usuario, especializacion) {
   return findById(id_usuario);
 }
 
-/** Cambia la contraseña de un usuario. */
+/** Cambia la contraseña de un usuario. Solo acepta hashes bcrypt. */
 async function updatePassword(id_usuario, nuevaContrasena) {
-  if (!esHashScrypt(nuevaContrasena)) {
-    throw new TypeError('La contraseña debe ser un hash scrypt válido');
+  if (!esHashBcrypt(nuevaContrasena)) {
+    throw new TypeError('La contraseña debe ser un hash bcrypt válido');
   }
 
   const result = await prisma.usuario.updateMany({

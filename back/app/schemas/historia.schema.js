@@ -61,6 +61,16 @@ const idParamSchema = Joi.object({
   id: Joi.number().integer().positive().required()
 });
 
+/** GET /historia/mascota/:id_mascota */
+const idMascotaParamSchema = Joi.object({
+  id_mascota: Joi.number().integer().positive().required()
+});
+
+/** GET /historia/cita/:id_cita */
+const idCitaParamSchema = Joi.object({
+  id_cita: Joi.number().integer().positive().required()
+});
+
 /**
  * Listar historias (query params)
  */
@@ -71,5 +81,5 @@ const listarHistoriaQuerySchema = Joi.object({
   fecha_fin: Joi.date().iso().optional()
 });
 
-export { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema };
-export default { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, listarHistoriaQuerySchema };
+export { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascotaParamSchema, idCitaParamSchema, listarHistoriaQuerySchema };
+export default { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascotaParamSchema, idCitaParamSchema, listarHistoriaQuerySchema };

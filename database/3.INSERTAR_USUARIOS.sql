@@ -1,5 +1,8 @@
 -- =========================================================
 -- INSERTAR USUARIOS DE PRUEBA
+-- Las contraseñas se guardan como hash bcrypt (12 rondas, salt
+-- independiente por usuario). Contraseña de demostración: 123456
+-- (solo para entornos locales; nunca usar en producción).
 -- =========================================================
 
 -- =========================================================
@@ -26,7 +29,7 @@ VALUES
     '3001112233',
     'laura.gomez@proyectohs.com',
     'Calle 80 # 15-20',
-    '123456',
+    '$2b$12$HXW9o/Tr1QT6Owzk6wq1R.hM1Aymam8p13OE3cQr1e2Q.VLXQZXG6',
     NULL,
     NULL,
     'recepcionista'
@@ -38,7 +41,7 @@ VALUES
     '3012223344',
     'andrea.martinez@proyectohs.com',
     'Carrera 13 # 72-15',
-    '123456',
+    '$2b$12$W.8fvAwdzvbm7VXeyZhbK.bizoo.3lDUjzqxPn6fQizrTa69qrmN6',
     NULL,
     NULL,
     'recepcionista'
@@ -50,7 +53,7 @@ VALUES
     '3023334455',
     'carlos.torres@proyectohs.com',
     'Calle 100 # 18-30',
-    '123456',
+    '$2b$12$KYjlTS5RlnhVsYkMFRJrSui3lu8L6YbBqhzSn.Fg6yIrKzLmP3b22',
     NULL,
     NULL,
     'recepcionista'
@@ -81,7 +84,7 @@ VALUES
     '3104445566',
     'juan.rodriguez@proyectohs.com',
     'Carrera 7 # 85-20',
-    '123456',
+    '$2b$12$3cNfktMGNHsWYZF4pP2O5OW60i3bRnkYq8yNnPpTsy3zQ8KyBhdpa',
     NULL,
     NULL,
     'admin'
@@ -115,7 +118,7 @@ VALUES
     '3115556677',
     'pedro.gonzalez@gmail.com',
     'Calle 45 # 20-10',
-    '123456',
+    '$2b$12$wSL/XJnAcG3OvhsCtGnOSuePFeO8MzeTkVjM.iK.k4PstCLg4HvI.',
     NULL,
     'principal',
     'usuario'
@@ -127,7 +130,7 @@ VALUES
     '3126667788',
     'maria.lopez@gmail.com',
     'Carrera 30 # 45-25',
-    '123456',
+    '$2b$12$6QAY5S84IxYBr0DGSqxTwu9u9BXZmPw/7h5H90nE.qkcUhUmkskM.',
     NULL,
     'principal',
     'usuario'
@@ -139,7 +142,7 @@ VALUES
     '3137778899',
     'andres.martinez@gmail.com',
     'Calle 60 # 25-15',
-    '123456',
+    '$2b$12$toZ3TDNcaHoWPP.p8kYyxut.Gc738CMCUP5De7kuD9QADlJCmxVJm',
     NULL,
     'principal',
     'usuario'
@@ -151,7 +154,7 @@ VALUES
     '3148889900',
     'diana.perez@gmail.com',
     'Carrera 50 # 80-20',
-    '123456',
+    '$2b$12$3LzHZ2cGWvYfH1BYjRfsweKrbQx1Spl3E6z3zuWgvIwu5IZH8gHn6',
     NULL,
     'principal',
     'usuario'
@@ -163,7 +166,7 @@ VALUES
     '3159990011',
     'felipe.sanchez@gmail.com',
     'Calle 72 # 40-18',
-    '123456',
+    '$2b$12$pszofGuKdN9Qn2Ndq8H1ZuvHoHJvuaafyWNkaqngVd02bZ0a3yNk.',
     NULL,
     'principal',
     'usuario'
@@ -175,7 +178,7 @@ VALUES
     '3161112233',
     'natalia.ramirez@gmail.com',
     'Carrera 19 # 65-30',
-    '123456',
+    '$2b$12$023QYFtX9FnOtRFfwKYozulV9XSMwkQgA5mSj7ijBoOgjVQZGL8v2',
     NULL,
     'principal',
     'usuario'
@@ -187,7 +190,7 @@ VALUES
     '3172223344',
     'santiago.moreno@gmail.com',
     'Calle 90 # 22-40',
-    '123456',
+    '$2b$12$Z4Xkftnuvt6l3ytcPQQ/heKIhV8EToTS1AaZyMQ4rdm28SCoJcToC',
     NULL,
     'principal',
     'usuario'
@@ -199,7 +202,7 @@ VALUES
     '3183334455',
     'camila.vargas@gmail.com',
     'Carrera 11 # 60-25',
-    '123456',
+    '$2b$12$1E.o3g4G5n/ze2Of8oz6seb8H5momWKT9wrzKOP66ndlXLHPseZtG',
     NULL,
     'acudiente',
     'usuario'
@@ -211,7 +214,7 @@ VALUES
     '3194445566',
     'ricardo.diaz@gmail.com',
     'Calle 35 # 15-40',
-    '123456',
+    '$2b$12$Bo0Gl9AM1v2e3iLeltPnI.sfDVROwV0I2ynHHksUhuUYls3aIJz92',
     NULL,
     'acudiente',
     'usuario'
@@ -223,7 +226,7 @@ VALUES
     '3205556677',
     'valentina.ruiz@gmail.com',
     'Carrera 40 # 70-10',
-    '123456',
+    '$2b$12$gfSzkZa.53xZMUyvSVczeuSZgE/B.MIX3Q/sQeux0utWONbpkJz1i',
     NULL,
     'acudiente',
     'usuario'
@@ -255,7 +258,7 @@ VALUES
     '3211112233',
     'alejandro.castillo@proyectohs.com',
     'Carrera 15 # 80-25',
-    '123456',
+    '$2b$12$9e/oHmEmOvOG.LTFx3qSUu7xI13.cwDMp..EcEszq8pA2ucGL5kv2',
     'Medicina Veterinaria General',
     NULL,
     'especialista'
@@ -267,7 +270,7 @@ VALUES
     '3222223344',
     'carolina.mendez@proyectohs.com',
     'Calle 90 # 18-35',
-    '123456',
+    '$2b$12$US1dBsHKZc/7gpC2mP7BHugaB8V5vJ0KrYvRysDj.kTEooMqpQqMK',
     'Medicina Felina',
     NULL,
     'especialista'
@@ -279,7 +282,7 @@ VALUES
     '3233334455',
     'mauricio.rojas@proyectohs.com',
     'Carrera 50 # 75-40',
-    '123456',
+    '$2b$12$WTnEg9cgCsw64cIIo2MzrObHeO46.mCCmg13bj2JY3QItN7u1WlZO',
     'Cirugia Veterinaria',
     NULL,
     'especialista'

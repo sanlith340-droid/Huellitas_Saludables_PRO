@@ -1,6 +1,7 @@
 // app/models/cita.model.js
 import { prisma } from '../config/prisma.js';
 import { esFechaHoraPasada } from '../utils/fechaHora.js';
+import { aIdEntero, aLimiteEntero, aMarcaTiempoOpcional } from '../utils/sqlSeguro.js';
 
 const INCLUDE_CITA = {
   mascota: {
@@ -160,29 +161,34 @@ async function obtenerPrimerRecepcionista() {
   return recepcionista?.id_usuario ?? null;
 }
 
+// Consultas crudas: cada ${valor} de $queryRaw`...` se envía como parámetro
+// enlazado. Además, los valores se validan por tipo antes de la consulta.
 async function bloquearDisponibilidad(tx, id_disponibilidad, ahora = null) {
+  const id = aIdEntero(id_disponibilidad, 'id_disponibilidad');
+  const momento = aMarcaTiempoOpcional(ahora);
   const rows = await tx.$queryRaw`
     SELECT id_disponibilidad, estado,
       (fecha + hora) > (
-        COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+        COALESCE(${momento}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
       ) AS futura
     FROM disponibilidad
-    WHERE id_disponibilidad = ${Number(id_disponibilidad)}
+    WHERE id_disponibilidad = ${id}
     FOR UPDATE
   `;
   return rows[0] ?? null;
 }
 
 async function bloquearDisponibilidades(tx, ids, ahora = null) {
-  const ordenados = [...new Set(ids.map(Number))].sort((a, b) => a - b);
+  const ordenados = [...new Set(ids.map((id) => aIdEntero(id, 'id_disponibilidad')))].sort((a, b) => a - b);
   if (ordenados.length < 2) {
     const fila = await bloquearDisponibilidad(tx, ordenados[0], ahora);
     return fila ? [fila] : [];
   }
+  const momento = aMarcaTiempoOpcional(ahora);
   return tx.$queryRaw`
     SELECT id_disponibilidad, estado,
       (fecha + hora) > (
-        COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+        COALESCE(${momento}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
       ) AS futura
     FROM disponibilidad
     WHERE id_disponibilidad = ${ordenados[0]}
@@ -193,10 +199,11 @@ async function bloquearDisponibilidades(tx, ids, ahora = null) {
 }
 
 async function bloquearCita(tx, id_cita) {
+  const id = aIdEntero(id_cita, 'id_cita');
   const rows = await tx.$queryRaw`
     SELECT id_cita, id_disponibilidad, estado
     FROM cita
-    WHERE id_cita = ${Number(id_cita)}
+    WHERE id_cita = ${id}
     FOR UPDATE
   `;
   return rows[0] ?? null;
@@ -340,6 +347,8 @@ async function cambiarEstadoConTransaccion(id_cita, estado, {
 
 /** Cancela en bloques citas pendientes/confirmadas cuyo horario local ya venció. */
 async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100 } = {}) {
+  const momento = aMarcaTiempoOpcional(ahora);
+  const limiteSeguro = aLimiteEntero(limite, { minimo: 1, maximo: 1000 });
   return prisma.$transaction(async (tx) => {
     const vencidas = await tx.$queryRaw`
       SELECT c.id_cita
@@ -347,10 +356,10 @@ async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100 } = 
       JOIN disponibilidad d ON d.id_disponibilidad = c.id_disponibilidad
       WHERE c.estado IN ('pendiente', 'confirmado')
         AND (d.fecha + d.hora) <= (
-          COALESCE(${ahora}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
+          COALESCE(${momento}::timestamptz, CURRENT_TIMESTAMP) AT TIME ZONE 'America/Bogota'
         )
       ORDER BY d.fecha ASC, d.hora ASC, c.id_cita ASC
-      LIMIT ${limite}
+      LIMIT ${limiteSeguro}
       FOR UPDATE OF c SKIP LOCKED
     `;
 

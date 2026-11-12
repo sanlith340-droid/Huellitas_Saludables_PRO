@@ -10,8 +10,11 @@ Guía paso a paso para levantar **base de datos + backend + frontend** y comprob
 > Importante: los comandos `npm` se ejecutan **dentro de `back/` o de `front/`**, nunca en la raíz del repositorio (el `package.json` de la raíz es un resto antiguo del frontend y no arranca nada útil).
 
 ---
+## NOTA DEBE HABER FRANAJS CREADAS DE LOS ESPECIALISTAS
 
 ## Usuarios de demostración
+
+Para la demostracion, en la termianl poner (`npm run migrate`)
 
 La semilla (`npm run seed`) crea estos usuarios. **Todos tienen la contraseña `123456`** y se guardan con hash bcrypt.
 
@@ -25,6 +28,9 @@ La semilla (`npm run seed`) crea estos usuarios. **Todos tienen la contraseña `
 
 Nunca cargues estos datos en producción.
 
+##  NOTA ASEGURARSE QUE DENTRO DEL BACK ESTE EL ARCHIVO ENV
+
+
 ---
 
 ## Camino A: Docker
@@ -34,6 +40,8 @@ Desde la raíz del proyecto:
 ```bash
 cp .env.docker.example .env
 ```
+Esto genera el JWT SECRET node -e "console.log(require('crypto').randomBytes48 ? '' : require('crypto').randomBytes(48).toString('hex'))"
+
 
 Edita `.env` y cambia como mínimo:
 

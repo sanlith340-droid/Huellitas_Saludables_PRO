@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import ListaErrores from "../components/ListaErrores";
+import { erroresDeRespuesta } from "../utils/errores";
+import {
+  bloquearTeclaEspacio,
+  bloquearTeclaNoDigito,
+  sinEspacios,
+  soloDigitos,
+} from "../utils/inputs";
 import {
   FaUserPlus,
   FaUserShield,
@@ -61,6 +69,12 @@ const FORM_INICIAL = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TELEFONO_REGEX = /^\d{7,10}$/;
+
+type ErrorCampo = {
+  campo: string;
+  mensaje: string;
+};
 
 function iniciales(nombre = "", apellidos = "") {
   return `${nombre.charAt(0)}${apellidos.charAt(0)}`.toUpperCase() || "?";
@@ -76,7 +90,7 @@ function GestionUsuarios() {
 
   // Formulario
   const [form, setForm] = useState(FORM_INICIAL);
-  const [errorForm, setErrorForm] = useState("");
+  const [erroresForm, setErroresForm] = useState<ErrorCampo[]>([]);
   const [enviando, setEnviando] = useState(false);
 
   // Lista
@@ -84,6 +98,9 @@ function GestionUsuarios() {
   const [busqueda, setBusqueda] = useState("");
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+
+  const camposInvalidos = new Set(erroresForm.map((error) => error.campo));
+  const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -125,35 +142,105 @@ function GestionUsuarios() {
   }, [personal, filtro, busqueda]);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let valor = value;
+
+    // Teléfono solo numérico; correo y contraseñas sin espacios.
+    if (name === "telefono") valor = soloDigitos(valor);
+    if (name === "correo" || name === "contrasena" || name === "confirmar") {
+      valor = sinEspacios(valor);
+    }
+
+    setForm({ ...form, [name]: valor });
   };
 
-  const validar = () => {
-    if (!form.nombre.trim() || !form.apellidos.trim()) return "Ingresa nombre y apellidos.";
-    if (!form.telefono.trim()) return "Ingresa el teléfono.";
-    if (!EMAIL_REGEX.test(form.correo.trim())) return "Ingresa un correo electrónico válido.";
-    if (!form.direccion.trim()) return "Ingresa la dirección.";
-    if (form.rol === "especialista" && !form.especializacion.trim()) {
-      return "La especialización es obligatoria para especialistas.";
+  /**
+   * Devuelve TODOS los problemas del formulario, uno por regla,
+   * para mostrarlos en columna y no de a uno por envío.
+   */
+  const validar = (): ErrorCampo[] => {
+    const errores: ErrorCampo[] = [];
+
+    if (!form.nombre.trim()) errores.push({ campo: "nombre", mensaje: "Ingresa el nombre." });
+    if (!form.apellidos.trim()) {
+      errores.push({ campo: "apellidos", mensaje: "Ingresa los apellidos." });
     }
-    if (/\s/u.test(form.contrasena)) return "La contraseña no puede contener espacios.";
-    if (/\s/u.test(form.confirmar)) return "La confirmación no puede contener espacios.";
-    if (form.contrasena.length < 4) return "La contraseña debe tener al menos 4 caracteres.";
-    if (form.contrasena !== form.confirmar) return "Las contraseñas no coinciden.";
-    return "";
+
+    if (!form.telefono) {
+      errores.push({ campo: "telefono", mensaje: "Ingresa el teléfono." });
+    } else if (!/^\d+$/.test(form.telefono)) {
+      errores.push({
+        campo: "telefono",
+        mensaje: "El teléfono solo puede contener números, sin letras ni símbolos.",
+      });
+    } else if (!TELEFONO_REGEX.test(form.telefono)) {
+      errores.push({
+        campo: "telefono",
+        mensaje: "El teléfono debe tener entre 7 y 10 dígitos.",
+      });
+    }
+
+    if (!form.correo) {
+      errores.push({ campo: "correo", mensaje: "Ingresa el correo electrónico." });
+    } else if (/\s/u.test(form.correo)) {
+      errores.push({
+        campo: "correo",
+        mensaje: "El correo electrónico no puede contener espacios.",
+      });
+    } else if (!EMAIL_REGEX.test(form.correo.trim())) {
+      errores.push({
+        campo: "correo",
+        mensaje: "Ingresa un correo electrónico válido (ej. nombre@correo.com).",
+      });
+    }
+
+    if (!form.direccion.trim()) {
+      errores.push({ campo: "direccion", mensaje: "Ingresa la dirección." });
+    }
+
+    if (form.rol === "especialista" && !form.especializacion.trim()) {
+      errores.push({
+        campo: "especializacion",
+        mensaje: "La especialización es obligatoria para especialistas.",
+      });
+    }
+
+    if (!form.contrasena) {
+      errores.push({ campo: "contrasena", mensaje: "Ingresa la contraseña." });
+    } else if (/\s/u.test(form.contrasena)) {
+      errores.push({
+        campo: "contrasena",
+        mensaje: "La contraseña no puede contener espacios.",
+      });
+    } else if (form.contrasena.length < 4) {
+      errores.push({
+        campo: "contrasena",
+        mensaje: "La contraseña debe tener al menos 4 caracteres.",
+      });
+    }
+
+    if (!form.confirmar) {
+      errores.push({ campo: "confirmar", mensaje: "Confirma la contraseña." });
+    } else if (/\s/u.test(form.confirmar)) {
+      errores.push({
+        campo: "confirmar",
+        mensaje: "La confirmación no puede contener espacios.",
+      });
+    } else if (form.contrasena !== form.confirmar) {
+      errores.push({ campo: "confirmar", mensaje: "Las contraseñas no coinciden." });
+    }
+
+    return errores;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAviso("");
 
-    const problema = validar();
-    if (problema) {
-      setErrorForm(problema);
-      return;
-    }
+    const problemas = validar();
+    setErroresForm(problemas);
+    if (problemas.length > 0) return;
 
-    setErrorForm("");
     setEnviando(true);
 
     // La API no admite "especializacion" para roles distintos de especialista
@@ -180,7 +267,8 @@ function GestionUsuarios() {
       setForm({ ...FORM_INICIAL, rol: form.rol });
       await cargar();
     } catch (err) {
-      setErrorForm(err.response?.data?.message || "No se pudo crear la cuenta.");
+      const detalles = erroresDeRespuesta(err, "No se pudo crear la cuenta.");
+      setErroresForm(detalles.map((mensaje) => ({ campo: "", mensaje })));
     } finally {
       setEnviando(false);
     }
@@ -242,7 +330,10 @@ function GestionUsuarios() {
                     type="button"
                     key={rol}
                     className={`chip ${form.rol === rol ? "chip--active" : ""}`}
-                    onClick={() => setForm({ ...form, rol, especializacion: "" })}
+                    onClick={() => {
+                      setForm({ ...form, rol, especializacion: "" });
+                      setErroresForm([]);
+                    }}
                   >
                     {ROL_ICON[rol]} {ROL_LABEL[rol]}
                   </button>
@@ -253,7 +344,14 @@ function GestionUsuarios() {
             <div className="field-row">
               <div className="field">
                 <label htmlFor="nombre">Nombre</label>
-                <input id="nombre" name="nombre" value={form.nombre} onChange={handleChange} maxLength={100} />
+                <input
+                  id="nombre"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  aria-invalid={esInvalido("nombre")}
+                  maxLength={100}
+                />
               </div>
               <div className="field">
                 <label htmlFor="apellidos">Apellidos</label>
@@ -262,6 +360,7 @@ function GestionUsuarios() {
                   name="apellidos"
                   value={form.apellidos}
                   onChange={handleChange}
+                  aria-invalid={esInvalido("apellidos")}
                   maxLength={150}
                 />
               </div>
@@ -270,7 +369,22 @@ function GestionUsuarios() {
             <div className="field-row">
               <div className="field">
                 <label htmlFor="telefono">Teléfono</label>
-                <input id="telefono" name="telefono" value={form.telefono} onChange={handleChange} maxLength={20} />
+                <input
+                  id="telefono"
+                  name="telefono"
+                  type="tel"
+                  value={form.telefono}
+                  onChange={handleChange}
+                  onKeyDown={bloquearTeclaNoDigito}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  aria-invalid={esInvalido("telefono")}
+                  aria-describedby="telefono-ayuda"
+                  maxLength={10}
+                />
+                <span className="field__hint" id="telefono-ayuda">
+                  Solo números.
+                </span>
               </div>
               <div className="field">
                 <label htmlFor="correo">Correo</label>
@@ -280,14 +394,28 @@ function GestionUsuarios() {
                   type="email"
                   value={form.correo}
                   onChange={handleChange}
+                  onKeyDown={bloquearTeclaEspacio}
+                  aria-invalid={esInvalido("correo")}
+                  aria-describedby="correo-ayuda"
+                  spellCheck={false}
                   maxLength={150}
                 />
+                <span className="field__hint" id="correo-ayuda">
+                  Sin espacios.
+                </span>
               </div>
             </div>
 
             <div className="field">
               <label htmlFor="direccion">Dirección</label>
-              <input id="direccion" name="direccion" value={form.direccion} onChange={handleChange} maxLength={150} />
+              <input
+                id="direccion"
+                name="direccion"
+                value={form.direccion}
+                onChange={handleChange}
+                aria-invalid={esInvalido("direccion")}
+                maxLength={150}
+              />
             </div>
 
             {form.rol === "especialista" && (
@@ -298,6 +426,7 @@ function GestionUsuarios() {
                   name="especializacion"
                   value={form.especializacion}
                   onChange={handleChange}
+                  aria-invalid={esInvalido("especializacion")}
                   maxLength={100}
                   placeholder="Ej. Medicina felina"
                 />
@@ -314,6 +443,8 @@ function GestionUsuarios() {
                   autoComplete="new-password"
                   value={form.contrasena}
                   onChange={handleChange}
+                  onKeyDown={bloquearTeclaEspacio}
+                  aria-invalid={esInvalido("contrasena")}
                 />
               </div>
               <div className="field">
@@ -325,11 +456,13 @@ function GestionUsuarios() {
                   autoComplete="new-password"
                   value={form.confirmar}
                   onChange={handleChange}
+                  onKeyDown={bloquearTeclaEspacio}
+                  aria-invalid={esInvalido("confirmar")}
                 />
               </div>
             </div>
 
-            {errorForm && <p className="message message-error">{errorForm}</p>}
+            <ListaErrores errores={erroresForm.map((error) => error.mensaje)} />
 
             <button className="btn btn-primary btn-block" disabled={enviando}>
               <FaUserPlus /> {enviando ? "Creando..." : `Crear ${ROL_LABEL[form.rol].toLowerCase()}`}

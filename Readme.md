@@ -90,7 +90,7 @@ flowchart LR
 | Servidor web | Nginx | 1.27-alpine | Sirve la SPA y hace proxy a la API |
 | Contenedores | Docker + Compose v2 | — | Orquestación local y de pruebas |
 
-> La justificación de cada elección está en el [registro de decisiones técnicas](#8-decisiones-técnicas).
+> El catálogo completo de tecnologías, responsabilidades y motivos está en [Tecnologías, responsabilidades y motivos](docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md); las decisiones principales también se resumen en el [registro de decisiones técnicas](#8-decisiones-técnicas).
 
 ---
 
@@ -237,7 +237,7 @@ erDiagram
 | Citas | `GET/POST/PUT /api/citas` · `PATCH /api/citas/{id}/cancelar` · `GET …/especialista/{id}` | `usuario`, `recepcionista`, `admin` |
 | Historia clínica | `GET/POST/PUT /api/historia` · `GET …/mascota/{id}` · `GET …/cita/{id}` | `especialista` |
 
-Lista completa con roles: [`docs/backend/API.md`](docs/backend/API.md). Códigos habituales: `400` validación · `401` token ausente/inválido · `403` rol sin permiso · `404` no encontrado · `503` sin base de datos.
+Lista completa con roles: [`docs/back/API.md`](docs/back/API.md). Códigos habituales: `400` validación · `401` token ausente/inválido · `403` rol sin permiso · `404` no encontrado · `503` sin base de datos.
 
 ---
 
@@ -254,13 +254,13 @@ Lista completa con roles: [`docs/backend/API.md`](docs/backend/API.md). Códigos
 
 | Indicador | Valor |
 |---|---|
-| Archivos de prueba | 16 (en `back/tests/`) |
-| Casos de prueba | 241 (última ejecución completa) |
-| Cubre | Login/registro, JWT, `401`/`403`, citas, disponibilidad (filtros, paginación, conflictos), historias, mascotas, usuarios |
-| No cubre | Frontend (sin tests), pruebas E2E, pruebas de carga |
-| Aislamiento | Base temporal `proyectohs_test` recreada en cada ejecución |
+| Archivos de prueba | 23 en `back/tests/` (11 unitarios y 12 de integración, según el árbol revisado) |
+| Casos de prueba | 334 aprobados en una ejecución histórica registrada en la bitácora del 13/11/2026; no se reejecutó para esta actualización |
+| Cubre | Autenticación, validación, JWT, contraseñas, SQL, usuarios, mascotas, disponibilidad, citas, historias clínicas y cancelación automática |
+| Falta o es parcial | Frontend automatizado/E2E, sistema completo, aceptación formal, rendimiento/carga/estrés, compatibilidad y pruebas formales de usabilidad |
+| Aislamiento | Compose de pruebas usa PostgreSQL temporal; en local verificar `DB_HOST` y `DB_NAME_TEST` antes de ejecutar, ya que el sufijo `_test` no garantiza que el host sea local |
 
-> ⚠️ **La suite borra y recrea la base indicada en `DB_NAME_TEST`.** No la apuntes a una base con datos que quieras conservar.
+> **Precaución:** el setup crea y elimina la base indicada en `DB_NAME_TEST`. El validador exige un nombre seguro terminado en `_test` y distinto de `DB_NAME`, pero no demuestra que `DB_HOST` sea local. No apuntes a producción ni a una base con datos que quieras conservar.
 
 ```bash
 cd back
@@ -277,7 +277,7 @@ docker compose -f docker-compose.test.yml up --build --abort-on-container-exit -
 docker compose -f docker-compose.test.yml down -v
 ```
 
-Más detalle en [`docs/tests/PRUEBAS.md`](docs/tests/PRUEBAS.md).
+Consulta el [Plan Maestro de Pruebas](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) y la [guía de ejecución](docs/test/EJECUCION.md) para el alcance, las 18 categorías y los controles de seguridad de la base de pruebas.
 
 ---
 
@@ -300,7 +300,7 @@ Más detalle en [`docs/tests/PRUEBAS.md`](docs/tests/PRUEBAS.md).
 | `backend` | Build de `back/Dockerfile` | Espera a la BD → migra → (opcional) siembra → inicia la API |
 | `frontend` | Build multi-etapa + `nginx:1.27-alpine` | Sirve la SPA y hace proxy a la API |
 
-Los tres tienen *healthchecks* y orden de arranque (`depends_on: service_healthy`). Detalles en [`DOCKER.md`](DOCKER.md).
+Los servicios tienen dependencias de arranque; PostgreSQL y backend definen *healthchecks*. Detalles en [`docs/back/DOCKER.md`](docs/back/DOCKER.md).
 
 ### Variables de entorno
 
@@ -397,7 +397,7 @@ La semilla Prisma (`back/prisma/seed.js`) crean usuarios de cada rol (`ADM001`, 
 
 ## 8. Decisiones técnicas
 
-El registro completo (contexto, evidencia, consecuencias y alternativas) está en [`docs/backend/DECISIONES_TECNICAS.md`](docs/backend/DECISIONES_TECNICAS.md).
+El registro maestro de arquitectura, reglas de negocio y decisiones técnicas de frontend, backend y base de datos está en [`docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md`](docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md). La documentación anterior de decisiones backend debe leerse junto con ese documento porque puede conservar datos históricos ya actualizados en el código.
 
 | ID | Decisión | En una línea |
 |---|---|---|
@@ -414,7 +414,7 @@ El registro completo (contexto, evidencia, consecuencias y alternativas) está e
 | DT-011 | OpenAPI / Swagger UI | Contrato consultable desde el navegador |
 | DT-012 | dotenv + Docker + entrypoint | Configuración por entorno; migra al iniciar |
 
-> Hoy el registro cubre solo el backend. Falta documentar las decisiones del frontend (React/Vite/TypeScript, `localStorage` para el token, Nginx como proxy) y del despliegue.
+> El documento maestro distingue decisiones observadas de motivaciones históricas no comprobadas, e incluye las 45 reglas originales, cinco reglas complementarias (RN46–RN50) y el estado de las 18 tareas del plan adjunto.
 
 ---
 
@@ -470,13 +470,19 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 
 | Documento | Contenido |
 |---|---|
-| [`DOCKER.md`](DOCKER.md) | Despliegue con Docker en detalle |
-| [`docs/backend/ARQUITECTURA.md`](docs/backend/ARQUITECTURA.md) | Arquitectura, relaciones y pantallas |
-| [`docs/backend/API.md`](docs/backend/API.md) | Todas las rutas y roles |
-| [`docs/backend/DESARROLLO.md`](docs/backend/DESARROLLO.md) | Trabajar en el backend: Prisma Migrate, semilla y pruebas |
-| [`docs/backend/DECISIONES_TECNICAS.md`](docs/backend/DECISIONES_TECNICAS.md) | Registro DT-001 … DT-012 |
-| [`docs/tests/PRUEBAS.md`](docs/tests/PRUEBAS.md) | Guía de la suite de pruebas |
-| [`MENSAJES_DE_ERROR_POR_ROL.md`](MENSAJES_DE_ERROR_POR_ROL.md) | Mensajes de permisos (backend y frontend) |
+| [`docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md`](docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md) | Documento maestro: arquitectura de tres capas, stack frontend/backend/BD, RN01–RN50, estado de las 18 tareas y evolución prevista. |
+| [`docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md`](docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md) | Función, responsabilidad, versión, motivos documentados o inferidos, límites y evidencia de las tecnologías del proyecto. |
+| [`docs/README.md`](docs/README.md) | Índice de la documentación organizada |
+| [`docs/arranque.md`](docs/arranque.md) | Iniciar con Docker o en desarrollo local |
+| [`docs/front/README.md`](docs/front/README.md) | Organización, responsabilidades y comandos del frontend |
+| [`docs/test/README.md`](docs/test/README.md) | Índice y estado de la documentación de pruebas |
+| [`docs/test/PLAN_MAESTRO_DE_PRUEBAS.md`](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) | Las 18 categorías, cobertura actual, brechas y escenarios propuestos |
+| [`docs/test/EJECUCION.md`](docs/test/EJECUCION.md) | Comandos de pruebas y seguridad de DB_NAME_TEST |
+| [`docs/back/DOCKER.md`](docs/back/DOCKER.md) | Referencia detallada del despliegue local con Docker |
+| [`docs/back/ARQUITECTURA.md`](docs/back/ARQUITECTURA.md) | Arquitectura y relaciones del backend |
+| [`docs/back/API.md`](docs/back/API.md) | Rutas y roles de la API |
+| [`docs/back/DESARROLLO.md`](docs/back/DESARROLLO.md) | Desarrollo backend, migraciones, semilla y pruebas |
+| [`docs/back/MENSAJES_DE_ERROR_POR_ROL.md`](docs/back/MENSAJES_DE_ERROR_POR_ROL.md) | Mensajes de permisos (backend y frontend) |
 
 ```text
 Huellitas_Saludables_PRO/
@@ -487,7 +493,11 @@ Huellitas_Saludables_PRO/
 ├── front/                   # SPA React + TypeScript + Vite
 │   └── src/                 #   pages · components · routes · context · services
 ├── database/                # Scripts SQL históricos de referencia (la app usa migraciones)
-├── docs/                    # backend/ · tests/
+├── docs/                    # única carpeta de documentación
+│   ├── arranque.md           # inicio local/Docker
+│   ├── back/                 # documentación backend/técnica
+│   ├── front/                # guía del frontend
+│   └── test/                 # plan maestro y ejecución de pruebas
 ├── docker-compose.yml       # db + backend + frontend
 └── docker-compose.test.yml  # pruebas con BD temporal
 ```

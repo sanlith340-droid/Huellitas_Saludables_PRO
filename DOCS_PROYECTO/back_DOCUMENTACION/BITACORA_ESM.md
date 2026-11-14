@@ -46,7 +46,7 @@ Realizar la migración del backend del proyecto HUELLITAS SALUDABLES desde el si
 | 08/11/2026 | 3:00 a. m. | Se ejecutó la batería de pruebas automatizadas: 11 suites y 179 pruebas aprobadas. |
 | 08/11/2026 | 3:30 a. m. | Se verificó la comunicación entre React y el backend, comprobando la autenticación, las rutas de mascotas, citas, disponibilidad y razas, así como la configuración CORS. |
 | 08/11/2026 | 4:00 a. m. | Se revisó la configuración de Docker, confirmando que el comando de inicio `node server.js` continuara siendo compatible. |
-| 08/11/2026 | 4:30 a. m. | Se consolidaron los cambios realizados y se documentó el proceso de migración en `docs/backend/Bitacora_Migracion_ESM.md`. |
+| 08/11/2026 | 4:30 a. m. | Se consolidaron los cambios realizados y se documentó el proceso de migración en `docs/back/Bitacora_Migracion_ESM.md`. |
 
 ### 4. Archivos modificados
 

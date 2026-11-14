@@ -434,6 +434,13 @@ img {
   gap: 14px;
 }
 
+.field__hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.78rem;
+  color: var(--ink-600);
+}
+
 input,
 select {
   width: 100%;
@@ -487,6 +494,52 @@ select:focus {
 .message-success {
   background: #e8f1e6;
   color: #2f5c3a;
+}
+
+/* ---------- Errores por campo (columna, uno por fila) ---------- */
+
+.lista-errores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.lista-errores__item {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--red-600);
+  border-radius: var(--radius-sm);
+  background: #fbe9e4;
+  color: var(--red-600);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(-6px);
+  animation: error-aparece 0.3s ease-out forwards;
+}
+
+@keyframes error-aparece {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--red-600);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lista-errores__item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ---------- Dashboard ---------- */

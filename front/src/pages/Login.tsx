@@ -2,7 +2,46 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import ListaErrores from "../components/ListaErrores";
+import { erroresDeRespuesta } from "../utils/errores";
+import { bloquearTeclaEspacio, sinEspacios } from "../utils/inputs";
 import huLogo from "../assets/hu.png";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type ErrorCampo = {
+  campo: string;
+  mensaje: string;
+};
+
+function validarLogin(form: { correo: string; contrasena: string }): ErrorCampo[] {
+  const errores: ErrorCampo[] = [];
+
+  if (!form.correo) {
+    errores.push({ campo: "correo", mensaje: "Ingresa tu correo electrónico." });
+  } else if (/\s/u.test(form.correo)) {
+    errores.push({
+      campo: "correo",
+      mensaje: "El correo electrónico no puede contener espacios.",
+    });
+  } else if (!EMAIL_REGEX.test(form.correo)) {
+    errores.push({
+      campo: "correo",
+      mensaje: "Ingresa un correo electrónico válido (ej. nombre@correo.com).",
+    });
+  }
+
+  if (!form.contrasena) {
+    errores.push({ campo: "contrasena", mensaje: "Ingresa tu contraseña." });
+  } else if (/\s/u.test(form.contrasena)) {
+    errores.push({
+      campo: "contrasena",
+      mensaje: "La contraseña no puede contener espacios.",
+    });
+  }
+
+  return errores;
+}
 
 function Login() {
   const navigate = useNavigate();
@@ -13,27 +52,36 @@ function Login() {
     contrasena: "",
   });
 
-  const [mensaje, setMensaje] = useState("");
+  const [errores, setErrores] = useState<ErrorCampo[]>([]);
   const [cargando, setCargando] = useState(false);
 
+  const camposInvalidos = new Set(errores.map((error) => error.campo));
+  const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    // Correo y contraseña: prohibido escribir espacios.
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [name]: sinEspacios(value),
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensaje("");
-    if (/\s/u.test(form.contrasena)) {
-      setMensaje("La contraseña no puede contener espacios.");
-      return;
-    }
+    setErrores([]);
+
+    const problemas = validarLogin(form);
+    setErrores(problemas);
+    if (problemas.length > 0) return;
+
     setCargando(true);
 
     try {
-      const respuesta = await api.post("/auth/login", form);
+      const respuesta = await api.post("/auth/login", {
+        correo: form.correo.trim(),
+        contrasena: form.contrasena,
+      });
       const datos = respuesta.data.data;
 
       login(datos.usuario);
@@ -41,7 +89,8 @@ function Login() {
 
       navigate("/dashboard");
     } catch (error) {
-      setMensaje(error.response?.data?.message || "Error al iniciar sesión");
+      const detalles = erroresDeRespuesta(error, "Error al iniciar sesión");
+      setErrores(detalles.map((mensaje) => ({ campo: "", mensaje })));
     } finally {
       setCargando(false);
     }
@@ -74,8 +123,16 @@ function Login() {
                 placeholder="nombre@correo.com"
                 value={form.correo}
                 onChange={handleChange}
+                onKeyDown={bloquearTeclaEspacio}
+                aria-invalid={esInvalido("correo")}
+                aria-describedby="correo-ayuda"
+                autoComplete="email"
+                spellCheck={false}
                 required
               />
+              <span className="field__hint" id="correo-ayuda">
+                Sin espacios.
+              </span>
             </div>
 
             <div className="field">
@@ -87,16 +144,23 @@ function Login() {
                 placeholder="••••••••"
                 value={form.contrasena}
                 onChange={handleChange}
+                onKeyDown={bloquearTeclaEspacio}
+                aria-invalid={esInvalido("contrasena")}
+                aria-describedby="contrasena-ayuda"
+                autoComplete="current-password"
                 required
               />
+              <span className="field__hint" id="contrasena-ayuda">
+                Sin espacios.
+              </span>
             </div>
+
+            <ListaErrores errores={errores.map((error) => error.mensaje)} />
 
             <button className="btn btn-primary btn-block" disabled={cargando}>
               {cargando ? "Ingresando..." : "Iniciar sesión"}
             </button>
           </form>
-
-          {mensaje && <p className="message message-error">{mensaje}</p>}
 
           <p className="form-footer">
             ¿Aún no tienes cuenta? <Link to="/registro">Regístrate aquí</Link>

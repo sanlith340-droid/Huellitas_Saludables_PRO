@@ -8,6 +8,8 @@ import AppError from '../utils/AppError.js';
 const CAMPOS_NO_NORMALIZABLES = /^(password|passwd|pwd|contrasena|contraseña|clave|token|authorization)$/i;
 const CAMPOS_CREDENCIAL = /^(password|passwd|pwd|contrasena|contraseña)$/i;
 const CAMPOS_ENUM = /^(especie|genero|estado|rol|tipo)$/i;
+const CAMPOS_CORREO = /^(correo|email|correo_electronico)$/i;
+const CAMPOS_TELEFONO = /^(telefono|teléfono|celular)$/i;
 
 function normalizarEspacios(valor, clave = '') {
   if (typeof valor === 'string') {
@@ -65,10 +67,13 @@ function mensajeValidacion(detalle) {
     case 'boolean.base': return `${campo} debe ser verdadero o falso.`;
     case 'date.base': return `${campo} debe ser una fecha válida.`;
     case 'any.only': return `${campo} tiene un valor no permitido.`;
-    case 'string.pattern.base':
-      return CAMPOS_CREDENCIAL.test(campo.split('.').at(-1) || '')
-        ? 'La contraseña no puede contener espacios.'
-        : `${campo} tiene un formato inválido.`;
+    case 'string.pattern.base': {
+      const nombreCampo = campo.split('.').at(-1) || '';
+      if (CAMPOS_CREDENCIAL.test(nombreCampo)) return 'La contraseña no puede contener espacios.';
+      if (CAMPOS_CORREO.test(nombreCampo)) return 'El correo electrónico no puede contener espacios.';
+      if (CAMPOS_TELEFONO.test(nombreCampo)) return 'El teléfono solo puede contener números.';
+      return `${campo} tiene un formato inválido.`;
+    }
     default: return `${campo} no es válido.`;
   }
 }
@@ -87,7 +92,17 @@ function validate(schema, property = 'body') {
     });
 
     if (error) {
-      const mensajes = error.details.map(mensajeValidacion);
+      // Un mensaje por campo: si varias reglas fallan sobre el mismo dato
+      // (p. ej. correo con espacios y con formato inválido), se informa solo
+      // el primer problema, para que el frontend muestre un error por fila.
+      const mensajes = [];
+      const camposConError = new Set();
+      for (const detalle of error.details) {
+        const campo = Array.isArray(detalle.path) ? detalle.path.join('.') : '';
+        if (camposConError.has(campo)) continue;
+        camposConError.add(campo);
+        mensajes.push(mensajeValidacion(detalle));
+      }
       return next(AppError.badRequest(mensajes.join(' '), { fields: mensajes }));
     }
 

@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
+import ListaErrores from "../components/ListaErrores";
+import { erroresDeRespuesta } from "../utils/errores";
+import {
+  bloquearTeclaEspacio,
+  bloquearTeclaNoDigito,
+  sinEspacios,
+  soloDigitos,
+} from "../utils/inputs";
 import huLogo from "../assets/hu.png";
 
 const ESTADO_INICIAL = {
@@ -13,33 +21,121 @@ const ESTADO_INICIAL = {
   tipo: "principal",
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TELEFONO_REGEX = /^\d{7,10}$/;
+
+type ErrorCampo = {
+  campo: string;
+  mensaje: string;
+};
+
+/**
+ * Valida todos los campos y devuelve TODOS los problemas encontrados,
+ * uno por cada regla incumplida, para mostrarlos en columna.
+ */
+function validarRegistro(form: typeof ESTADO_INICIAL): ErrorCampo[] {
+  const errores: ErrorCampo[] = [];
+
+  if (!form.nombre.trim()) {
+    errores.push({ campo: "nombre", mensaje: "Ingresa tu nombre." });
+  }
+
+  if (!form.apellidos.trim()) {
+    errores.push({ campo: "apellidos", mensaje: "Ingresa tus apellidos." });
+  }
+
+  if (!form.correo) {
+    errores.push({ campo: "correo", mensaje: "Ingresa tu correo electrónico." });
+  } else if (/\s/u.test(form.correo)) {
+    errores.push({
+      campo: "correo",
+      mensaje: "El correo electrónico no puede contener espacios.",
+    });
+  } else if (!EMAIL_REGEX.test(form.correo)) {
+    errores.push({
+      campo: "correo",
+      mensaje: "Ingresa un correo electrónico válido (ej. nombre@correo.com).",
+    });
+  }
+
+  if (!form.telefono) {
+    errores.push({ campo: "telefono", mensaje: "Ingresa tu número de teléfono." });
+  } else if (!/^\d+$/.test(form.telefono)) {
+    errores.push({
+      campo: "telefono",
+      mensaje: "El teléfono solo puede contener números, sin letras ni símbolos.",
+    });
+  } else if (!TELEFONO_REGEX.test(form.telefono)) {
+    errores.push({
+      campo: "telefono",
+      mensaje: "El teléfono debe tener entre 7 y 10 dígitos.",
+    });
+  }
+
+  if (!form.direccion.trim()) {
+    errores.push({ campo: "direccion", mensaje: "Ingresa tu dirección." });
+  }
+
+  if (!form.contrasena) {
+    errores.push({ campo: "contrasena", mensaje: "Ingresa una contraseña." });
+  } else if (/\s/u.test(form.contrasena)) {
+    errores.push({
+      campo: "contrasena",
+      mensaje: "La contraseña no puede contener espacios.",
+    });
+  } else if (form.contrasena.length < 4) {
+    errores.push({
+      campo: "contrasena",
+      mensaje: "La contraseña debe tener al menos 4 caracteres.",
+    });
+  }
+
+  return errores;
+}
+
 function Registro() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(ESTADO_INICIAL);
+  const [errores, setErrores] = useState<ErrorCampo[]>([]);
   const [mensaje, setMensaje] = useState("");
   const [exito, setExito] = useState(false);
   const [cargando, setCargando] = useState(false);
 
+  const camposInvalidos = new Set(errores.map((error) => error.campo));
+  const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    let valor = value;
+
+    // El teléfono solo admite dígitos; correo y contraseña no admiten espacios.
+    if (name === "telefono") valor = soloDigitos(valor);
+    if (name === "correo" || name === "contrasena") valor = sinEspacios(valor);
+
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [name]: valor,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje("");
-    if (/\s/u.test(form.contrasena)) {
-      setExito(false);
-      setMensaje("La contraseña no puede contener espacios.");
-      return;
-    }
+    setExito(false);
+
+    const problemas = validarRegistro(form);
+    setErrores(problemas);
+    if (problemas.length > 0) return;
+
     setCargando(true);
 
     try {
-      await api.post("/auth/registro", form);
+      await api.post("/auth/registro", {
+        ...form,
+        correo: form.correo.trim(),
+        telefono: form.telefono.trim(),
+      });
 
       setExito(true);
       setMensaje("Cuenta creada. Ya puedes iniciar sesión.");
@@ -47,8 +143,8 @@ function Registro() {
 
       setTimeout(() => navigate("/login"), 1500);
     } catch (error) {
-      setExito(false);
-      setMensaje(error.response?.data?.message || "No se pudo completar el registro");
+      const detalles = erroresDeRespuesta(error, "No se pudo completar el registro");
+      setErrores(detalles.map((mensajeError) => ({ campo: "", mensaje: mensajeError })));
     } finally {
       setCargando(false);
     }
@@ -82,6 +178,8 @@ function Registro() {
                   placeholder="Nombre"
                   value={form.nombre}
                   onChange={handleChange}
+                  aria-invalid={esInvalido("nombre")}
+                  autoComplete="given-name"
                   required
                 />
               </div>
@@ -95,6 +193,8 @@ function Registro() {
                   placeholder="Apellidos"
                   value={form.apellidos}
                   onChange={handleChange}
+                  aria-invalid={esInvalido("apellidos")}
+                  autoComplete="family-name"
                   required
                 />
               </div>
@@ -109,8 +209,16 @@ function Registro() {
                 placeholder="nombre@correo.com"
                 value={form.correo}
                 onChange={handleChange}
+                onKeyDown={bloquearTeclaEspacio}
+                aria-invalid={esInvalido("correo")}
+                aria-describedby="correo-ayuda"
+                autoComplete="email"
+                spellCheck={false}
                 required
               />
+              <span className="field__hint" id="correo-ayuda">
+                Sin espacios.
+              </span>
             </div>
 
             <div className="field-row">
@@ -123,8 +231,18 @@ function Registro() {
                   placeholder="3001234567"
                   value={form.telefono}
                   onChange={handleChange}
+                  onKeyDown={bloquearTeclaNoDigito}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  aria-invalid={esInvalido("telefono")}
+                  aria-describedby="telefono-ayuda"
+                  autoComplete="tel-national"
                   required
                 />
+                <span className="field__hint" id="telefono-ayuda">
+                  Solo números (7 a 10 dígitos).
+                </span>
               </div>
 
               <div className="field">
@@ -145,6 +263,8 @@ function Registro() {
                 placeholder="Calle 123 # 45-67"
                 value={form.direccion}
                 onChange={handleChange}
+                aria-invalid={esInvalido("direccion")}
+                autoComplete="street-address"
                 required
               />
             </div>
@@ -158,10 +278,19 @@ function Registro() {
                 placeholder="Mínimo 4 caracteres"
                 value={form.contrasena}
                 onChange={handleChange}
+                onKeyDown={bloquearTeclaEspacio}
+                aria-invalid={esInvalido("contrasena")}
+                aria-describedby="contrasena-ayuda"
+                autoComplete="new-password"
                 minLength={4}
                 required
               />
+              <span className="field__hint" id="contrasena-ayuda">
+                Sin espacios, mínimo 4 caracteres.
+              </span>
             </div>
+
+            <ListaErrores errores={errores.map((error) => error.mensaje)} />
 
             <button className="btn btn-primary btn-block" disabled={cargando}>
               {cargando ? "Creando cuenta..." : "Crear cuenta"}

@@ -19,4 +19,4 @@ Para cargar los registros de demostración en desarrollo:
 npm run seed
 ```
 
-No uses los datos demo ni sus credenciales en producción. Más información: [guía de desarrollo](backend/DESARROLLO.md) y [arquitectura](backend/ARQUITECTURA.md).
+No uses los datos demo ni sus credenciales en producción. Más información: [guía de desarrollo](DESARROLLO.md) y [arquitectura](ARQUITECTURA.md).

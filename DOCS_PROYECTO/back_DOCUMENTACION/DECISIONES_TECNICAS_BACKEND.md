@@ -256,7 +256,7 @@ Aplicar autorización en la API mediante el usuario verificado por `identifyUser
 #### Evidencia y justificación técnica
 - `back/app/middlewares/identifyUser.js` establece `req.user` desde el usuario encontrado en la base de datos y exporta `requireRole`.
 - Las rutas de cada dominio aplican los roles permitidos para operaciones específicas.
-- `docs/backend/API.md` documenta roles y rutas; esta guía describe el contrato del backend, no sustituye las verificaciones en tiempo de ejecución.
+- `docs/back/API.md` documenta roles y rutas; esta guía describe el contrato del backend, no sustituye las verificaciones en tiempo de ejecución.
 
 #### Consecuencias
 **A favor:** autenticación y autorización son controles distintos: tener un token válido no concede automáticamente acceso a todas las operaciones.
@@ -366,7 +366,7 @@ Configurar **OpenAPI** con `swagger-jsdoc` y servir una interfaz con `swagger-ui
 #### Evidencia y justificación técnica
 - `back/app/config/swagger.js` configura la especificación.
 - `back/app/app.js` monta Swagger UI en `/api-docs`.
-- `docs/backend/API.md` resume rutas y roles del backend.
+- `docs/back/API.md` resume rutas y roles del backend.
 
 #### Consecuencias
 **A favor:** el contrato puede consultarse desde navegador y compartirse con quienes consumen la API.

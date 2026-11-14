@@ -121,6 +121,18 @@ describe('Administración de personal', () => {
       expect(res.status).toBe(400);
     });
 
+    it('teléfono con caracteres no numéricos devuelve 400', async () => {
+      const res = await registrar({ ...nuevaRecepcionista(4), telefono: '310-000-0004' });
+      expect(res.status).toBe(400);
+      expect(res.body.details.fields).toContain('El teléfono solo puede contener números.');
+    });
+
+    it('correo con espacios devuelve 400', async () => {
+      const res = await registrar({ ...nuevaRecepcionista(5), correo: 'nueva rec5@proyectohs.com' });
+      expect(res.status).toBe(400);
+      expect(res.body.details.fields).toContain('El correo electrónico no puede contener espacios.');
+    });
+
     it('un especialista NO puede registrar personal (403)', async () => {
       const res = await registrar(nuevaRecepcionista(3), tokenEsp);
       expect(res.status).toBe(403);

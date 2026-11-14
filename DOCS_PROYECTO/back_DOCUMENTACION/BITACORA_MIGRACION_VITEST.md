@@ -52,7 +52,7 @@ Realizar la migración del framework de pruebas automatizadas Jest a Vitest, ada
 | 08/11/2026 | 6:15 a. m. | Se verificó el inicio del backend y el funcionamiento del endpoint `/health`, además de una respuesta HTTP 401 al consultar el perfil sin token. |
 | 08/11/2026 | 6:45 a. m. | Se verificó la autenticación desde el frontend, la redirección al dashboard y las consultas de mascotas, citas, razas y disponibilidad. |
 | 08/11/2026 | 7:15 a. m. | Se compararon los archivos del frontend y del backend para confirmar que la migración del framework de pruebas no hubiera modificado la lógica funcional de la aplicación. |
-| 08/11/2026 | 7:45 a. m. | Se documentaron los resultados, las dependencias modificadas y el procedimiento de ejecución en `docs/backend/Bitacora_Migracion_Vitest.md`. |
+| 08/11/2026 | 7:45 a. m. | Se documentaron los resultados, las dependencias modificadas y el procedimiento de ejecución en `docs/back/Bitacora_Migracion_Vitest.md`. |
 
 ### 4. Archivos modificados
 

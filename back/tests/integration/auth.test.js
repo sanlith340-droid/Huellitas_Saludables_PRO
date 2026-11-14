@@ -235,5 +235,36 @@ describe('Auth - /api/auth', () => {
         expect(res.status).toBe(400);
       }
     );
+
+    // TEST NEGATIVO: el teléfono solo admite números
+    it.each(['300-123-4567', '300 123 4567', 'teléfono300'])(
+      'teléfono con caracteres no numéricos (%j) devuelve 400',
+      async (telefono) => {
+        const res = await request(app)
+          .post('/api/auth/registro')
+          .send({
+            nombre: 'Teléfono', apellidos: 'Inválido', telefono,
+            correo: `tel_${Date.now()}_${Math.random().toString(36).slice(2)}@test.com`,
+            direccion: 'Calle X', contrasena: 'segura123',
+          });
+
+        expect(res.status).toBe(400);
+        expect(res.body.details.fields).toContain('El teléfono solo puede contener números.');
+      }
+    );
+
+    // TEST NEGATIVO: el correo no admite espacios
+    it('correo con espacios devuelve 400 con un único mensaje claro', async () => {
+      const res = await request(app)
+        .post('/api/auth/registro')
+        .send({
+          nombre: 'Correo', apellidos: 'Con Espacio', telefono: '3001234567',
+          correo: 'correo con espacio@test.com',
+          direccion: 'Calle X', contrasena: 'segura123',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.details.fields).toEqual(['El correo electrónico no puede contener espacios.']);
+    });
   });
 });

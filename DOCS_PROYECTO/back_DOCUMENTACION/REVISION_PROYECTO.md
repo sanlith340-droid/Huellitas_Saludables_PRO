@@ -61,15 +61,15 @@ En la revisión histórica, el proyecto tenía capas claras, migraciones, autori
 |---|---|---|---|
 | M1 | **RF09 y RF15 están a medias.** Notificaciones y auditoría solo escriben en consola; el README antiguo los presentaba como requisitos cubiertos. | `notificacion.service.js` · `auditLog.js` | Declararlos como parciales (ya hecho en el README nuevo) y planificarlos |
 | M2 | **Token en `localStorage`.** Es un compromiso habitual en SPAs, pero queda expuesto ante XSS. | `front/src/services/api.ts` | Registrar la decisión como DT y evaluar cookie `HttpOnly` + `SameSite` |
-| M3 | **Sin pruebas de frontend ni E2E.** La "pirámide de pruebas" del PDF queda sin cima y sin la capa del cliente. | `docs/tests/PRUEBAS.md` lo reconoce | Vitest + Testing Library; después Playwright para el flujo login → cita |
-| M4 | **Decisiones documentadas solo para el backend.** Faltan frontend (React/Vite/TS, Nginx como proxy, `localStorage`) y despliegue. | `docs/backend/Decisiones…` | Añadir DT-013 en adelante |
+| M3 | **Sin pruebas de frontend ni E2E.** La "pirámide de pruebas" del PDF queda sin cima y sin la capa del cliente. | `docs/test/README.md` lo reconoce | Vitest + Testing Library; después Playwright para el flujo login → cita |
+| M4 | **Decisiones documentadas solo para el backend.** Faltan frontend (React/Vite/TS, Nginx como proxy, `localStorage`) y despliegue. | `docs/back/Decisiones…` | Añadir DT-013 en adelante |
 | M5 | **Sin entorno de producción definido** (HTTPS, gestión de secretos, respaldos de la BD). | — | Definirlo como entregable de la dimensión DIM_05 |
 
 ### ⚪ Higiene del repositorio y documentación
 
 | # | Hallazgo | Acción |
 |---|---|---|
-| H1 | **Enlaces rotos** en el README raíz: apuntan a `docs/DESARROLLO.md`, `docs/API.md` y `docs/ARQUITECTURA.md`, pero los archivos están en `docs/backend/`. Lo mismo en `Huellitas Saludables Backend.md` e `Implemetar_ORM.md`. | Corregidos en el README nuevo; actualizar esos dos archivos o eliminarlos |
+| H1 | **Enlaces rotos** en el README raíz: apuntan a `docs/DESARROLLO.md`, `docs/API.md` y `docs/ARQUITECTURA.md`, pero los archivos están en `docs/back/`. Lo mismo en `Huellitas Saludables Backend.md` e `Implemetar_ORM.md`. | Corregidos en el README nuevo; actualizar esos dos archivos o eliminarlos |
 | H2 | **Secuencia de Docker incorrecta en el README antiguo:** ejecutaba `docker compose exec … db:seed:undo:all` y `db:migrate:undo:all` *antes* de `up`, cuando aún no hay contenedores; y repite migrar/sembrar a mano aunque el *entrypoint* ya migra. Había además un bloque de código mal cerrado. | Corregido: `cp` → editar `.env` → `up -d --build` (con `DB_SEED=true` si quieres datos demo) |
 | H3 | **Resuelto.** `back/Readme.md` documenta Prisma 7 ESM, migraciones, semilla, pruebas y configuración actual. | `back/Readme.md` | Mantener la guía alineada con `package.json` y `prisma/schema.prisma` |
 | H4 | **`front/readme.md`** son dos líneas de `npm install …`. | Reemplazar por un README del frontend (scripts, variables, estructura) |
@@ -78,15 +78,15 @@ En la revisión histórica, el proyecto tenía capas claras, migraciones, autori
 | H7 | **Imágenes duplicadas:** `front/img/` repite `front/src/assets/` (y en dos formatos). | Conservar una sola ubicación |
 | H8 | **`.env.example` y `.env.docker.example` son idénticos** en la raíz. | Dejar uno y documentarlo |
 | H9 | **`ARQUITECTURA.md` menciona `database/data_jesus/`**, carpeta que no existe; los scripts viven en `database/`. | Corregir la ruta |
-| H10 | **Nombre del registro de decisiones:** `Decisiones Técnicas — Huellitas Saludables (Backend).md` (acentos, raya y paréntesis) se corrompe al comprimir y complica los enlaces. | Renombrar a `docs/backend/DECISIONES_TECNICAS.md` (el README nuevo ya enlaza con ese nombre) |
-| H11 | **Resuelto.** El documento de decisiones actualizado describe el hash scrypt y los logs de producción sin datos personales. | `docs/backend/Decisiones Técnicas — Huellitas Saludables (Backend).md` | Mantener la documentación sincronizada con el código |
+| H10 | **Nombre del registro de decisiones:** `Decisiones Técnicas — Huellitas Saludables (Backend).md` (acentos, raya y paréntesis) se corrompe al comprimir y complica los enlaces. | Renombrar a `docs/back/DECISIONES_TECNICAS.md` (el README nuevo ya enlaza con ese nombre) |
+| H11 | **Resuelto.** El documento de decisiones actualizado describe el hash scrypt y los logs de producción sin datos personales. | `docs/back/Decisiones Técnicas — Huellitas Saludables (Backend).md` | Mantener la documentación sincronizada con el código |
 | H12 | `Implemetar_ORM.md` (errata) y `Huellitas Saludables Backend.md` son *stubs* de redirección. | Eliminar o fusionar en `docs/` |
 | H13 | `database/*.sql` es el esquema histórico (coincide con las migraciones actuales). Puede confundir sobre cuál es la fuente de verdad. | Mover a `database/legacy/` con una nota, o eliminarlo |
 
 Comandos sugeridos para la parte mecánica:
 
 ```bash
-git mv "docs/backend/Decisiones Técnicas — Huellitas Saludables (Backend).md" docs/backend/DECISIONES_TECNICAS.md
+git mv "docs/back/Decisiones Técnicas — Huellitas Saludables (Backend).md" docs/back/DECISIONES_TECNICAS.md
 git rm package.json package-lock.json front/vite.config.js front/vite.config.d.ts
 git rm "Huellitas Saludables Backend.md" Implemetar_ORM.md
 cp /ruta/al/nuevo/Readme.md Readme.md

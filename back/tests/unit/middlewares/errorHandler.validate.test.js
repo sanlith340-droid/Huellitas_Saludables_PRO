@@ -102,3 +102,51 @@ describe('validación y normalización de espacios', () => {
     }
   );
 });
+
+describe('teléfono solo numérico y correo sin espacios', () => {
+  const esquemaContacto = Joi.object({
+    telefono: Joi.string().pattern(/^\d+$/u).required(),
+    correo: Joi.string().pattern(/^\S+$/u).email().required(),
+  });
+
+  it('acepta un teléfono numérico y un correo sin espacios', () => {
+    const req = { body: { telefono: '3001234567', correo: 'luna@huellitas.com' } };
+    const next = vi.fn();
+
+    validate(esquemaContacto)(req, {}, next);
+
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it.each(['300-123-4567', '300 123 4567', 'abc300', '+57 3001234567', '(300)1234567'])(
+    'rechaza el teléfono %j con el mensaje de solo números',
+    (telefono) => {
+      const req = { body: { telefono, correo: 'luna@huellitas.com' } };
+      let error;
+      validate(esquemaContacto)(req, {}, (nextError) => { error = nextError; });
+
+      expect(error.message).toBe('El teléfono solo puede contener números.');
+      expect(error.details.fields).toEqual(['El teléfono solo puede contener números.']);
+    }
+  );
+
+  it('rechaza un correo con espacios con un único mensaje específico', () => {
+    const req = { body: { telefono: '3001234567', correo: 'luna mascota@huellitas.com' } };
+    let error;
+    validate(esquemaContacto)(req, {}, (nextError) => { error = nextError; });
+
+    expect(error.message).toBe('El correo electrónico no puede contener espacios.');
+    expect(error.details.fields).toEqual(['El correo electrónico no puede contener espacios.']);
+  });
+
+  it('devuelve un error individual por cada campo inválido', () => {
+    const req = { body: { telefono: '300 abc', correo: 'luna mascota@huellitas.com' } };
+    let error;
+    validate(esquemaContacto)(req, {}, (nextError) => { error = nextError; });
+
+    expect(error.details.fields).toEqual([
+      'El teléfono solo puede contener números.',
+      'El correo electrónico no puede contener espacios.',
+    ]);
+  });
+});

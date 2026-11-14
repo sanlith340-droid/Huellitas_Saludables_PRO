@@ -61,7 +61,7 @@ npm run passwords:migrate                                   # solo analiza, no m
 npm run passwords:migrate -- --aplicar --confirmo-respaldo  # migra (hacer respaldo antes)
 ```
 
-Detalle completo en `docs/backend/BITACORA_BCRYPT.md`. Las consultas SQL crudas y su protección contra SQL Injection se documentan en `docs/backend/BITACORA_SQL_INJECTION.md`.
+Detalle completo en `docs/back/BITACORA_BCRYPT.md`. Las consultas SQL crudas y su protección contra SQL Injection se documentan en `docs/back/BITACORA_SQL_INJECTION.md`.
 
 El login, el registro público y el registro administrativo rechazan cualquier carácter de espacio en la contraseña, incluidos espacios al inicio, al final o en medio, tabulaciones, saltos de línea y espacios Unicode. La API responde con `400 BAD_REQUEST` y `La contraseña no puede contener espacios.`; el frontend muestra el mismo mensaje antes de enviar el formulario. Los espacios siguen permitidos en nombres, apellidos y direcciones.
 

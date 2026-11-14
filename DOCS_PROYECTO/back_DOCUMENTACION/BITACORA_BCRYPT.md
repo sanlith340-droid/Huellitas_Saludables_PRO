@@ -50,7 +50,7 @@ Proteger las contraseñas mediante hashing seguro con bcrypt: ninguna contraseñ
 | `back/package.json` / `back/package-lock.json` | Dependencia `bcrypt` y script `passwords:migrate`. |
 | `back/.env.example` | Variable opcional documentada `BCRYPT_SALT_ROUNDS` (por defecto 12). |
 | `database/3.INSERTAR_USUARIOS.sql` | Las 17 contraseñas `'123456'` se reemplazaron por hashes bcrypt de 12 rondas (uno distinto por usuario). La contraseña demo sigue siendo `123456`. |
-| `back/Readme.md`, `Readme.md`, `docs/tests/PRUEBAS.md`, `docs/backend/Bitacora_Encriptacion_Contrasenas.md` | Documentación actualizada. |
+| `back/Readme.md`, `Readme.md`, `docs/test/README.md`, `docs/back/Bitacora_Encriptacion_Contrasenas.md` | Documentación actualizada. |
 
 Archivos creados:
 

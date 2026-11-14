@@ -44,7 +44,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-`DB_NAME_TEST` debe terminar en `_test` y ser distinta de `DB_NAME`; el setup recrea solo esa base. Más detalles en [PRUEBAS.md](../tests/PRUEBAS.md).
+`DB_NAME_TEST` debe terminar en `_test` y ser distinta de `DB_NAME`; el setup recrea solo esa base. La ubicación actual es [docs/test — ejecución de pruebas](../test/EJECUCION.md).
 
 ## Estructura principal
 

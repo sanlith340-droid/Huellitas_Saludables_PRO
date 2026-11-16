@@ -26,6 +26,17 @@ const origenesPermitidos = (process.env.CORS_ORIGIN || '')
 
 const app = express();
 
+// Configurar solo una cantidad explícita de saltos de proxy confiables.
+// No se usa `true`, porque permitiría confiar en X-Forwarded-For arbitrarios.
+const trustProxyHops = process.env.TRUST_PROXY;
+if (trustProxyHops) {
+  const hopCount = Number(trustProxyHops);
+  if (!Number.isSafeInteger(hopCount) || hopCount < 1) {
+    throw new Error('TRUST_PROXY debe ser un número entero positivo de proxies confiables.');
+  }
+  app.set('trust proxy', hopCount);
+}
+
 // 1. Swagger (documentación)
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 

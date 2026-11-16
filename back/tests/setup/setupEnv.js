@@ -17,3 +17,7 @@ dotenv.config({
 
 // Fechas deterministas para fixtures legados (p. ej. disponibilidades de agosto de 2026).
 process.env.HUELLITAS_TEST_NOW ||= '2026-08-18T12:00:00-05:00';
+
+// Evita que los casos de integración independientes compartan el mismo límite.
+// authRateLimit.test.js lo fija explícitamente en 5 para probar el bloqueo real.
+process.env.AUTH_RATE_LIMIT_MAX = '1000';

@@ -8,14 +8,15 @@ import expressPkg from 'express';
 const { Router } = expressPkg;
 import controller from '../controllers/auth.controller.js';
 import validate from '../middlewares/validate.js';
+import { loginRateLimiter, registroRateLimiter } from '../middlewares/authRateLimit.js';
 import { requireRole } from '../middlewares/identifyUser.js';
 import { loginSchema, registroSchema, registroAdminSchema } from '../schemas/auth.schema.js';
 
 const router = Router();
 
 // Públicos
-router.post('/login', validate(loginSchema, 'body'), controller.login);
-router.post('/registro', validate(registroSchema, 'body'), controller.registro);
+router.post('/login', loginRateLimiter, validate(loginSchema, 'body'), controller.login);
+router.post('/registro', registroRateLimiter, validate(registroSchema, 'body'), controller.registro);
 
 // Solo admin - crear admin, especialista, recepcionista
 router.post(

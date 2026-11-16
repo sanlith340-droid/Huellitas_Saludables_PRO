@@ -24,6 +24,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
+      TRUST_PROXY: ${TRUST_PROXY:-1}
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-proyectohs}

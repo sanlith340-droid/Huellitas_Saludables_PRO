@@ -279,6 +279,29 @@ docker compose -f docker-compose.test.yml down -v
 
 Consulta el [Plan Maestro de Pruebas](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) y la [guía de ejecución](docs/test/EJECUCION.md) para el alcance, las 18 categorías y los controles de seguridad de la base de pruebas.
 
+### Estados de interfaz (carga, vacío, error y guardado)
+
+Ninguna pantalla se queda en blanco. Mientras se consulta la API aparece la escena del
+perrito corriendo (o un esqueleto con la forma del contenido), cuando no hay datos se
+muestra una ilustración con una acción concreta y, si la API falla, un mensaje explicado
+con botón **Reintentar**. Los formularios deshabilitan su botón y muestran "Guardando..."
+con una huella girando.
+
+| Estado | Componente | Dónde se ve |
+|---|---|---|
+| Carga de página | `LoadingState` (`pagina`) | Mis mascotas, agendar cita, perfil |
+| Carga dentro de tarjeta | `LoadingState` (`panel`, `en-linea`) | Panel de citas, disponibilidad |
+| Carga con forma de contenido | `Esqueletos.tsx` | Panel del tutor, administración, personal |
+| Vacío | `EmptyState` | Listas y agendas sin registros |
+| Error de API | `ErrorState` | Cualquier consulta fallida, con reintento |
+| Guardando | `BotonEnvio` / `SpinnerHuella` | Todos los formularios y acciones |
+| Progreso global | `BarraCargaGlobal` + `loadingStore` | Barra superior con huellas |
+| Sin conexión | `AvisoSinConexion` | Aviso flotante al perder la red |
+
+En desarrollo existe la vitrina **`/estados`**, que reúne todas las variantes en una sola
+página para revisarlas o mostrarlas. El detalle completo está en
+[Estados de interfaz](DOCS_PROYECTO/ESTADOS_DE_INTERFAZ.md).
+
 ---
 
 ## 6. Infraestructura y DevOps

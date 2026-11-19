@@ -1,5 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../services/api";
+import ErrorState from "./ErrorState";
+import LoadingState from "./feedback/LoadingState";
+import BotonEnvio from "./feedback/BotonEnvio";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 
 const ESTADO_INICIAL = {
   nombre: "",
@@ -39,6 +43,8 @@ const normalizarNombre = (nombre) =>
 function FormularioMascota({ onMascotaRegistrada = null }) {
   const [razas, setRazas] = useState([]);
   const [cargandoRazas, setCargandoRazas] = useState(true);
+  const [falloRazas, setFalloRazas] = useState<unknown>(null);
+  const [errorRazas, setErrorRazas] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -48,24 +54,24 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
     RAZAS_POR_ESPECIE[form.especie]?.has(normalizarNombre(raza.nombre))
   );
 
-  useEffect(() => {
-    const cargarRazas = async () => {
-      try {
-        setCargandoRazas(true);
-        setError("");
-        const response = await api.get("/razas");
-        setRazas(response.data.data || []);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || "No se pudieron cargar las razas."
-        );
-      } finally {
-        setCargandoRazas(false);
-      }
-    };
-
-    cargarRazas();
+  const cargarRazas = useCallback(async () => {
+    try {
+      setCargandoRazas(true);
+      setErrorRazas("");
+      setFalloRazas(null);
+      const response = await api.get("/razas");
+      setRazas(response.data.data || []);
+    } catch (err) {
+      setFalloRazas(err);
+      setErrorRazas(mensajeDeError(err, "No se pudieron cargar las razas."));
+    } finally {
+      setCargandoRazas(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void cargarRazas();
+  }, [cargarRazas]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -96,7 +102,7 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
       setForm(ESTADO_INICIAL);
       onMascotaRegistrada?.();
     } catch (err) {
-      setError(err.response?.data?.message || "No se pudo registrar la mascota.");
+      setError(mensajeDeError(err, "No se pudo registrar la mascota."));
     } finally {
       setEnviando(false);
     }
@@ -112,6 +118,20 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
         <p className="message message-error" role="alert">
           {error}
         </p>
+      )}
+
+      {errorRazas && (
+        <ErrorState
+          variant={varianteDeError(falloRazas)}
+          compacto
+          title={tituloDeError(falloRazas)}
+          description={errorRazas}
+          onRetry={() => void cargarRazas()}
+        />
+      )}
+
+      {cargandoRazas && !errorRazas && (
+        <LoadingState variante="en-linea" etiqueta="Cargando razas..." />
       )}
 
       <form onSubmit={handleSubmit} noValidate>
@@ -185,9 +205,13 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
           </div>
         </div>
 
-        <button type="submit" className="btn btn-primary btn-block" disabled={enviando}>
-          {enviando ? "Registrando..." : "Registrar mascota"}
-        </button>
+        <BotonEnvio
+          guardando={enviando}
+          texto="Registrar mascota"
+          textoGuardando="Guardando..."
+          bloque
+          disabled={cargandoRazas || Boolean(errorRazas)}
+        />
       </form>
 
       {mensaje && (

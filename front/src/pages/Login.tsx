@@ -4,7 +4,9 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import ListaErrores from "../components/ListaErrores";
 import ErrorState from "../components/ErrorState";
+import BotonEnvio from "../components/feedback/BotonEnvio";
 import { erroresDeRespuesta } from "../utils/errores";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import { bloquearTeclaEspacio, sinEspacios } from "../utils/inputs";
 import huLogo from "../assets/hu.png";
 
@@ -56,6 +58,7 @@ function Login() {
   const [errores, setErrores] = useState<ErrorCampo[]>([]);
   const [errorUsuario, setErrorUsuario] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [errorApi, setErrorApi] = useState<unknown>(null);
 
   const camposInvalidos = new Set(errores.map((error) => error.campo));
   const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
@@ -73,6 +76,7 @@ function Login() {
     e.preventDefault();
     setErrores([]);
     setErrorUsuario(false);
+    setErrorApi(null);
 
     const problemas = validarLogin(form);
     setErrores(problemas);
@@ -95,6 +99,11 @@ function Login() {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 401) {
         setErrorUsuario(true);
+        return;
+      }
+      // Fallos de red o del servidor: pantalla de error con reintento en vez de un texto suelto.
+      if (!status || status >= 500) {
+        setErrorApi(error);
         return;
       }
       const detalles = erroresDeRespuesta(error, "Error al iniciar sesión");
@@ -173,9 +182,22 @@ function Login() {
             )}
             <ListaErrores errores={errores.map((error) => error.mensaje)} />
 
-            <button className="btn btn-primary btn-block" disabled={cargando}>
-              {cargando ? "Ingresando..." : "Iniciar sesión"}
-            </button>
+            {errorApi && (
+              <ErrorState
+                variant={varianteDeError(errorApi)}
+                compacto
+                className="error-state--inline"
+                title={tituloDeError(errorApi)}
+                description={mensajeDeError(errorApi, "No pudimos iniciar sesión. Inténtalo de nuevo.")}
+              />
+            )}
+
+            <BotonEnvio
+              guardando={cargando}
+              texto="Iniciar sesión"
+              textoGuardando="Entrando..."
+              bloque
+            />
           </form>
 
           <p className="form-footer">

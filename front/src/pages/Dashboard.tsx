@@ -4,6 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { FaPaw, FaCalendarAlt, FaPlus } from "react-icons/fa";
 import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/feedback/LoadingState";
+import EmptyState from "../components/feedback/EmptyState";
+import { SpinnerHuella } from "../components/feedback/BotonEnvio";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "";
@@ -45,6 +49,7 @@ function DashboardUsuario({ usuario }) {
   const [mascotas, setMascotas] = useState([]);
   const [citas, setCitas] = useState([]);
   const [error, setError] = useState("");
+  const [fallo, setFallo] = useState(null);
   const [errorServidor, setErrorServidor] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [cancelandoId, setCancelandoId] = useState(null);
@@ -52,6 +57,7 @@ function DashboardUsuario({ usuario }) {
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     setError("");
+    setFallo(null);
     setErrorServidor(false);
 
     try {
@@ -70,10 +76,8 @@ function DashboardUsuario({ usuario }) {
       setCitas(misCitas);
     } catch (err) {
       setErrorServidor(!err.response || err.response.status >= 500);
-      setError(
-        err.response?.data?.message ||
-          "No se pudo conectar con el servidor. Verifica que el backend y la base de datos estén activos."
-      );
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo cargar el resumen de tu cuenta."));
     } finally {
       setCargando(false);
     }
@@ -90,7 +94,8 @@ function DashboardUsuario({ usuario }) {
       await cargarDatos();
     } catch (err) {
       setErrorServidor(!err.response || err.response.status >= 500);
-      setError(err.response?.data?.message || "No se pudo cancelar la cita.");
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo cancelar la cita."));
     } finally {
       setCancelandoId(null);
     }
@@ -119,7 +124,15 @@ function DashboardUsuario({ usuario }) {
         <span className="badge">{usuario?.rol}</span>
       </div>
 
-      {error && <p className="message message-error">{error}</p>}
+      {error && !errorServidor && (
+        <ErrorState
+          variant={varianteDeError(fallo)}
+          compacto
+          title={tituloDeError(fallo)}
+          description={error}
+          onRetry={() => void cargarDatos()}
+        />
+      )}
 
       <div className="dash-grid">
         <div className="panel">
@@ -131,9 +144,15 @@ function DashboardUsuario({ usuario }) {
           </div>
 
           {cargando ? (
-            <p className="empty-state">Cargando mascotas...</p>
+            <LoadingState variante="esqueleto" filas={3} titulo="Cargando mascotas" />
           ) : mascotas.length === 0 ? (
-            <p className="empty-state">Aún no tienes mascotas registradas.</p>
+            <EmptyState
+              variante="en-linea"
+              ilustracion="mascotas"
+              titulo="Aún no hay mascotas"
+              descripcion="Registra a tu compañero para agendar su primera cita."
+              accion={{ etiqueta: "Registrar mascota", to: "/mascotas/nueva" }}
+            />
           ) : (
             mascotas.map((mascota, i) => (
               <div className="list-item" key={mascota.id_mascota ?? i}>
@@ -161,9 +180,15 @@ function DashboardUsuario({ usuario }) {
           </div>
 
           {cargando ? (
-            <p className="empty-state">Cargando citas...</p>
+            <LoadingState variante="esqueleto" filas={3} titulo="Cargando citas" />
           ) : citas.length === 0 ? (
-            <p className="empty-state">No tienes citas agendadas.</p>
+            <EmptyState
+              variante="en-linea"
+              ilustracion="citas"
+              titulo="No tienes citas agendadas"
+              descripcion="Cuando reserves un horario, aparecerá aquí con su estado."
+              accion={{ etiqueta: "Agendar cita", to: "/citas/nueva" }}
+            />
           ) : (
             citas.map((cita, i) => (
               <div className="list-item list-item--cita" key={cita.id_cita ?? i}>
@@ -188,8 +213,10 @@ function DashboardUsuario({ usuario }) {
                       type="button"
                       className="btn btn-ghost btn-sm"
                       disabled={cancelandoId === cita.id_cita}
+                      aria-busy={cancelandoId === cita.id_cita || undefined}
                       onClick={() => handleCancelar(cita.id_cita)}
                     >
+                      {cancelandoId === cita.id_cita && <SpinnerHuella />}
                       {cancelandoId === cita.id_cita ? "Cancelando..." : "Cancelar"}
                     </button>
                   )}

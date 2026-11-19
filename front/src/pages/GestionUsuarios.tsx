@@ -3,7 +3,12 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import ListaErrores from "../components/ListaErrores";
 import ErrorState from "../components/ErrorState";
+import BotonEnvio, { SpinnerHuella } from "../components/feedback/BotonEnvio";
+import EmptyState from "../components/feedback/EmptyState";
+import LoadingState from "../components/feedback/LoadingState";
+import { EsqueletoFilas } from "../components/feedback/Esqueletos";
 import { erroresDeRespuesta } from "../utils/errores";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import {
   bloquearTeclaEspacio,
   bloquearTeclaNoDigito,
@@ -87,6 +92,7 @@ function GestionUsuarios() {
   const [personal, setPersonal] = useState<Personal[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorLista, setErrorLista] = useState("");
+  const [falloLista, setFalloLista] = useState<unknown>(null);
   const [aviso, setAviso] = useState("");
 
   // Formulario
@@ -106,14 +112,13 @@ function GestionUsuarios() {
   const cargar = useCallback(async () => {
     setCargando(true);
     setErrorLista("");
+    setFalloLista(null);
     try {
       const respuesta = await api.get("/usuarios/personal");
       setPersonal(respuesta.data.data || []);
     } catch (err) {
-      setErrorLista(
-        err.response?.data?.message ||
-          "No se pudo cargar el personal. Verifica que el backend esté activo."
-      );
+      setFalloLista(err);
+      setErrorLista(mensajeDeError(err, "No se pudo cargar el personal de la clínica."));
     } finally {
       setCargando(false);
     }
@@ -285,7 +290,8 @@ function GestionUsuarios() {
       setConfirmandoId(null);
       setAviso(`Se eliminó la cuenta de ${persona.nombre} ${persona.apellidos}.`);
     } catch (err) {
-      setErrorLista(err.response?.data?.message || "No se pudo eliminar la cuenta.");
+      setFalloLista(err);
+      setErrorLista(mensajeDeError(err, "No se pudo eliminar la cuenta."));
       setConfirmandoId(null);
       // Puede haber cambiado (p. ej. se le asignó una cita): refresca los datos
       cargar();
@@ -465,9 +471,13 @@ function GestionUsuarios() {
 
             <ListaErrores errores={erroresForm.map((error) => error.mensaje)} />
 
-            <button className="btn btn-primary btn-block" disabled={enviando}>
-              <FaUserPlus /> {enviando ? "Creando..." : `Crear ${ROL_LABEL[form.rol].toLowerCase()}`}
-            </button>
+            <BotonEnvio
+              guardando={enviando}
+              texto={`Crear ${ROL_LABEL[form.rol].toLowerCase()}`}
+              textoGuardando="Guardando..."
+              icono={<FaUserPlus />}
+              bloque
+            />
           </form>
         </aside>
 
@@ -477,7 +487,15 @@ function GestionUsuarios() {
             <h2>Personal registrado</h2>
           </div>
 
-          {errorLista && <p className="message message-error">{errorLista}</p>}
+          {errorLista && !cargando && (
+            <ErrorState
+              variant={varianteDeError(falloLista)}
+              compacto
+              title={tituloDeError(falloLista)}
+              description={errorLista}
+              onRetry={() => void cargar()}
+            />
+          )}
 
           <div className="avail-search">
             <FaSearch />
@@ -498,19 +516,47 @@ function GestionUsuarios() {
                 className={`chip ${filtro === f ? "chip--active" : ""}`}
                 onClick={() => setFiltro(f)}
               >
-                {FILTRO_LABEL[f]} <span className="chip__count">{conteo[f]}</span>
+                {FILTRO_LABEL[f]}{" "}
+                {!cargando && !errorLista && (
+                  <span className="chip__count">{conteo[f]}</span>
+                )}
               </button>
             ))}
           </div>
 
           <div style={{ marginTop: 12 }}>
             {cargando ? (
-              <p className="empty-state">Cargando personal...</p>
+              <>
+                <LoadingState
+                  variante="panel"
+                  titulo="Revisando al equipo"
+                  mensajes={[
+                    "Buscando las cuentas del personal...",
+                    "Contando especialistas y recepcionistas...",
+                  ]}
+                />
+                <EsqueletoFilas filas={4} />
+              </>
+            ) : errorLista ? null : personal.length === 0 ? (
+              <EmptyState
+                ilustracion="personal"
+                titulo="Todavía no hay cuentas de personal"
+                descripcion="Usa el formulario de la izquierda para crear la primera cuenta. Puedes empezar por un especialista."
+                sugerencias={[
+                  "Los especialistas necesitan una especialización.",
+                  "Las cuentas de administrador no se pueden eliminar.",
+                ]}
+              />
             ) : visibles.length === 0 ? (
               <ErrorState
                 variant="search"
                 title="No encontramos coincidencias"
                 description="Prueba con otro nombre, correo o filtro de cuenta."
+                actionLabel="Limpiar filtros"
+                onAction={() => {
+                  setBusqueda("");
+                  setFiltro("todos");
+                }}
               />
             ) : (
               visibles.map((p) => (
@@ -547,9 +593,11 @@ function GestionUsuarios() {
                             type="button"
                             className="btn btn-danger btn-sm"
                             disabled={eliminandoId === p.id_usuario}
+                            aria-busy={eliminandoId === p.id_usuario || undefined}
                             onClick={() => eliminar(p)}
                           >
-                            <FaTrash /> {eliminandoId === p.id_usuario ? "Eliminando..." : "Sí, eliminar"}
+                            {eliminandoId === p.id_usuario ? <SpinnerHuella /> : <FaTrash />}
+                            {eliminandoId === p.id_usuario ? "Eliminando..." : "Sí, eliminar"}
                           </button>
                           <button
                             type="button"

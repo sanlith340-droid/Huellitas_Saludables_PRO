@@ -1,5 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import api from "../services/api";
+import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/feedback/EmptyState";
+import LoadingState from "../components/feedback/LoadingState";
+import BotonEnvio, { SpinnerHuella } from "../components/feedback/BotonEnvio";
+import { EsqueletoFilas, EsqueletoSemana } from "../components/feedback/Esqueletos";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import {
   FaTrash,
   FaCalendarPlus,
@@ -104,6 +110,7 @@ function Disponibilidad() {
   const [franjas, setFranjas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [fallo, setFallo] = useState<unknown>(null);
 
   const [form, setForm] = useState(ESTADO_INICIAL);
   const [mostrarForm, setMostrarForm] = useState(false);
@@ -119,6 +126,7 @@ function Disponibilidad() {
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     setError("");
+    setFallo(null);
 
     try {
       const [resEspecialistas, resDisponibilidad] = await Promise.all([
@@ -129,10 +137,8 @@ function Disponibilidad() {
       setEspecialistas(resEspecialistas.data.data || []);
       setFranjas(resDisponibilidad.data.data || []);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          "No se pudo cargar la disponibilidad. Verifica que el backend esté activo."
-      );
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo cargar la disponibilidad de los especialistas."));
     } finally {
       setCargando(false);
     }
@@ -218,7 +224,7 @@ function Disponibilidad() {
       setMostrarForm(false);
       await cargarDatos();
     } catch (err) {
-      setMensajeForm(err.response?.data?.message || "No se pudo crear la franja horaria.");
+      setMensajeForm(mensajeDeError(err, "No se pudo crear la franja horaria."));
     } finally {
       setEnviando(false);
     }
@@ -231,7 +237,8 @@ function Disponibilidad() {
       await api.delete(`/disponibilidad/${id_disponibilidad}`);
       await cargarDatos();
     } catch (err) {
-      setError(err.response?.data?.message || "No se pudo eliminar la franja horaria.");
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo eliminar la franja horaria."));
     } finally {
       setAccionandoId(null);
     }
@@ -245,7 +252,8 @@ function Disponibilidad() {
       await api.put(`/disponibilidad/${franja.id_disponibilidad}`, { estado: nuevoEstado });
       await cargarDatos();
     } catch (err) {
-      setError(err.response?.data?.message || "No se pudo actualizar el estado.");
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo actualizar el estado de la franja."));
     } finally {
       setAccionandoId(null);
     }
@@ -263,7 +271,15 @@ function Disponibilidad() {
         </button>
       </div>
 
-      {error && <p className="message message-error">{error}</p>}
+      {error && (
+        <ErrorState
+          variant={varianteDeError(fallo)}
+          compacto
+          title={tituloDeError(fallo)}
+          description={error}
+          onRetry={() => void cargarDatos()}
+        />
+      )}
 
       {mostrarForm && (
         <div className="panel avail-form-panel">
@@ -323,9 +339,12 @@ function Disponibilidad() {
               />
             </div>
 
-            <button className="btn btn-primary" disabled={enviando}>
-              <FaCalendarPlus /> {enviando ? "Creando..." : "Crear franja"}
-            </button>
+            <BotonEnvio
+              guardando={enviando}
+              texto="Crear franja"
+              textoGuardando="Guardando..."
+              icono={<FaCalendarPlus />}
+            />
           </form>
 
           {mensajeForm && <p className="message message-error">{mensajeForm}</p>}
@@ -346,9 +365,21 @@ function Disponibilidad() {
 
           <div className="avail-specialists__list">
             {cargando ? (
-              <p className="empty-state">Cargando...</p>
-            ) : especialistasFiltrados.length === 0 ? (
-              <p className="empty-state">Sin resultados.</p>
+              <>
+                <LoadingState variante="en-linea" etiqueta="Cargando especialistas..." />
+                <EsqueletoFilas filas={4} />
+              </>
+            ) : error ? null : especialistasFiltrados.length === 0 ? (
+              <EmptyState
+                variante="en-linea"
+                ilustracion="busqueda"
+                titulo="Sin coincidencias"
+                descripcion={
+                  busqueda
+                    ? "Ningún especialista coincide con esa búsqueda."
+                    : "Todavía no hay especialistas registrados en la clínica."
+                }
+              />
             ) : (
               especialistasFiltrados.map((e) => (
                 <button
@@ -379,7 +410,9 @@ function Disponibilidad() {
 
         <div className="avail-main">
           <div className="panel">
-            {especialistaSeleccionado ? (
+            {cargando ? (
+              <LoadingState variante="en-linea" etiqueta="Armando la semana..." />
+            ) : especialistaSeleccionado ? (
               <div className="avail-doctor-header">
                 <div className="doctor-card__avatar avail-doctor-header__avatar">
                   {iniciales(especialistaSeleccionado.nombre, especialistaSeleccionado.apellidos)}
@@ -394,9 +427,11 @@ function Disponibilidad() {
                 </div>
               </div>
             ) : (
-              <p className="empty-state">
-                {cargando ? "Cargando especialistas..." : "No hay especialistas registrados."}
-              </p>
+              <EmptyState
+                ilustracion="personal"
+                titulo="No hay especialistas registrados"
+                descripcion="Cuando el administrador cree las cuentas del equipo, aquí podrás ver su disponibilidad semanal."
+              />
             )}
 
             <div className="avail-toolbar">
@@ -435,7 +470,9 @@ function Disponibilidad() {
               </div>
             </div>
 
-            {especialistaSeleccionado && (
+            {cargando ? (
+              <EsqueletoSemana />
+            ) : especialistaSeleccionado && (
               <div className="week-grid">
                 {weekDates.map((fecha) => {
                   const iso = toISODate(fecha);
@@ -488,7 +525,17 @@ function Disponibilidad() {
               </p>
 
               {detalleDia.length === 0 ? (
-                <p className="empty-state">No hay franjas registradas para este día.</p>
+                <EmptyState
+                  variante="en-linea"
+                  ilustracion="horarios"
+                  titulo="Este día no tiene franjas"
+                  descripcion="Crea una nueva franja horaria para que los tutores puedan reservar."
+                  accion={{
+                    etiqueta: "Nueva franja",
+                    onClick: abrirFormulario,
+                    variante: "outline",
+                  }}
+                />
               ) : (
                 detalleDia.map((f) => (
                   <div className="list-item list-item--cita" key={f.id_disponibilidad}>
@@ -511,8 +558,10 @@ function Disponibilidad() {
                           type="button"
                           className="btn btn-outline btn-sm"
                           disabled={accionandoId === f.id_disponibilidad}
+                          aria-busy={accionandoId === f.id_disponibilidad || undefined}
                           onClick={() => handleCambiarEstado(f)}
                         >
+                          {accionandoId === f.id_disponibilidad && <SpinnerHuella />}
                           {f.estado === "disponible" ? "Marcar ocupado" : "Liberar"}
                         </button>
                         <button

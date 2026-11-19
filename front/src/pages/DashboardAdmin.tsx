@@ -1,8 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { FaUsers, FaUserMd, FaConciergeBell, FaUserShield, FaArrowRight } from "react-icons/fa";
+import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/feedback/EmptyState";
+import LoadingState from "../components/feedback/LoadingState";
+import { EsqueletoFilas } from "../components/feedback/Esqueletos";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 
 const ROL_LABEL = {
   especialista: "Especialista",
@@ -20,25 +25,26 @@ function DashboardAdmin() {
   const [personal, setPersonal] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [fallo, setFallo] = useState(null);
+
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    setError("");
+    setFallo(null);
+    try {
+      const respuesta = await api.get("/usuarios/personal");
+      setPersonal(respuesta.data.data || []);
+    } catch (err) {
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo cargar el resumen de la clínica."));
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const cargar = async () => {
-      setCargando(true);
-      setError("");
-      try {
-        const respuesta = await api.get("/usuarios/personal");
-        setPersonal(respuesta.data.data || []);
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "No se pudo cargar el resumen. Verifica que el backend esté activo."
-        );
-      } finally {
-        setCargando(false);
-      }
-    };
-    cargar();
-  }, []);
+    void cargar();
+  }, [cargar]);
 
   const resumen = useMemo(
     () => ({
@@ -59,7 +65,7 @@ function DashboardAdmin() {
     [personal]
   );
 
-  const valor = (n: number) => (cargando ? "–" : n);
+  const valor = (n: number) => (cargando ? <span className="esqueleto esqueleto--valor" aria-hidden="true" /> : n);
 
   return (
     <div className="container">
@@ -73,7 +79,15 @@ function DashboardAdmin() {
         </Link>
       </div>
 
-      {error && <p className="message message-error">{error}</p>}
+      {error && (
+        <ErrorState
+          variant={varianteDeError(fallo)}
+          compacto
+          title={tituloDeError(fallo)}
+          description={error}
+          onRetry={() => void cargar()}
+        />
+      )}
 
       <div className="admin-stats">
         <Link to="/usuarios/admin" className="stat-card">
@@ -118,9 +132,21 @@ function DashboardAdmin() {
         </div>
 
         {cargando ? (
-          <p className="empty-state">Cargando...</p>
-        ) : recientes.length === 0 ? (
-          <p className="empty-state">Aún no hay personal registrado.</p>
+          <>
+            <LoadingState
+              variante="panel"
+              titulo="Revisando las cuentas del personal"
+              mensajes={["Consultando al equipo de la clínica...", "Contando especialistas y recepcionistas..."]}
+            />
+            <EsqueletoFilas filas={3} />
+          </>
+        ) : error ? null : recientes.length === 0 ? (
+          <EmptyState
+            ilustracion="personal"
+            titulo="Todavía no hay cuentas de personal"
+            descripcion="Registra especialistas, recepcionistas y administradores para que la clínica empiece a operar."
+            accion={{ etiqueta: "Gestionar personal", to: "/usuarios/admin" }}
+          />
         ) : (
           recientes.map((p) => (
             <div className="list-item" key={p.id_usuario}>

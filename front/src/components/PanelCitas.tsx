@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../services/api";
+import ErrorState from "./ErrorState";
+import LoadingState from "./feedback/LoadingState";
+import EmptyState from "./feedback/EmptyState";
+import { SpinnerHuella } from "./feedback/BotonEnvio";
+import { EsqueletoCitas } from "./feedback/Esqueletos";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import {
   FaPaw,
   FaClock,
@@ -34,6 +40,12 @@ interface PanelCitasProps {
   // Endpoint que devuelve las citas a mostrar. Vacío = aún no se puede cargar.
   urlCitas: string;
 }
+
+const MENSAJES_CARGA = [
+  "Revisando la agenda de la clínica...",
+  "Buscando las citas de cada especialista...",
+  "Ordenando los horarios por fecha...",
+];
 
 
 const ESTADO_LABEL = {
@@ -84,7 +96,9 @@ function formatearHora(hora: string) {
 function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
   const [citas, setCitas] = useState<Cita[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [error, setError] = useState("");
+  const [errorCarga, setErrorCarga] = useState("");
+  const [fallo, setFallo] = useState<unknown>(null);
+  const [errorAccion, setErrorAccion] = useState("");
   const [aviso, setAviso] = useState("");
 
   // Filtros
@@ -98,27 +112,29 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
   const [cancelandoId, setCancelandoId] = useState<number | null>(null);
   const [liberarHorario, setLiberarHorario] = useState(true);
 
-  useEffect(() => {
-    if (!urlCitas) return;
+  const cargar = useCallback(async () => {
+    if (!urlCitas) {
+      setCargando(false);
+      return;
+    }
 
-    const cargar = async () => {
-      setCargando(true);
-      setError("");
-      try {
-        const respuesta = await api.get(urlCitas);
-        setCitas(respuesta.data.data || []);
-      } catch (err) {
-        setError(
-          err.response?.data?.message ||
-            "No se pudieron cargar tus citas. Verifica que el backend esté activo."
-        );
-      } finally {
-        setCargando(false);
-      }
-    };
-
-    cargar();
+    setCargando(true);
+    setErrorCarga("");
+    setFallo(null);
+    try {
+      const respuesta = await api.get(urlCitas);
+      setCitas(respuesta.data.data || []);
+    } catch (err) {
+      setFallo(err);
+      setErrorCarga(mensajeDeError(err, "No se pudieron cargar las citas."));
+    } finally {
+      setCargando(false);
+    }
   }, [urlCitas]);
+
+  useEffect(() => {
+    void cargar();
+  }, [cargar]);
 
   // Citas que cumplen fecha + búsqueda (sin filtrar por estado, para poder
   // mostrar el contador de cada estado en los chips).
@@ -186,7 +202,7 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
 
   const decidir = async (cita: Cita, estado: "atendido" | "cancelado") => {
     setAccionandoId(cita.id_cita);
-    setError("");
+    setErrorAccion("");
     setAviso("");
     try {
       const body: { estado: string; liberar_horario?: boolean } = { estado };
@@ -206,7 +222,7 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
         );
       }
     } catch (err) {
-      setError(err.response?.data?.message || "No se pudo actualizar la cita.");
+      setErrorAccion(mensajeDeError(err, "No se pudo actualizar la cita."));
     } finally {
       setAccionandoId(null);
     }
@@ -226,7 +242,7 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
         </div>
       </div>
 
-      {error && <p className="message message-error">{error}</p>}
+      {errorAccion && <p className="message message-error">{errorAccion}</p>}
       {aviso && <p className="message message-success">{aviso}</p>}
 
       {/* ---------- Filtros ---------- */}
@@ -297,7 +313,10 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
               }`}
               onClick={() => setFiltroEstado(estado)}
             >
-              {FILTRO_ESTADO_LABEL[estado]} <span className="chip__count">{conteo[estado]}</span>
+              {FILTRO_ESTADO_LABEL[estado]}{" "}
+              {!cargando && !errorCarga && (
+                <span className="chip__count">{conteo[estado]}</span>
+              )}
             </button>
           ))}
 
@@ -312,17 +331,52 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
       {/* ---------- Listado agrupado por fecha ---------- */}
       <div style={{ marginTop: 24 }}>
         {cargando ? (
-          <div className="panel">
-            <p className="empty-state">Cargando citas...</p>
-          </div>
+          <>
+            <LoadingState
+              variante="panel"
+              titulo="Preparando la agenda"
+              mensajes={MENSAJES_CARGA}
+              className="carga--agenda"
+            />
+            <div style={{ marginTop: 16 }}>
+              <EsqueletoCitas grupos={2} filas={2} />
+            </div>
+          </>
+        ) : !urlCitas ? (
+          <ErrorState
+            variant="user"
+            compacto
+            title="No pudimos identificar tu cuenta"
+            description="Tu sesión no tiene el identificador del especialista. Vuelve a iniciar sesión para ver tus citas."
+            to="/login"
+            actionLabel="Iniciar sesión"
+          />
+        ) : errorCarga ? (
+          <ErrorState
+            variant={varianteDeError(fallo)}
+            compacto
+            title={tituloDeError(fallo)}
+            description={errorCarga}
+            onRetry={() => void cargar()}
+          />
         ) : citas.length === 0 ? (
-          <div className="panel">
-            <p className="empty-state">No tienes citas asignadas por el momento.</p>
-          </div>
+          <EmptyState
+            ilustracion="citas"
+            titulo="La agenda está libre"
+            descripcion="No hay citas registradas para esta vista. En cuanto alguien reserve un horario, aparecerá aquí."
+            sugerencias={[
+              "Revisa la disponibilidad de los especialistas para abrir nuevos horarios.",
+              "Las citas canceladas también quedan registradas en esta lista.",
+            ]}
+            accion={{ etiqueta: "Actualizar la agenda", onClick: () => void cargar(), variante: "outline" }}
+          />
         ) : grupos.length === 0 ? (
-          <div className="panel">
-            <p className="empty-state">Ninguna cita coincide con los filtros seleccionados.</p>
-          </div>
+          <EmptyState
+            ilustracion="busqueda"
+            titulo="Ninguna cita coincide con los filtros"
+            descripcion="La agenda sí tiene citas, pero ninguna pasa los filtros que elegiste. Prueba con otro estado, otra fecha u otro término de búsqueda."
+            accion={{ etiqueta: "Limpiar filtros", onClick: limpiarFiltros }}
+          />
         ) : (
           grupos.map(([fechaGrupo, citasDia]) => (
             <div className="panel cita-group" key={fechaGrupo}>
@@ -374,9 +428,11 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
                             type="button"
                             className="btn btn-danger btn-sm"
                             disabled={accionandoId === cita.id_cita}
+                            aria-busy={accionandoId === cita.id_cita || undefined}
                             onClick={() => decidir(cita, "cancelado")}
                           >
-                            <FaBan /> {accionandoId === cita.id_cita ? "Cancelando..." : "Sí, cancelar"}
+                            {accionandoId === cita.id_cita ? <SpinnerHuella /> : <FaBan />}
+                            {accionandoId === cita.id_cita ? "Guardando..." : "Sí, cancelar"}
                           </button>
                           <button
                             type="button"
@@ -416,9 +472,11 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
                           type="button"
                           className="btn btn-primary btn-sm"
                           disabled={accionandoId === cita.id_cita}
+                          aria-busy={accionandoId === cita.id_cita || undefined}
                           onClick={() => decidir(cita, "atendido")}
                         >
-                          <FaCheck /> {accionandoId === cita.id_cita ? "Guardando..." : "Atendida"}
+                          {accionandoId === cita.id_cita ? <SpinnerHuella /> : <FaCheck />}
+                          {accionandoId === cita.id_cita ? "Guardando..." : "Atendida"}
                         </button>
                         <button
                           type="button"

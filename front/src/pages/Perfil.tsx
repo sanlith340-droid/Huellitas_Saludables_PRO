@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaIdCard, FaPhone, FaUser } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import ErrorState from "../components/ErrorState";
+import LoadingState from "../components/feedback/LoadingState";
+import { EsqueletoPerfil } from "../components/feedback/Esqueletos";
+import { mensajeDeError } from "../utils/erroresApi";
 
 function textoSeguro(valor: unknown): string {
   if (typeof valor === "string" && valor.trim()) return valor.trim();
@@ -17,21 +20,27 @@ function Perfil() {
   const [datos, setDatos] = useState<Record<string, unknown>>((usuario || {}) as Record<string, unknown>);
   const [cargando, setCargando] = useState(true);
   const [errorPerfil, setErrorPerfil] = useState<number | null>(null);
+  const [mensajeError, setMensajeError] = useState("");
+
+  const cargarPerfil = useCallback(async () => {
+    setCargando(true);
+    setErrorPerfil(null);
+    setMensajeError("");
+    try {
+      const respuesta = await api.get("/auth/perfil");
+      if (respuesta.data?.data) setDatos(respuesta.data.data);
+    } catch (error) {
+      const estado = (error as { response?: { status?: number } })?.response?.status ?? 0;
+      setErrorPerfil(estado);
+      setMensajeError(mensajeDeError(error, "No pudimos cargar tu perfil."));
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let vigente = true;
-    api.get("/auth/perfil")
-      .then((respuesta) => {
-        if (vigente && respuesta.data?.data) setDatos(respuesta.data.data);
-      })
-      .catch((error) => {
-        if (vigente) setErrorPerfil(error.response?.status ?? 0);
-      })
-      .finally(() => {
-        if (vigente) setCargando(false);
-      });
-    return () => { vigente = false; };
-  }, []);
+    void cargarPerfil();
+  }, [cargarPerfil]);
   const nombre = [textoSeguro(datos?.nombre), textoSeguro(datos?.apellidos)]
     .filter((parte) => parte !== "No registrado")
     .join(" ") || "Tu perfil";
@@ -49,21 +58,43 @@ function Perfil() {
   };
 
   if (cargando) {
-    return <div className="container profile-page"><p className="empty-state">Cargando perfil…</p></div>;
+    return (
+      <div className="container profile-page">
+        <div className="dash-header profile-page__header">
+          <div>
+            <p className="profile-page__eyebrow">Mi cuenta</p>
+            <h1>Perfil</h1>
+            <p>Consulta la información asociada a tu sesión.</p>
+          </div>
+        </div>
+        <LoadingState
+          variante="panel"
+          titulo="Buscando tu ficha"
+          mensajes={["Consultando tus datos de cuenta...", "Acomodando tu carné de la clínica..."]}
+        />
+        <div style={{ marginTop: 18 }}>
+          <EsqueletoPerfil />
+        </div>
+      </div>
+    );
   }
 
   if (errorPerfil !== null) {
     const variante = errorPerfil === 403 ? "denied" : errorPerfil === 404 ? "user" : "server";
+    const esDeRed = errorPerfil === 0;
     return (
       <div className="container error-page">
         <ErrorState
-          variant={variante}
+          variant={esDeRed ? "network" : variante}
           title={errorPerfil === 404 ? "No encontramos tu cuenta" : undefined}
-          description={errorPerfil === 404
-            ? "La sesión no tiene un perfil disponible. Vuelve a iniciar sesión para actualizar tus datos."
-            : undefined}
-          to={errorPerfil === 404 ? "/login" : "/dashboard"}
-          actionLabel={errorPerfil === 404 ? "Iniciar sesión" : "Volver a mi inicio"}
+          description={
+            errorPerfil === 404
+              ? "La sesión no tiene un perfil disponible. Vuelve a iniciar sesión para actualizar tus datos."
+              : mensajeError || undefined
+          }
+          to={errorPerfil === 404 ? "/login" : undefined}
+          actionLabel={errorPerfil === 404 ? "Iniciar sesión" : undefined}
+          onRetry={errorPerfil === 404 ? undefined : () => void cargarPerfil()}
         />
       </div>
     );

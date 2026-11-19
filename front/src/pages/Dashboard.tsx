@@ -3,6 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import { FaPaw, FaCalendarAlt, FaPlus } from "react-icons/fa";
+import ErrorState from "../components/ErrorState";
 
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "";
@@ -44,12 +45,14 @@ function DashboardUsuario({ usuario }) {
   const [mascotas, setMascotas] = useState([]);
   const [citas, setCitas] = useState([]);
   const [error, setError] = useState("");
+  const [errorServidor, setErrorServidor] = useState(false);
   const [cargando, setCargando] = useState(true);
   const [cancelandoId, setCancelandoId] = useState(null);
 
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     setError("");
+    setErrorServidor(false);
 
     try {
       const resMascotas = await api.get("/mascotas");
@@ -66,6 +69,7 @@ function DashboardUsuario({ usuario }) {
       );
       setCitas(misCitas);
     } catch (err) {
+      setErrorServidor(!err.response || err.response.status >= 500);
       setError(
         err.response?.data?.message ||
           "No se pudo conectar con el servidor. Verifica que el backend y la base de datos estén activos."
@@ -85,11 +89,25 @@ function DashboardUsuario({ usuario }) {
       await api.patch(`/citas/${id_cita}/cancelar`);
       await cargarDatos();
     } catch (err) {
+      setErrorServidor(!err.response || err.response.status >= 500);
       setError(err.response?.data?.message || "No se pudo cancelar la cita.");
     } finally {
       setCancelandoId(null);
     }
   };
+
+  if (errorServidor && error) {
+    return (
+      <div className="container error-page">
+        <ErrorState
+          variant="server"
+          description={error}
+          actionLabel="Reintentar"
+          onAction={() => void cargarDatos()}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="container">

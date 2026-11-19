@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
+import ErrorState from "../components/ErrorState";
 import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from "react-icons/fa";
 
 const ESTADO_LABEL = {
@@ -96,6 +97,8 @@ function NuevaCita() {
   const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [errorServidor, setErrorServidor] = useState(false);
+  const [errorCita, setErrorCita] = useState(false);
   const [cancelandoId, setCancelandoId] = useState(null);
 
   const [idEspecialista, setIdEspecialista] = useState(null);
@@ -112,6 +115,7 @@ function NuevaCita() {
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     setError("");
+    setErrorServidor(false);
 
     try {
       const [resMascotas, resDisponibilidad, resCitas] = await Promise.all([
@@ -133,6 +137,7 @@ function NuevaCita() {
       );
       setCitas(misCitas);
     } catch (err) {
+      setErrorServidor(!err.response || err.response.status >= 500);
       setError(
         err.response?.data?.message ||
           "No se pudo cargar la disponibilidad. Verifica que el backend esté activo."
@@ -186,12 +191,14 @@ function NuevaCita() {
   );
 
   const handleElegirEspecialista = (id_usuario) => {
+    setErrorCita(false);
     setIdEspecialista(id_usuario);
     setFechaElegida(null);
     setIdDisponibilidad(null);
   };
 
   const handleElegirFecha = (fecha) => {
+    setErrorCita(false);
     setFechaElegida(fecha);
     setIdDisponibilidad(null);
   };
@@ -221,6 +228,7 @@ function NuevaCita() {
       setMotivo("");
       await cargarDatos();
     } catch (err) {
+      if (err.response?.status === 409) setErrorCita(true);
       setMensaje(err.response?.data?.message || "No se pudo agendar la cita.");
     } finally {
       setEnviando(false);
@@ -239,13 +247,23 @@ function NuevaCita() {
     }
   };
 
+  if (errorServidor && error) {
+    return (
+      <div className="container error-page">
+        <ErrorState
+          variant="server"
+          title="No pudimos cargar la agenda"
+          description={error}
+          actionLabel="Reintentar"
+          onAction={() => void cargarDatos()}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <div className="form-page form-page--wide">
-        <Link to="/dashboard" className="back-link">
-          ← Volver a mi panel
-        </Link>
-
         <h1>Agendar cita</h1>
         <p className="auth-card__subtitle">
           Elige un doctor, un día y una hora disponible para tu mascota.
@@ -267,7 +285,13 @@ function NuevaCita() {
             <h2 className="section-title">1. Elige un doctor</h2>
 
             {especialistas.length === 0 ? (
-              <p className="empty-state">No hay horarios disponibles por el momento.</p>
+              <ErrorState
+                variant="appointment"
+                title="No hay horarios disponibles"
+                description="Por ahora no encontramos citas futuras. Actualiza la disponibilidad más tarde."
+                actionLabel="Actualizar horarios"
+                onAction={() => void cargarDatos()}
+              />
             ) : (
               <div className="doctor-grid">
                 {especialistas.map((esp) => (
@@ -389,7 +413,21 @@ function NuevaCita() {
               <FaClock /> {enviando ? "Agendando..." : "Confirmar cita"}
             </button>
 
-            {mensaje && <p className="message message-error">{mensaje}</p>}
+            {errorCita && (
+              <ErrorState
+                variant="appointment"
+                title="Ese horario acaba de ocuparse"
+                description="La disponibilidad cambió mientras completabas la reserva. Elige otra franja para continuar."
+                actionLabel="Actualizar horarios"
+                onAction={() => {
+                  setErrorCita(false);
+                  setMensaje("");
+                  setIdDisponibilidad(null);
+                  void cargarDatos();
+                }}
+              />
+            )}
+            {mensaje && !errorCita && <p className="message message-error">{mensaje}</p>}
           </form>
         )}
       </div>

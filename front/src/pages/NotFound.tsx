@@ -1,16 +1,9 @@
-import { Link } from "react-router-dom";
-import huLogo from "../assets/hu.png";
+import ErrorState from "../components/ErrorState";
 
 function NotFound() {
   return (
-    <div className="not-found">
-      <img src={huLogo} alt="Huellitas Saludables" className="not-found__logo" />
-      <h1>404</h1>
-      <h2>Esta página se escapó como un gato</h2>
-      <p>No encontramos lo que buscas.</p>
-      <Link to="/" className="btn btn-primary">
-        Volver al inicio
-      </Link>
+    <div className="container error-page">
+      <ErrorState variant="notFound" title="404 · Esta página se perdió" to="/" actionLabel="Volver al inicio" />
     </div>
   );
 }

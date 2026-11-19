@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import ListaErrores from "../components/ListaErrores";
+import ErrorState from "../components/ErrorState";
 import { erroresDeRespuesta } from "../utils/errores";
 import {
   bloquearTeclaEspacio,
@@ -506,7 +507,11 @@ function GestionUsuarios() {
             {cargando ? (
               <p className="empty-state">Cargando personal...</p>
             ) : visibles.length === 0 ? (
-              <p className="empty-state">No hay cuentas que coincidan con la búsqueda.</p>
+              <ErrorState
+                variant="search"
+                title="No encontramos coincidencias"
+                description="Prueba con otro nombre, correo o filtro de cuenta."
+              />
             ) : (
               visibles.map((p) => (
                 <div className="list-item staff-row" key={p.id_usuario}>

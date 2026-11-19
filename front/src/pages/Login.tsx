@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import ListaErrores from "../components/ListaErrores";
+import ErrorState from "../components/ErrorState";
 import { erroresDeRespuesta } from "../utils/errores";
 import { bloquearTeclaEspacio, sinEspacios } from "../utils/inputs";
 import huLogo from "../assets/hu.png";
@@ -53,6 +54,7 @@ function Login() {
   });
 
   const [errores, setErrores] = useState<ErrorCampo[]>([]);
+  const [errorUsuario, setErrorUsuario] = useState(false);
   const [cargando, setCargando] = useState(false);
 
   const camposInvalidos = new Set(errores.map((error) => error.campo));
@@ -70,6 +72,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrores([]);
+    setErrorUsuario(false);
 
     const problemas = validarLogin(form);
     setErrores(problemas);
@@ -89,6 +92,11 @@ function Login() {
 
       navigate("/dashboard");
     } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
+        setErrorUsuario(true);
+        return;
+      }
       const detalles = erroresDeRespuesta(error, "Error al iniciar sesión");
       setErrores(detalles.map((mensaje) => ({ campo: "", mensaje })));
     } finally {
@@ -155,6 +163,14 @@ function Login() {
               </span>
             </div>
 
+            {errorUsuario && (
+              <ErrorState
+                variant="user"
+                className="error-state--inline"
+                title="No encontramos una coincidencia"
+                description="El correo o la contraseña no coinciden. Revisa tus datos e inténtalo de nuevo."
+              />
+            )}
             <ListaErrores errores={errores.map((error) => error.mensaje)} />
 
             <button className="btn btn-primary btn-block" disabled={cargando}>

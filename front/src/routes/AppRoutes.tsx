@@ -8,6 +8,7 @@ import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Registro from "../pages/Registro";
 import Dashboard from "../pages/Dashboard";
+import Perfil from "../pages/Perfil";
 
 import NuevaMascota from "../pages/NuevaMascota";
 import ListaMascotas from "../pages/ListaMascotas";
@@ -45,6 +46,15 @@ const AppRoutes = () => {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/perfil"
+          element={
+            <PrivateRoute>
+              <Perfil />
             </PrivateRoute>
           }
         />
@@ -125,4 +135,3 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
-

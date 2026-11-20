@@ -57,6 +57,7 @@ Centraliza en una sola aplicación el flujo operativo de una veterinaria: el due
 | RF08 | Recepción gestiona disponibilidad y agenda | CRUD en `routes/disponibilidad.routes.js` | ✅ Implementado |
 | RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` | ⚠️ Stub: evento de registro genérico, sin envío real |
 | RF10 | El veterinario consulta sus citas asignadas | `GET /api/citas/especialista/:id` · pantalla `CitasEspecialista` | ✅ Implementado |
+| RF11 | El especialista registra o actualiza la historia de una cita atendida | `GET/POST/PUT /api/historia` · formulario desde la agenda del especialista | ⚠️ Parcial: diagnóstico, tratamiento, peso y observaciones; vacunas no están modeladas |
 | RF15 | Auditoría de acciones de admin/recepción | `middlewares/auditLog.js` | ⚠️ Registro estructurado; aún no persistido |
 
 ### Flujo principal
@@ -244,18 +245,18 @@ Lista completa con roles: [`docs/back/API.md`](docs/back/API.md). Códigos habit
 ## 5. Calidad y pruebas
 
 ```text
-          ▲  E2E (navegador)        → no existe
-         ╱ ╲
-        ╱   ╲ Integración (API+BD)  → Vitest + Supertest
-       ╱─────╲
-      ╱       ╲ Unitarias           → 7 archivos
+         ▲  E2E (navegador)        → no existe
+        ╱ ╲
+       ╱   ╲ Integración (API+BD)  → 14 archivos Vitest + Supertest
+      ╱─────╲
+     ╱       ╲ Unitarias           → 13 archivos
      ╱─────────╲
 ```
 
 | Indicador | Valor |
 |---|---|
-| Archivos de prueba | 23 en `back/tests/` (11 unitarios y 12 de integración, según el árbol revisado) |
-| Casos de prueba | 334 aprobados en una ejecución histórica registrada en la bitácora del 13/11/2026; no se reejecutó para esta actualización |
+| Archivos de prueba | 27 en `back/tests/` (13 unitarios y 14 de integración; conteo estático del archivo revisado el 20/11/2026) |
+| Casos de prueba | 334 aprobados en una ejecución histórica del 13/11/2026; no se reejecutó. El documento también conserva una cifra anterior de 241: conciliar ambas contra su commit y reporte antes de volver a informar resultados. |
 | Cubre | Autenticación, validación, JWT, contraseñas, SQL, usuarios, mascotas, disponibilidad, citas, historias clínicas y cancelación automática |
 | Falta o es parcial | Frontend automatizado/E2E, sistema completo, aceptación formal, rendimiento/carga/estrés, compatibilidad y pruebas formales de usabilidad |
 | Aislamiento | Compose de pruebas usa PostgreSQL temporal; en local verificar `DB_HOST` y `DB_NAME_TEST` antes de ejecutar, ya que el sufijo `_test` no garantiza que el host sea local |
@@ -278,6 +279,29 @@ docker compose -f docker-compose.test.yml down -v
 ```
 
 Consulta el [Plan Maestro de Pruebas](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) y la [guía de ejecución](docs/test/EJECUCION.md) para el alcance, las 18 categorías y los controles de seguridad de la base de pruebas.
+
+### Estados de interfaz (carga, vacío, error y guardado)
+
+Ninguna pantalla se queda en blanco. Mientras se consulta la API aparece la escena del
+perrito corriendo (o un esqueleto con la forma del contenido), cuando no hay datos se
+muestra una ilustración con una acción concreta y, si la API falla, un mensaje explicado
+con botón **Reintentar**. Los formularios deshabilitan su botón y muestran "Guardando..."
+con una huella girando.
+
+| Estado | Componente | Dónde se ve |
+|---|---|---|
+| Carga de página | `LoadingState` (`pagina`) | Mis mascotas, agendar cita, perfil |
+| Carga dentro de tarjeta | `LoadingState` (`panel`, `en-linea`) | Panel de citas, disponibilidad |
+| Carga con forma de contenido | `Esqueletos.tsx` | Panel del tutor, administración, personal |
+| Vacío | `EmptyState` | Listas y agendas sin registros |
+| Error de API | `ErrorState` | Cualquier consulta fallida, con reintento |
+| Guardando | `BotonEnvio` / `SpinnerHuella` | Todos los formularios y acciones |
+| Progreso global | `BarraCargaGlobal` + `loadingStore` | Barra superior con huellas |
+| Sin conexión | `AvisoSinConexion` | Aviso flotante al perder la red |
+
+En desarrollo existe la vitrina **`/estados`**, que reúne todas las variantes en una sola
+página para revisarlas o mostrarlas. El detalle completo está en
+[Estados de interfaz](DOCS_PROYECTO/ESTADOS_DE_INTERFAZ.md).
 
 ---
 
@@ -311,7 +335,7 @@ Los servicios tienen dependencias de arranque; PostgreSQL y backend definen *hea
 | `DB_NAME_TEST` | Base **desechable** para pruebas |
 | `JWT_SECRET` | Secreto de firma de tokens — **obligatorio cambiarlo** |
 | `JWT_EXPIRES_IN` | Vigencia del token (defecto `8h`) |
-| `CORS_ORIGIN` | Orígenes permitidos — *hoy el backend no la usa* (ver seguridad) |
+| `CORS_ORIGIN` | Orígenes permitidos — lista separada por comas; el backend solo acepta coincidencias exactas (ver seguridad) |
 | `VITE_API_URL` | URL de la API para el frontend (`/api` en Docker) |
 | `DB_SEED` | `true` carga datos demo en el primer arranque |
 
@@ -458,9 +482,9 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 
 - ✅ Esquema versionado con migraciones, restricciones y *trigger* de disponibilidad
 - ✅ API por capas con validación Joi y autorización por rol
-- ✅ JWT con verificación del usuario en base de datos
+- ✅ JWT con verificación del usuario en base de datos y revocación de sesión por `jti`
 - ✅ Swagger en `/api-docs`
-- ✅ 241 casos de prueba Vitest de integración/unitarias del backend
+- ⚠️ Los conteos históricos de pruebas (241 y 334) no están conciliados; el ZIP revisado contiene 27 archivos de pruebas backend, pero no se ejecutó para esta actualización
 - ✅ Docker Compose con *healthchecks* y entorno de pruebas aislado
 - ✅ Frontend con rutas protegidas por rol; compila con `tsc` sin errores
 

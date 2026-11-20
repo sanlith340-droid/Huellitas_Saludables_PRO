@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
+  FaCalendarAlt,
   FaCalendarCheck,
   FaHome,
   FaPaw,
   FaSignOutAlt,
   FaUserCircle,
+  FaUsers,
 } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
@@ -15,35 +17,57 @@ type NavItem = {
   label: string;
   to: string;
   icon: typeof FaHome;
-  section: "inicio" | "mascotas" | "citas" | "perfil";
+  activePaths?: string[];
+};
+
+const ROLE_HOME_PATH: Record<string, string> = {
+  usuario: "/dashboard",
+  especialista: "/citas/especialista",
+  recepcionista: "/disponibilidad",
+  admin: "/admin",
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  usuario: "Usuario",
+  especialista: "Especialista",
+  recepcionista: "Recepción",
+  admin: "Administrador",
+};
+
+const ITEMS_BY_ROLE: Record<string, NavItem[]> = {
+  usuario: [
+    { label: "Mi panel", to: "/dashboard", icon: FaHome },
+    { label: "Mascotas", to: "/mascotas", icon: FaPaw },
+    { label: "Solicitar cita", to: "/citas/nueva", icon: FaCalendarCheck, activePaths: ["/citas"] },
+    { label: "Perfil", to: "/perfil", icon: FaUserCircle },
+  ],
+  especialista: [
+    { label: "Mis citas", to: "/citas/especialista", icon: FaCalendarCheck, activePaths: ["/citas"] },
+    { label: "Perfil", to: "/perfil", icon: FaUserCircle },
+  ],
+  recepcionista: [
+    { label: "Agenda", to: "/disponibilidad", icon: FaCalendarAlt },
+    { label: "Perfil", to: "/perfil", icon: FaUserCircle },
+  ],
+  admin: [
+    { label: "Panel de administración", to: "/admin", icon: FaHome },
+    { label: "Personal", to: "/usuarios/admin", icon: FaUsers, activePaths: ["/usuarios"] },
+    { label: "Disponibilidad", to: "/disponibilidad", icon: FaCalendarAlt },
+    { label: "Citas", to: "/citas/admin", icon: FaCalendarCheck, activePaths: ["/citas"] },
+    { label: "Perfil", to: "/perfil", icon: FaUserCircle },
+  ],
 };
 
 function Navbar() {
-  const { usuario, autenticado, logout } = useAuth();
-  const navigate = useNavigate();
+  const { usuario, autenticado, logout, cerrandoSesion } = useAuth();
   const location = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  const rol = usuario?.rol?.toLowerCase();
-  const inicioPath = autenticado && (rol === "usuario" || !rol) ? "/dashboard" : "/";
-  const citasPath =
-    rol === "especialista"
-      ? "/citas/especialista"
-      : rol === "recepcionista"
-        ? "/disponibilidad"
-        : rol === "admin"
-          ? "/admin"
-          : "/citas/nueva";
-  const items: NavItem[] = [
-    { label: "Inicio", to: inicioPath, icon: FaHome, section: "inicio" },
-    ...(autenticado
-      ? [
-          { label: "Mascotas", to: "/mascotas", icon: FaPaw, section: "mascotas" as const },
-          { label: "Citas", to: citasPath, icon: FaCalendarCheck, section: "citas" as const },
-          { label: "Perfil", to: "/perfil", icon: FaUserCircle, section: "perfil" as const },
-        ]
-      : []),
-  ];
+  const rol = usuario?.rol?.toLowerCase() || "";
+  const inicioPath = autenticado ? ROLE_HOME_PATH[rol] || "/dashboard" : "/";
+  const items: NavItem[] = autenticado
+    ? ITEMS_BY_ROLE[rol] || [{ label: "Mi panel", to: "/dashboard", icon: FaHome }]
+    : [{ label: "Inicio", to: "/", icon: FaHome }];
 
   useEffect(() => {
     setMenuAbierto(false);
@@ -58,28 +82,23 @@ function Navbar() {
     return () => window.removeEventListener("keydown", cerrarConEscape);
   }, [menuAbierto]);
 
-  const estaActivo = (section: NavItem["section"]) => {
+  const estaActivo = (item: NavItem) => {
     const path = location.pathname;
-    if (section === "inicio") {
-      return path === "/" || (autenticado && path === "/dashboard");
-    }
-    if (section === "mascotas") return path.startsWith("/mascotas");
-    if (section === "citas") {
-      return ["/citas", "/disponibilidad", "/admin"].some((prefix) => path.startsWith(prefix));
-    }
-    return path.startsWith("/perfil");
+    return [item.to, ...(item.activePaths || [])].some(
+      (ruta) => path === ruta || (ruta !== "/" && path.startsWith(`${ruta}/`))
+    );
   };
 
+  // La revocación del token, la limpieza local y la redirección viven en AuthContext.
   const handleLogout = () => {
     setMenuAbierto(false);
-    logout();
-    navigate("/");
+    void logout();
   };
 
   return (
     <header className="navbar">
       <div className="container navbar__inner">
-        <Link to={inicioPath} className="brand" aria-label="Huellitas Saludables, ir a Inicio">
+        <Link to={inicioPath} className="brand" aria-label="Huellitas Saludables, ir a mi panel">
           <span className="brand__mark">
             <img src={huLogo} alt="" />
           </span>
@@ -106,11 +125,12 @@ function Navbar() {
           }}
         >
           <div className="navbar__links">
-            {items.map(({ label, to, icon: Icon, section }) => {
-              const active = estaActivo(section);
+            {items.map((item) => {
+              const { label, to, icon: Icon } = item;
+              const active = estaActivo(item);
               return (
                 <Link
-                  key={section}
+                  key={`${to}-${label}`}
                   to={to}
                   className={`navbar__link${active ? " is-active" : ""}`}
                   aria-current={active ? "page" : undefined}
@@ -131,12 +151,18 @@ function Navbar() {
                 </span>
                 <span className="navbar__greeting-text">
                   <strong>{usuario?.nombre || "Mi cuenta"}</strong>
-                  <small>{usuario?.rol || "usuario"}</small>
+                  <small>{ROLE_LABEL[rol] || usuario?.rol || "Usuario"}</small>
                 </span>
               </span>
-              <button type="button" className="navbar__logout" onClick={handleLogout}>
+              <button
+                type="button"
+                className="navbar__logout"
+                onClick={handleLogout}
+                disabled={cerrandoSesion}
+                aria-busy={cerrandoSesion}
+              >
                 <FaSignOutAlt aria-hidden="true" />
-                <span>Cerrar sesión</span>
+                <span>{cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}</span>
               </button>
             </div>
           ) : (

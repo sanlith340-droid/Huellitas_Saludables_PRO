@@ -32,7 +32,7 @@ Las categorías de prueba se organizan en cuatro dimensiones independientes: for
 
 | Área | Alcance previsto | Estado observado |
 |---|---|---|
-| Backend: servicios, validaciones, seguridad y utilidades | Unitarias y pruebas de integración HTTP con PostgreSQL | **Implementado** en el código de pruebas. Hay un resultado histórico de 23 archivos y 334 pruebas aprobadas registrado el 13/11/2026; no se reejecutó al redactar este plan. |
+| Backend: servicios, validaciones, seguridad y utilidades | Unitarias y pruebas de integración HTTP con PostgreSQL | **Implementado** en el código de pruebas. El ZIP revisado el 20/11/2026 contiene 27 archivos (13 unitarios y 14 de integración). Hay un resultado histórico de 23 archivos y 334 pruebas aprobadas registrado el 13/11/2026; no se reejecutó en esta revisión y no debe presentarse como resultado actual. |
 | Frontend: React, formularios, rutas y estados visuales | Verificación manual y futura automatización de componentes/E2E | **Parcial/manual.** Se documentaron comprobaciones manuales de formularios. No se encontró suite automatizada de frontend ni E2E. |
 | Sistema completo | Browser/Nginx → API → PostgreSQL y flujos de usuario | **Pendiente como suite formal.** El healthcheck de API/BD no equivale a una prueba de sistema de extremo a extremo. |
 | Aceptación | Validación de flujos y criterios por representante del negocio | **Pendiente formal.** No se encontró acta de aceptación ni matriz aprobada por usuarios finales. |

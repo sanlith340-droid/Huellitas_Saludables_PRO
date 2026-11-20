@@ -5,6 +5,7 @@
  */
 
 import authModel from '../models/auth.model.js';
+import tokenRevocadoModel from '../models/tokenRevocado.model.js';
 import AppError from '../utils/AppError.js';
 import { generarToken } from '../utils/jwt.js';
 import {
@@ -163,5 +164,26 @@ async function registroAdmin(datosUsuario, adminId) {
   };
 }
 
-export { login, registro, registroAdmin };
-export default { login, registro, registroAdmin };
+/**
+ * Cierra la sesión revocando el token concreto con el que se hizo la petición.
+ * `jti` y `exp` provienen del JWT ya verificado por identifyUser (nunca de headers
+ * sueltos). Es idempotente a nivel de datos: el modelo no crea duplicados.
+ */
+async function logout({ jti, exp }) {
+  const expiraEn = new Date(exp * 1000);
+  await tokenRevocadoModel.revocar({ jti, expiraEn });
+
+  // Confirmación explícita: no se responde éxito si la revocación no quedó persistida.
+  if (!(await tokenRevocadoModel.estaRevocado(jti))) {
+    throw AppError.serviceUnavailable('No fue posible confirmar el cierre de sesión.');
+  }
+  return { revocado: true };
+}
+
+/** Elimina de la lista de revocación los tokens que ya expiraron. Devuelve cuántos. */
+async function limpiarTokensRevocadosExpirados(ahora = new Date()) {
+  return tokenRevocadoModel.eliminarExpirados(ahora);
+}
+
+export { login, registro, registroAdmin, logout, limpiarTokensRevocadosExpirados };
+export default { login, registro, registroAdmin, logout, limpiarTokensRevocadosExpirados };

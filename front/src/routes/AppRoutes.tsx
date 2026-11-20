@@ -1,25 +1,33 @@
+import { lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import PrivateRoute from "../components/PrivateRoute";
 import RoleRoute from "../components/RoleRoute";
 
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Registro from "../pages/Registro";
-import Dashboard from "../pages/Dashboard";
-import Perfil from "../pages/Perfil";
+/*
+ * Las pantallas se cargan por separado (code splitting). Mientras llega el
+ * archivo de la pantalla, MainLayout muestra la escena del perrito corriendo,
+ * así que la navegación nunca deja un hueco en blanco.
+ */
+const Home = lazy(() => import("../pages/Home"));
+const Login = lazy(() => import("../pages/Login"));
+const Registro = lazy(() => import("../pages/Registro"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const Perfil = lazy(() => import("../pages/Perfil"));
 
-import NuevaMascota from "../pages/NuevaMascota";
-import ListaMascotas from "../pages/ListaMascotas";
+const NuevaMascota = lazy(() => import("../pages/NuevaMascota"));
+const ListaMascotas = lazy(() => import("../pages/ListaMascotas"));
 
-import NuevaCita from "../pages/NuevaCita";
-import Disponibilidad from "../pages/Disponibilidad";
-import CitasEspecialista from "../pages/CitasEspecialista";
-import GestionUsuarios from "../pages/GestionUsuarios";
-import DashboardAdmin from "../pages/DashboardAdmin";
+const NuevaCita = lazy(() => import("../pages/NuevaCita"));
+const Disponibilidad = lazy(() => import("../pages/Disponibilidad"));
+const CitasEspecialista = lazy(() => import("../pages/CitasEspecialista"));
+const CitasAdmin = lazy(() => import("../pages/CitasAdmin"));
+const GestionUsuarios = lazy(() => import("../pages/GestionUsuarios"));
+const DashboardAdmin = lazy(() => import("../pages/DashboardAdmin"));
 
-import NotFound from "../pages/NotFound";
+const NotFound = lazy(() => import("../pages/NotFound"));
+const EstadosDemo = lazy(() => import("../pages/EstadosDemo"));
 
 const AppRoutes = () => {
   return (
@@ -63,9 +71,9 @@ const AppRoutes = () => {
         <Route
           path="/mascotas"
           element={
-            <PrivateRoute>
+            <RoleRoute roles={["usuario"]}>
               <ListaMascotas />
-            </PrivateRoute>
+            </RoleRoute>
           }
         />
 
@@ -73,25 +81,25 @@ const AppRoutes = () => {
         <Route
           path="/mascotas/nueva"
           element={
-            <PrivateRoute>
+            <RoleRoute roles={["usuario"]}>
               <NuevaMascota />
-            </PrivateRoute>
+            </RoleRoute>
           }
         />
 
         <Route
           path="/citas/nueva"
           element={
-            <PrivateRoute>
+            <RoleRoute roles={["usuario"]}>
               <NuevaCita />
-            </PrivateRoute>
+            </RoleRoute>
           }
         />
 
         <Route
           path="/disponibilidad"
           element={
-            <RoleRoute roles={["recepcionista"]}>
+            <RoleRoute roles={["recepcionista", "admin"]}>
               <Disponibilidad />
             </RoleRoute>
           }
@@ -102,6 +110,15 @@ const AppRoutes = () => {
           element={
             <RoleRoute roles={["especialista"]}>
               <CitasEspecialista />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/citas/admin"
+          element={
+            <RoleRoute roles={["admin"]}>
+              <CitasAdmin />
             </RoleRoute>
           }
         />
@@ -123,6 +140,9 @@ const AppRoutes = () => {
             </RoleRoute>
           }
         />
+
+        {/* Vitrina de estados (solo en desarrollo): /estados */}
+        {import.meta.env.DEV && <Route path="/estados" element={<EstadosDemo />} />}
 
         <Route
           path="*"

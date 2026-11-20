@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import ErrorState from "../components/ErrorState";
+import EmptyState from "../components/feedback/EmptyState";
+import LoadingState from "../components/feedback/LoadingState";
+import BotonEnvio, { SpinnerHuella } from "../components/feedback/BotonEnvio";
+import { EsqueletoDoctores } from "../components/feedback/Esqueletos";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import { FaCalendarAlt, FaClock, FaUserMd, FaCheck } from "react-icons/fa";
 
 const ESTADO_LABEL = {
@@ -97,6 +101,7 @@ function NuevaCita() {
   const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [fallo, setFallo] = useState<unknown>(null);
   const [errorServidor, setErrorServidor] = useState(false);
   const [errorCita, setErrorCita] = useState(false);
   const [cancelandoId, setCancelandoId] = useState(null);
@@ -115,6 +120,7 @@ function NuevaCita() {
   const cargarDatos = useCallback(async () => {
     setCargando(true);
     setError("");
+    setFallo(null);
     setErrorServidor(false);
 
     try {
@@ -138,10 +144,8 @@ function NuevaCita() {
       setCitas(misCitas);
     } catch (err) {
       setErrorServidor(!err.response || err.response.status >= 500);
-      setError(
-        err.response?.data?.message ||
-          "No se pudo cargar la disponibilidad. Verifica que el backend esté activo."
-      );
+      setFallo(err);
+      setError(mensajeDeError(err, "No se pudo cargar la agenda de la clínica."));
     } finally {
       setCargando(false);
     }
@@ -229,7 +233,7 @@ function NuevaCita() {
       await cargarDatos();
     } catch (err) {
       if (err.response?.status === 409) setErrorCita(true);
-      setMensaje(err.response?.data?.message || "No se pudo agendar la cita.");
+      setMensaje(mensajeDeError(err, "No se pudo agendar la cita."));
     } finally {
       setEnviando(false);
     }
@@ -241,7 +245,7 @@ function NuevaCita() {
       await api.patch(`/citas/${id_cita}/cancelar`);
       await cargarDatos();
     } catch (err) {
-      setMensaje(err.response?.data?.message || "No se pudo cancelar la cita.");
+      setMensaje(mensajeDeError(err, "No se pudo cancelar la cita."));
     } finally {
       setCancelandoId(null);
     }
@@ -269,14 +273,48 @@ function NuevaCita() {
           Elige un doctor, un día y una hora disponible para tu mascota.
         </p>
 
-        {error && <p className="message message-error">{error}</p>}
+        {error && (
+          <ErrorState
+            variant={varianteDeError(fallo)}
+            compacto
+            title={tituloDeError(fallo)}
+            description={error}
+            onRetry={() => void cargarDatos()}
+          />
+        )}
 
-        {!error && cargando && <p className="empty-state">Cargando disponibilidad...</p>}
+        {!error && cargando && (
+          <>
+            <LoadingState
+              variante="panel"
+              titulo="Buscando horarios disponibles"
+              mensajes={[
+                "Revisando la agenda de cada especialista...",
+                "Buscando los huecos libres de la semana...",
+                "Casi listo para que elijas día y hora...",
+              ]}
+            />
+            <div className="panel" style={{ marginTop: 16 }}>
+              <div className="panel__head">
+                <h2>Especialistas disponibles</h2>
+              </div>
+              <EsqueletoDoctores cantidad={4} />
+            </div>
+          </>
+        )}
 
         {!error && !cargando && mascotas.length === 0 && (
-          <p className="message message-error">
-            Primero necesitas registrar una mascota. <Link to="/mascotas/nueva">Regístrala aquí</Link>.
-          </p>
+          <EmptyState
+            ilustracion="mascotas"
+            titulo="Primero necesitas registrar a tu mascota"
+            descripcion="Las citas se agendan a nombre de una mascota. Registra la tuya en menos de un minuto y vuelve a esta pantalla."
+            sugerencias={[
+              "Solo pedimos su nombre, especie y fecha de nacimiento.",
+              "Puedes registrar varias mascotas en la misma cuenta.",
+            ]}
+            accion={{ etiqueta: "Registrar mi mascota", to: "/mascotas/nueva" }}
+            accionSecundaria={{ etiqueta: "Ya la registré, actualizar", onClick: () => void cargarDatos() }}
+          />
         )}
 
         {!error && !cargando && mascotas.length > 0 && (
@@ -409,9 +447,13 @@ function NuevaCita() {
               />
             </div>
 
-            <button className="btn btn-primary" disabled={enviando || !idDisponibilidad}>
-              <FaClock /> {enviando ? "Agendando..." : "Confirmar cita"}
-            </button>
+            <BotonEnvio
+              guardando={enviando}
+              texto="Confirmar cita"
+              textoGuardando="Guardando..."
+              icono={<FaClock />}
+              disabled={!idDisponibilidad}
+            />
 
             {errorCita && (
               <ErrorState
@@ -440,9 +482,14 @@ function NuevaCita() {
           </div>
 
           {cargando ? (
-            <p className="empty-state">Cargando citas...</p>
-          ) : citas.length === 0 ? (
-            <p className="empty-state">No tienes citas agendadas.</p>
+            <LoadingState variante="panel" titulo="Revisando tus citas" mensajes={["Buscando tus reservas...", "Ordenando por fecha..."]} />
+          ) : error ? null : citas.length === 0 ? (
+            <EmptyState
+              variante="en-linea"
+              ilustracion="citas"
+              titulo="No tienes citas agendadas"
+              descripcion="Elige un especialista, un día y una hora para reservar la primera."
+            />
           ) : (
             citas.map((cita) => (
               <div className="list-item list-item--cita" key={cita.id_cita}>
@@ -468,8 +515,10 @@ function NuevaCita() {
                       type="button"
                       className="btn btn-ghost btn-sm"
                       disabled={cancelandoId === cita.id_cita}
+                      aria-busy={cancelandoId === cita.id_cita || undefined}
                       onClick={() => handleCancelar(cita.id_cita)}
                     >
+                      {cancelandoId === cita.id_cita && <SpinnerHuella />}
                       {cancelandoId === cita.id_cita ? "Cancelando..." : "Cancelar"}
                     </button>
                   )}

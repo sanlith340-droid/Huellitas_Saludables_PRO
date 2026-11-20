@@ -10,7 +10,7 @@ Guía operativa de la suite automatizada existente. Para conocer qué cubre cada
 - Archivos: `back/tests/**/*.test.js`.
 - Frontend: no se encontró framework/suite automatizada de componentes ni E2E en `front/`.
 
-La bitácora [`BITACORA_VALIDACION_FORMULARIOS.md`](../back/BITACORA_VALIDACION_FORMULARIOS.md) reporta una ejecución anterior con 23 archivos y 334 pruebas aprobadas. Es evidencia histórica, no el resultado de la última ejecución de este documento.
+El ZIP revisado el 20/11/2026 contiene 27 archivos backend (13 unitarios y 14 de integración). La bitácora [`BITACORA_VALIDACION_FORMULARIOS.md`](../back/BITACORA_VALIDACION_FORMULARIOS.md) reporta una ejecución anterior con 23 archivos y 334 pruebas aprobadas; es evidencia histórica, no el resultado de la última ejecución. El total vigente debe actualizarse solo después de ejecutar la suite y registrar commit, comando y resultado.
 
 ## Opción A: PostgreSQL temporal con Docker Compose
 

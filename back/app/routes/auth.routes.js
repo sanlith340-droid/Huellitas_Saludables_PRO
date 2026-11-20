@@ -29,6 +29,9 @@ router.post(
 // Autenticado
 router.get('/perfil', controller.perfil);
 
+// Autenticado - revoca el JWT con el que se hace la petición (cierre de sesión real)
+router.post('/logout', controller.logout);
+
 // Test
 router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Auth routes working!' });

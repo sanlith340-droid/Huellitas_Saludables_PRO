@@ -424,6 +424,33 @@ const options = {
           },
         },
       },
+      '/api/auth/logout': {
+        post: {
+          summary: 'Cerrar sesión y revocar el JWT usado en la petición',
+          description: 'Registra el `jti` del token en la lista de revocación (PostgreSQL). A partir de ese momento ese token responde 401 en cualquier endpoint protegido. No afecta otras sesiones del mismo usuario.',
+          tags: ['Auth'],
+          security: [{ apiKey: [] }],
+          responses: {
+            200: {
+              description: 'Sesión cerrada; el token quedó revocado',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      message: { type: 'string', example: 'Sesión cerrada correctamente' },
+                      data: { type: 'object', nullable: true, example: null },
+                    },
+                  },
+                },
+              },
+            },
+            401: { description: 'Sin token, token inválido/expirado o ya revocado' },
+            503: { description: 'No se pudo verificar o persistir la revocación' },
+          },
+        },
+      },
       '/api/auth/test': {
         get: {
           summary: 'Endpoint de prueba de autenticación',

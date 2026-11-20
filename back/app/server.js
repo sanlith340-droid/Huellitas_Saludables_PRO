@@ -10,6 +10,7 @@ import app from './app.js';
 import logger from './utils/logger.js';
 import { disconnect } from './config/prisma.js';
 import { iniciarCancelacionAutomatica } from './services/citaCancellationScheduler.js';
+import { iniciarLimpiezaTokensRevocados } from './services/tokenRevocadoCleanupScheduler.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -18,10 +19,12 @@ const server = app.listen(PORT, () => {
 });
 
 const detenerCancelacionAutomatica = iniciarCancelacionAutomatica();
+const detenerLimpiezaTokensRevocados = iniciarLimpiezaTokensRevocados();
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
     detenerCancelacionAutomatica();
+    detenerLimpiezaTokensRevocados();
     server.close(async () => {
       await disconnect();
     });

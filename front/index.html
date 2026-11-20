@@ -5,10 +5,56 @@
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Huellitas Saludables — agenda y gestiona las citas veterinarias de tus mascotas." />
+    <meta name="theme-color" content="#ebf2e4" />
     <title>Huellitas Saludables</title>
+    <style>
+      /* Pantalla de arranque: se ve mientras descarga el JavaScript.
+         React la reemplaza en cuanto la app toma el control. */
+      html, body { margin: 0; background: #ebf2e4; }
+      #arranque {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(circle at 50% 20%, #ffffff 0%, #f2f7ec 45%, #e6efe0 100%);
+        color: #2c4730;
+        font-family: "Nunito", "Segoe UI", system-ui, sans-serif;
+        text-align: center;
+      }
+      #arranque .arranque__caja { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+      #arranque .arranque__huellas { display: flex; gap: 12px; }
+      #arranque .arranque__huellas span {
+        width: 14px; height: 14px; border-radius: 50%;
+        background: #5a8c66; opacity: 0.25;
+        animation: arranque-huella 1.2s ease-in-out infinite;
+      }
+      #arranque .arranque__huellas span:nth-child(2) { animation-delay: .15s; }
+      #arranque .arranque__huellas span:nth-child(3) { animation-delay: .3s; }
+      #arranque .arranque__huellas span:nth-child(4) { animation-delay: .45s; }
+      #arranque p { margin: 0; font-size: .98rem; font-weight: 700; }
+      #arranque small { color: #5d6b58; font-size: .8rem; }
+      @keyframes arranque-huella {
+        0%, 100% { opacity: .22; transform: translateY(0) scale(.9); }
+        50% { opacity: 1; transform: translateY(-5px) scale(1.05); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #arranque .arranque__huellas span { animation: none; opacity: .6; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="arranque">
+        <div class="arranque__caja">
+          <div class="arranque__huellas" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <p>Preparando la sala de espera...</p>
+          <small>Huellitas Saludables</small>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

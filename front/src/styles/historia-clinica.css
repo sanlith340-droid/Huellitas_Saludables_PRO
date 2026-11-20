@@ -1,0 +1,134 @@
+.historia-clinica {
+  margin-top: 16px;
+  padding: 24px;
+  border: 1px solid var(--sand-300);
+  border-left: 4px solid var(--pine-500);
+  border-radius: var(--radius-md);
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
+.historia-clinica__encabezado {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.historia-clinica__encabezado h2 {
+  margin: 2px 0 8px;
+  font-size: 1.25rem;
+}
+
+.historia-clinica__ceja {
+  color: var(--pine-700);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.historia-clinica__nota,
+.historia-clinica__estado {
+  color: var(--ink-600);
+  font-size: 0.9rem;
+}
+
+.historia-clinica__campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.historia-clinica__campos label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--pine-900);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.historia-clinica__campos label > span {
+  color: var(--red-600);
+}
+
+.historia-clinica__campos input,
+.historia-clinica__campos textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--sand-300);
+  border-radius: var(--radius-sm);
+  padding: 11px 12px;
+  background: #fff;
+  color: var(--ink-900);
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.historia-clinica__campos input:focus,
+.historia-clinica__campos textarea:focus {
+  border-color: var(--pine-500);
+  outline: 3px solid rgba(90, 140, 102, 0.18);
+}
+
+.historia-clinica__campos small {
+  color: var(--ink-600);
+  font-size: 0.76rem;
+  font-weight: 400;
+}
+
+.historia-clinica__observaciones {
+  grid-column: 1 / -1;
+}
+
+.historia-clinica__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.historia-clinica__acciones button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.historia-clinica__error,
+.historia-clinica__aviso {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+}
+
+.historia-clinica__error {
+  border: 1px solid #e6b7ad;
+  background: #fff4f1;
+  color: #8d2f20;
+}
+
+.historia-clinica__aviso {
+  border: 1px solid #b8d0b3;
+  background: #f2f8ef;
+  color: var(--pine-900);
+}
+
+.historia-clinica__error .btn {
+  margin-top: 10px;
+}
+
+@media (max-width: 680px) {
+  .historia-clinica {
+    padding: 18px;
+  }
+
+  .historia-clinica__campos {
+    grid-template-columns: 1fr;
+  }
+
+  .historia-clinica__observaciones {
+    grid-column: auto;
+  }
+}

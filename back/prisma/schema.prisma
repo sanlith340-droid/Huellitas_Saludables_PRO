@@ -116,3 +116,13 @@ model HistoriaClinica {
 
   @@map("historia_clinica")
 }
+
+model TokenRevocado {
+  id_token_revocado Int      @id @default(autoincrement())
+  jti               String   @unique(map: "token_revocado_jti_key") @db.VarChar(64)
+  revocado_en       DateTime @default(now()) @db.Timestamptz(6)
+  expira_en         DateTime @db.Timestamptz(6)
+
+  @@index([expira_en], map: "token_revocado_expira_en_idx")
+  @@map("token_revocado")
+}

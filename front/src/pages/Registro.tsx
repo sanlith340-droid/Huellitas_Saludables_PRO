@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import ListaErrores from "../components/ListaErrores";
+import BotonEnvio from "../components/feedback/BotonEnvio";
+import ErrorState from "../components/ErrorState";
 import { erroresDeRespuesta } from "../utils/errores";
+import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import {
   bloquearTeclaEspacio,
   bloquearTeclaNoDigito,
@@ -101,6 +104,7 @@ function Registro() {
   const [mensaje, setMensaje] = useState("");
   const [exito, setExito] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [errorApi, setErrorApi] = useState<unknown>(null);
 
   const camposInvalidos = new Set(errores.map((error) => error.campo));
   const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
@@ -129,6 +133,7 @@ function Registro() {
     if (problemas.length > 0) return;
 
     setCargando(true);
+    setErrorApi(null);
 
     try {
       await api.post("/auth/registro", {
@@ -143,6 +148,12 @@ function Registro() {
 
       setTimeout(() => navigate("/login"), 1500);
     } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      // Fallos de red o del servidor: estado de error ilustrado en lugar de un texto suelto.
+      if (!status || status >= 500) {
+        setErrorApi(error);
+        return;
+      }
       const detalles = erroresDeRespuesta(error, "No se pudo completar el registro");
       setErrores(detalles.map((mensajeError) => ({ campo: "", mensaje: mensajeError })));
     } finally {
@@ -292,9 +303,22 @@ function Registro() {
 
             <ListaErrores errores={errores.map((error) => error.mensaje)} />
 
-            <button className="btn btn-primary btn-block" disabled={cargando}>
-              {cargando ? "Creando cuenta..." : "Crear cuenta"}
-            </button>
+            {errorApi && (
+              <ErrorState
+                variant={varianteDeError(errorApi)}
+                compacto
+                className="error-state--inline"
+                title={tituloDeError(errorApi)}
+                description={mensajeDeError(errorApi, "No pudimos crear tu cuenta. Inténtalo de nuevo.")}
+              />
+            )}
+
+            <BotonEnvio
+              guardando={cargando}
+              texto="Crear cuenta"
+              textoGuardando="Guardando..."
+              bloque
+            />
           </form>
 
           {mensaje && (

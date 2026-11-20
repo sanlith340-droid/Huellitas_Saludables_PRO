@@ -128,7 +128,7 @@ Prisma proporciona el esquema declarativo, el cliente JavaScript/ESM y las opera
 - **Autenticación:** JWT real firmado HS256, enviado como `Authorization: Bearer <token>`. El middleware busca al usuario vigente en PostgreSQL y obtiene de allí su rol; no confía en un rol escrito libremente por el cliente.
 - **Autorización:** middlewares `requireRole` y comprobaciones por recurso en servicios. La protección de rutas de React mejora la experiencia, pero la frontera de seguridad es el backend.
 - **Contraseñas:** bcrypt para nuevos hashes; valor predeterminado de 12 rondas. Se acepta verificar un hash scrypt heredado para migrarlo a bcrypt tras autenticación válida; contraseñas en texto plano no se aceptan en login.
-- **Tokens:** el cierre de sesión limpia el estado del cliente, pero no se encontró revocación inmediata en servidor. Un JWT emitido puede ser válido hasta expirar salvo otros controles; la invalidación de tokens sigue pendiente.
+- **Tokens:** el cierre de sesión revoca el `jti` en la tabla `TokenRevocado`; el middleware comprueba esa lista y rechaza el token revocado. Existen pruebas de integración para revocación, tokens inválidos/expirados y fallo seguro; consultar `test_DOCUMENTACION/EJECUCION.md` para registrar resultados de cada corrida.
 - **Validación:** Joi en backend y controles de formulario en frontend. El servidor vuelve a validar siempre; las reglas de entrada actuales incluyen, entre otras, teléfono numérico y correo/contraseña sin espacios.
 - **Errores y logs:** un único middleware transforma errores HTTP; fallos internos muestran texto genérico al cliente. Pino define niveles por entorno y redacta tokens, credenciales y datos personales.
 
@@ -298,8 +298,8 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 | 4 | P0 | Backend: migrar a Prisma | **Implementada.** Prisma 7 ESM, cliente, esquema y migraciones. |
 | 5 | P0 | Encriptar contraseñas con bcrypt | **Implementada.** bcrypt en altas/nuevos hashes; compatibilidad de lectura/migración para hashes scrypt heredados. |
 | 6 | P0 | Evitar SQL Injection | **Implementada en el acceso revisado.** Consultas parametrizadas y pruebas específicas; no usar APIs `Unsafe` con entrada externa. |
-| 7 | P0 | Limitar intentos de login | **Pendiente.** No se encontró rate limiter configurado para autenticación. |
-| 8 | P0 | Cierre de sesión que invalida tokens | **Parcial.** El frontend limpia sesión local; no se encontró endpoint/lista de revocación en backend. |
+| 7 | P0 | Limitar intentos de login | **Implementada en backend.** Login y registro usan limitadores por IP; umbral predeterminado de cinco intentos por 15 minutos. Hay pruebas de integración definidas; registrar el resultado de la corrida vigente. |
+| 8 | P0 | Cierre de sesión que invalida tokens | **Implementada en backend y frontend.** Logout revoca el `jti`; el middleware rechaza tokens revocados y el cliente limpia la sesión local. Hay pruebas de integración definidas; registrar el resultado de la corrida vigente. |
 | 9 | P0 | Refactorizar Dockerfiles | **Por confirmar.** Dockerfiles y Compose funcionales existen; no se encontró evidencia de cierre que demuestre que la tarea específica de refactor se completó. |
 | 10 | P0 | Quitar valores por defecto de JWT_SECRET y credenciales de BD | **Parcial.** El módulo JWT falla si no recibe secreto, pero Compose inyecta placeholder; `DB_PASSWORD` también tiene fallback. |
 | 11 | P0 | Configurar CORS correctamente | **Parcial.** Express lee `CORS_ORIGIN`, pero Compose usa `*` como default y el código espera una lista literal de orígenes. Configurar dominios exactos. |
@@ -307,7 +307,7 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 | 13 | P1 | Recuperar contraseña por correo | **Pendiente.** No se encontraron endpoints/UI de reset ni envío de correo. |
 | 14 | P1 | Rediseñar navegación por secciones con íconos | **Parcial.** Hay navegación por rol e iconos en partes de la interfaz; la Navbar no implementa todavía la reorganización completa descrita. |
 | 15 | P1 | Pantallas/estados de carga | **Parcial.** Algunas vistas comunican “Cargando…” y deshabilitan acciones; no hay un patrón global y uniforme. |
-| 16 | P1 | Historias clínicas desde la vista especialista | **Parcial.** API y servicios clínicos existen; `CitasEspecialista` muestra citas, pero la revisión no encontró el flujo completo de historia clínica integrado en esa vista. |
+| 16 | P1 | Historias clínicas desde la vista especialista | **Implementada parcialmente en la interfaz.** La agenda permite abrir, crear y actualizar historias de citas atendidas usando la API existente. El modelo no contempla vacunas y no hay automatización frontend; mantener RF011 como parcial hasta resolver esos puntos. |
 | 17 | P1 | Personalizar perfil de usuario y mascota | **Parcial.** Existe consulta de perfil y alta de mascota; no se encontró el flujo completo de edición de perfil de usuario/mascota. |
 | 18 | P1 | Cuidador con seguimiento de mascota | **Pendiente.** No se encontró modelo, endpoint ni pantalla de seguimiento/cuidado. |
 
@@ -318,7 +318,7 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 3. **Hash de contraseñas:** algunas secciones antiguas del README dicen scrypt; el código actual genera bcrypt y solo mantiene compatibilidad/migración de hashes scrypt heredados.
 4. **Auditoría:** hay auditoría persistente para cancelaciones, no un ledger general de CRUD. El middleware general no persiste en producción.
 5. **Credenciales/CORS:** defaults inseguros en Compose deben retirarse o exigir configuración no vacía. Configurar `CORS_ORIGIN` con orígenes explícitos y comprobar preflight.
-6. **Límite de login y revocación:** no se encontraron. Son pendientes P0 del plan.
+6. **Límite de login y revocación:** están implementados en backend y cuentan con pruebas fuente; verificar su ejecución vigente y mantener actualizados los resultados del plan de pruebas.
 7. **Datos personales:** usuarios autenticados pueden consultar rutas por ID que pueden exponer correo, teléfono o dirección. Revisar minimización de datos y permisos conforme a la política de privacidad del producto.
 8. **Swagger y README:** algunos contenidos están desactualizados respecto de JWT, cantidad de modelos, hashing y configuración CORS. Las pruebas de frontend/E2E y un pipeline CI siguen siendo brechas de calidad identificadas en los documentos del proyecto.
 9. **Producción:** el README caracteriza el proyecto como desarrollo/demo y no listo para producción. Antes de desplegar públicamente se necesitan secretos gestionados, CORS restringido, rate limiting, política de sesión, privacidad, backups/restauración y pruebas de seguridad operativa.
@@ -327,7 +327,7 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 
 1. Actualizar RN05/RN06 para describir JWT Bearer y rol consultado desde PostgreSQL.
 2. Alinear Swagger con JWT Bearer y respuestas reales; retirar headers de identidad y `mock-token`.
-3. Completar los pendientes P0: límite de login, estrategia de revocación y eliminación de defaults de secretos/credenciales; validar CORS con orígenes reales.
+3. Completar los pendientes de configuración P0: eliminar defaults de secretos/credenciales y validar CORS con orígenes reales; conservar evidencia vigente de rate limiting y revocación de sesión.
 4. Decidir si la auditoría de acciones administrativas debe persistirse en una tabla general y qué retención tendrá.
 5. Definir las reglas de exposición de datos personales en consultas por ID.
 6. Antes de añadir tablas futuras, acordar historias de usuario, permisos, campos, expiración/retención y criterios de borrado; crear migraciones aditivas y pruebas.

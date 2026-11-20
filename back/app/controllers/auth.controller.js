@@ -61,5 +61,15 @@ const perfil = asyncHandler(async (req, res) => {
   return ok(res, usuarioSinPassword, 'Perfil obtenido correctamente');
 });
 
-export { login, registro, registroAdmin, perfil };
-export default { login, registro, registroAdmin, perfil };
+const logout = asyncHandler(async (req, res) => {
+  // req.auth lo fija identifyUser a partir del JWT verificado; sin él no se revoca nada.
+  if (!req.user || !req.auth?.jti) {
+    throw AppError.unauthorized('Usuario no autenticado');
+  }
+
+  await authService.logout(req.auth);
+  return ok(res, null, 'Sesión cerrada correctamente');
+});
+
+export { login, registro, registroAdmin, perfil, logout };
+export default { login, registro, registroAdmin, perfil, logout };

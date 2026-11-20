@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -48,7 +48,12 @@ function validarLogin(form: { correo: string; contrasena: string }): ErrorCampo[
 
 function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, avisoSesion, limpiarAvisoSesion } = useAuth();
+  // Aviso tras cerrar sesión: se copia al estado local y se limpia del contexto para no repetirlo.
+  const [avisoCierre] = useState<string | null>(avisoSesion);
+  useEffect(() => {
+    if (avisoSesion) limpiarAvisoSesion();
+  }, [avisoSesion, limpiarAvisoSesion]);
 
   const [form, setForm] = useState({
     correo: "",
@@ -129,6 +134,12 @@ function Login() {
         <div className="auth-card">
           <h1>Iniciar sesión</h1>
           <p className="auth-card__subtitle">Ingresa tus datos para continuar.</p>
+
+          {avisoCierre && (
+            <p className="message message-success" role="status">
+              {avisoCierre}
+            </p>
+          )}
 
           <form onSubmit={handleSubmit} noValidate>
             <div className="field">

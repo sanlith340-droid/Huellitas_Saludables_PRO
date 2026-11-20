@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { FaEnvelope, FaIdCard, FaPhone, FaUser } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
@@ -15,8 +14,7 @@ function textoSeguro(valor: unknown): string {
 }
 
 function Perfil() {
-  const { usuario, logout } = useAuth();
-  const navigate = useNavigate();
+  const { usuario, logout, cerrandoSesion } = useAuth();
   const [datos, setDatos] = useState<Record<string, unknown>>((usuario || {}) as Record<string, unknown>);
   const [cargando, setCargando] = useState(true);
   const [errorPerfil, setErrorPerfil] = useState<number | null>(null);
@@ -52,9 +50,9 @@ function Perfil() {
     { etiqueta: "Teléfono", valor: textoSeguro(datos?.telefono), icono: FaPhone },
   ];
 
+  // Misma función centralizada que usa la Navbar (revoca el token y limpia la sesión).
   const cerrarSesion = () => {
-    logout();
-    navigate("/");
+    void logout();
   };
 
   if (cargando) {
@@ -132,7 +130,15 @@ function Perfil() {
 
         <div className="profile-card__footer">
           <p>¿Necesitas actualizar tus datos? Contacta al equipo de recepción para recibir ayuda.</p>
-          <button type="button" className="btn btn-outline" onClick={cerrarSesion}>Cerrar sesión</button>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={cerrarSesion}
+            disabled={cerrandoSesion}
+            aria-busy={cerrandoSesion}
+          >
+            {cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}
+          </button>
         </div>
       </section>
     </div>

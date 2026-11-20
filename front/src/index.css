@@ -2709,6 +2709,11 @@ input:focus-visible {
   color: #294c32;
 }
 
+.navbar__logout:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .navbar__signup {
   min-height: 43px;
   padding: 9px 15px;

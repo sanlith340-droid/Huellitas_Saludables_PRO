@@ -194,6 +194,33 @@ show "$RESP"
 echo "$RESP" | grep -q 'FORBIDDEN' && ok "Rechazo correcto" || fail "Deberia rechazar"
 
 # ============================================================
+step "21. LOGOUT - POST /api/auth/logout revoca el token en el servidor"
+# ============================================================
+RESP=$(curl -s -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo":"pedro.gonzalez@gmail.com","contrasena":"123456"}')
+TOKEN_LOGOUT=$(echo "$RESP" | extraer_token)
+[ -n "$TOKEN_LOGOUT" ] && ok "Login para prueba de logout OK" || fail "Login para prueba de logout fallo"
+
+RESP=$(curl -s $BASE/api/auth/perfil -H "Authorization: Bearer $TOKEN_LOGOUT")
+echo "$RESP" | grep -q '"success":true' && ok "Token vigente accede al perfil" || fail "Token vigente deberia acceder"
+
+RESP=$(curl -s -X POST $BASE/api/auth/logout -H "Authorization: Bearer $TOKEN_LOGOUT")
+show "$RESP"
+echo "$RESP" | grep -q '"success":true' && ok "Logout OK" || fail "Logout fallo"
+
+RESP=$(curl -s $BASE/api/auth/perfil -H "Authorization: Bearer $TOKEN_LOGOUT")
+show "$RESP"
+echo "$RESP" | grep -q 'La sesión ha sido cerrada' && ok "Token revocado rechazado (401)" || fail "El token revocado deberia rechazarse"
+
+RESP=$(curl -s -X POST $BASE/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"correo":"pedro.gonzalez@gmail.com","contrasena":"123456"}')
+TOKEN_NUEVO=$(echo "$RESP" | extraer_token)
+RESP=$(curl -s $BASE/api/auth/perfil -H "Authorization: Bearer $TOKEN_NUEVO")
+echo "$RESP" | grep -q '"success":true' && ok "Nuevo login: token nuevo funciona" || fail "El token nuevo deberia funcionar"
+
+# ============================================================
 step "RESUMEN"
 # ============================================================
 echo "Todos los endpoints fueron probados."

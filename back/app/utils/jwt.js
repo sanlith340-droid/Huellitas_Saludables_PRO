@@ -6,8 +6,13 @@
  * Reemplaza el "mock-token-..." que se usaba antes: ahora el token
  * es un JWT real, firmado con JWT_SECRET, que el cliente debe enviar
  * en el header `Authorization: Bearer <token>` en cada petición.
+ *
+ * Cada token lleva un identificador único (`jti`, UUID v4 generado con el CSPRNG
+ * de Node). Ese identificador permite revocar un token concreto al cerrar sesión
+ * (tabla `token_revocado`) sin invalidar otras sesiones del mismo usuario.
  */
 
+import { randomUUID } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -21,7 +26,8 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 /**
  * Genera un JWT firmado a partir de un usuario.
  * El payload solo incluye lo estrictamente necesario para autorizar
- * peticiones (id y rol); nunca la contraseña ni otros datos sensibles.
+ * peticiones (id y rol) más los claims estándar `jti`, `iat` y `exp`;
+ * nunca la contraseña ni otros datos sensibles.
  */
 function generarToken(usuario) {
   const payload = {
@@ -31,6 +37,7 @@ function generarToken(usuario) {
   return jwt.sign(payload, JWT_SECRET, {
     algorithm: 'HS256',
     expiresIn: JWT_EXPIRES_IN,
+    jwtid: randomUUID(),
   });
 }
 

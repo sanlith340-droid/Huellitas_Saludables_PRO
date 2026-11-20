@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaCalendarCheck,
   FaHome,
@@ -19,8 +19,7 @@ type NavItem = {
 };
 
 function Navbar() {
-  const { usuario, autenticado, logout } = useAuth();
-  const navigate = useNavigate();
+  const { usuario, autenticado, logout, cerrandoSesion } = useAuth();
   const location = useLocation();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -70,10 +69,10 @@ function Navbar() {
     return path.startsWith("/perfil");
   };
 
+  // La revocación del token, la limpieza local y la redirección viven en AuthContext.
   const handleLogout = () => {
     setMenuAbierto(false);
-    logout();
-    navigate("/");
+    void logout();
   };
 
   return (
@@ -134,9 +133,15 @@ function Navbar() {
                   <small>{usuario?.rol || "usuario"}</small>
                 </span>
               </span>
-              <button type="button" className="navbar__logout" onClick={handleLogout}>
+              <button
+                type="button"
+                className="navbar__logout"
+                onClick={handleLogout}
+                disabled={cerrandoSesion}
+                aria-busy={cerrandoSesion}
+              >
                 <FaSignOutAlt aria-hidden="true" />
-                <span>Cerrar sesión</span>
+                <span>{cerrandoSesion ? "Cerrando sesión..." : "Cerrar sesión"}</span>
               </button>
             </div>
           ) : (

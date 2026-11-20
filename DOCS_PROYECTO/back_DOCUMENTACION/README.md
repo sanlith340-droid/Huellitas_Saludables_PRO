@@ -17,6 +17,7 @@ Esta carpeta agrupa la documentación de backend y los documentos técnicos que 
 ## Bitácoras y referencias
 
 - `BITACORA_BCRYPT.md`: evolución y verificación del hash de contraseñas.
+- `BITACORA_CIERRE_SESION_INVALIDACION_TOKENS.md`: tarea #12, cierre de sesión con revocación de JWT (`jti`, tabla `token_revocado`, `POST /api/auth/logout`).
 - `BITACORA_ESM.md`: migración a módulos ESM.
 - `BITACORA_MIGRACION_VITEST.md`: incorporación de Vitest.
 - `BITACORA_MODERNIZACION_PRISMA_Y_CITAS.md`: Prisma, citas y cancelación/auditoría.

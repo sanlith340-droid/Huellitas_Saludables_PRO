@@ -1,0 +1,60 @@
+// app/services/mascota.service.js
+import mascotaModel from '../models/mascota.model.js';
+import razaModel from '../models/raza.model.js';
+import AppError from '../utils/AppError.js';
+
+async function listar() {
+  return mascotaModel.findAll();
+}
+
+async function obtenerPorId(id_mascota) {
+  const mascota = await mascotaModel.findById(id_mascota);
+  if (!mascota) {
+    throw AppError.notFound(`No existe la mascota con id ${id_mascota}`);
+  }
+  return mascota;
+}
+
+async function crearConUsuario(datos, id_usuario) {
+  const { nombre, fecha_nacimiento, especie, genero, id_raza } = datos;
+
+  // Validar raza
+  const raza = await razaModel.findById(id_raza);
+  if (!raza) {
+    throw AppError.notFound(`No existe la raza con id ${id_raza}`);
+  }
+
+  // Validar especie
+  const especiesPermitidas = ['perro', 'gato'];
+  if (!especiesPermitidas.includes(especie)) {
+    throw AppError.badRequest(`La especie debe ser: ${especiesPermitidas.join(', ')}`);
+  }
+
+  // Validar género
+  const generosPermitidos = ['macho', 'hembra'];
+  if (!generosPermitidos.includes(genero)) {
+    throw AppError.badRequest(`El género debe ser: ${generosPermitidos.join(', ')}`);
+  }
+
+  try {
+    return await mascotaModel.crearConUsuario({
+      nombre,
+      fecha_nacimiento,
+      especie,
+      genero,
+      id_raza,
+      id_usuario
+    });
+  } catch (error) {
+    if (error?.code === 'P2002') {
+      throw AppError.conflict('Ya existe una mascota con esos datos');
+    }
+    if (error?.code === 'P2003') {
+      throw AppError.badRequest('La referencia de raza o usuario no es válida');
+    }
+    throw error;
+  }
+}
+
+export { listar, obtenerPorId, crearConUsuario };
+export default { listar, obtenerPorId, crearConUsuario };

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Backend — Huellitas Saludables
 
 API Node.js 22 + Express 4 en ESM, PostgreSQL y Prisma ORM 7. Prisma Client se genera como ESM en `app/generated/prisma` y se usa desde el singleton `app/config/prisma.js`. El modelo Prisma contiene los siete modelos: `Usuario`, `Raza`, `Mascota`, `UsuarioMascota`, `Disponibilidad`, `Cita` e `HistoriaClinica`.
@@ -76,3 +77,87 @@ npm test
 Vitest prepara la base aislada, aplica las migraciones Prisma y la semilla, y luego los tests pueden reiniciarla. El helper exige que la base termine en `_test` y sea distinta de `DB_NAME`; solo esa base se elimina/recrea. El usuario PostgreSQL necesita permisos para crear y eliminar esa base de prueba. No apuntes la configuración de pruebas a producción.
 
 Docker ejecuta `npm run migrate` antes de iniciar `npm start`. Para activar datos demo en un entorno no productivo, define `DB_SEED=true`.
+=======
+## 📦 [HUELLITAS SALUDABLES]
+Ficha: 3407180 
+
+## INTEGRANTES: 
+Santiago Buitrago Goyeneche 
+Sara Jasmin Cruz Calderon
+Jorge Alejandro Torres Paez 
+
+## 📁 PLANTILLA DE ESTRUCTURA 
+
+```
+BACKEND_HUELLITAS/
+│
+├── src/
+│   ├── config/
+│   ├── controllers/
+│   ├── routes/
+│   ├── models/
+│   └── app.js
+│
+├── package.json
+├── .env.example
+├── README.md
+├── .gitignore
+├── requirements.txt
+```
+
+## DEPENDENCIAS Y REQUERIMIENTOS 
+
+npm install express
+
+npm init -y
+
+npm run dev : para iniciar el servidor
+
+comandos de sguridad:
+
+git config --global --list
+
+//////
+
+git branch -r : ver ramas remotas git
+
+git fetch --all : actuliza el remoto
+
+git branch commonjs origin/commonjs
+
+git add .
+
+git commit -m "lista"
+
+///
+
+git checkout main
+
+git branch
+
+git checkout "commit"
+
+git checkout -b "" // crear rama
+
+git branch : ver ramas
+
+//
+
+
+## DEPENDENCIAS Y PAQUETES NECESARIO EN REQUIREMENTS 
+
+-express
+-Gestor de paquetes npm
+npm install express
+
+npm init -y
+
+npm run dev : para iniciar el servidor 
+
+comandos de sguridad: 
+
+git config --global --list 
+
+
+## DOCUMENTO HECHO POR SANTIAGO BUITRAGO GOYENECHE // SCRUM MASTER 
+>>>>>>> bb4048bb58958dd0fd04563b4db782f30837bc50

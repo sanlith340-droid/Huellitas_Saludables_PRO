@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  FaBell,
   FaCalendarAlt,
   FaCalendarCheck,
   FaHome,
@@ -43,6 +44,7 @@ const ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   ],
   especialista: [
     { label: "Mis citas", to: "/citas/especialista", icon: FaCalendarCheck, activePaths: ["/citas"] },
+    { label: "Notificaciones", to: "/notificaciones", icon: FaBell },
     { label: "Perfil", to: "/perfil", icon: FaUserCircle },
   ],
   recepcionista: [

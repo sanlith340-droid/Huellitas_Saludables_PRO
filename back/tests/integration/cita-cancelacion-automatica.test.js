@@ -8,10 +8,14 @@ import { resetDatabase } from '../setup/dbHelper.js';
 
 describe('cancelación automática de citas vencidas', () => {
   let tokenUsuario;
+  let tokenEspecialista;
 
   beforeAll(async () => {
     await resetDatabase();
-    tokenUsuario = await getToken('usuario');
+    [tokenUsuario, tokenEspecialista] = await Promise.all([
+      getToken('usuario'),
+      getToken('especialista'),
+    ]);
   });
 
   it('cancela citas pasadas con auditoría de sistema y deja la franja ocupada', async () => {
@@ -46,6 +50,18 @@ describe('cancelación automática de citas vencidas', () => {
       motivo: 'Cancelada automáticamente porque la fecha y hora de la cita ya pasaron.',
     });
     expect(respuesta.body.data.cancelacion.cancelada_en).toBeTruthy();
+
+    const avisos = await request(app)
+      .get('/api/notificaciones')
+      .set('Authorization', `Bearer ${tokenEspecialista}`);
+    expect(avisos.status).toBe(200);
+    expect(avisos.body.data.notificaciones).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        tipo: 'cambio_estado_cita',
+        id_cita: idCita,
+        asunto: 'Cambio de estado en una cita',
+      }),
+    ]));
 
     const franja = await prisma.disponibilidad.findUnique({
       where: { id_disponibilidad: 2 },

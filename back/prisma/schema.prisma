@@ -23,8 +23,24 @@ model Usuario {
   mascotas               UsuarioMascota[]
   disponibilidades       Disponibilidad[]
   citasComoRecepcionista Cita[]           @relation("CitaRecepcionista")
+  notificaciones         Notificacion[]
+  passwordResetTokens    PasswordResetToken[]
 
   @@map("usuario")
+}
+
+model PasswordResetToken {
+  id_token_reset Int       @id @default(autoincrement())
+  token_hash     String    @unique(map: "password_reset_token_token_hash_key") @db.Char(64)
+  id_usuario     String    @db.VarChar(10)
+  expira_en      DateTime  @db.Timestamptz(6)
+  usado_en       DateTime? @db.Timestamptz(6)
+  creado_en      DateTime  @default(now()) @db.Timestamptz(6)
+  usuario        Usuario   @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
+
+  @@index([id_usuario], map: "password_reset_token_id_usuario_idx")
+  @@index([expira_en], map: "password_reset_token_expira_en_idx")
+  @@map("password_reset_token")
 }
 
 model Raza {
@@ -62,13 +78,14 @@ model UsuarioMascota {
 }
 
 model Disponibilidad {
-  id_disponibilidad Int      @id @default(autoincrement())
-  id_usuario        String   @db.VarChar(10)
-  fecha             DateTime @db.Date
-  hora              DateTime @db.Time(6)
-  estado            String   @default("disponible") @db.VarChar(20)
-  especialista      Usuario  @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
+  id_disponibilidad Int            @id @default(autoincrement())
+  id_usuario        String         @db.VarChar(10)
+  fecha             DateTime       @db.Date
+  hora              DateTime       @db.Time(6)
+  estado            String         @default("disponible") @db.VarChar(20)
+  especialista      Usuario        @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
   citas             Cita[]
+  notificaciones    Notificacion[]
 
   @@unique([id_usuario, fecha, hora], map: "uq_disponibilidad_usuario_fecha_hora")
   @@map("disponibilidad")
@@ -86,6 +103,7 @@ model Cita {
   disponibilidad    Disponibilidad   @relation(fields: [id_disponibilidad], references: [id_disponibilidad], onUpdate: Cascade, onDelete: Restrict)
   historiaClinica   HistoriaClinica?
   cancelacion       CitaCancelacion?
+  notificaciones    Notificacion[]
 
   @@map("cita")
 }
@@ -125,4 +143,24 @@ model TokenRevocado {
 
   @@index([expira_en], map: "token_revocado_expira_en_idx")
   @@map("token_revocado")
+}
+
+model Notificacion {
+  id_notificacion   Int             @id @default(autoincrement())
+  id_usuario        String          @db.VarChar(10)
+  tipo              String          @db.VarChar(40)
+  asunto            String          @db.VarChar(150)
+  mensaje           String          @db.VarChar(500)
+  id_cita           Int?
+  id_disponibilidad Int?
+  leida             Boolean         @default(false)
+  fecha_creacion    DateTime        @default(now()) @db.Timestamptz(6)
+  leida_en          DateTime?       @db.Timestamptz(6)
+  usuario           Usuario         @relation(fields: [id_usuario], references: [id_usuario], onUpdate: Cascade, onDelete: Cascade)
+  cita              Cita?           @relation(fields: [id_cita], references: [id_cita], onUpdate: Cascade, onDelete: SetNull)
+  disponibilidad    Disponibilidad? @relation(fields: [id_disponibilidad], references: [id_disponibilidad], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([id_usuario, fecha_creacion])
+  @@index([id_usuario, leida])
+  @@map("notificacion")
 }

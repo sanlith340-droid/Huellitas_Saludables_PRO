@@ -13,6 +13,8 @@ import RoleRoute from "../components/RoleRoute";
 const Home = lazy(() => import("../pages/Home"));
 const Login = lazy(() => import("../pages/Login"));
 const Registro = lazy(() => import("../pages/Registro"));
+const RecuperarContrasena = lazy(() => import("../pages/RecuperarContrasena"));
+const NuevaContrasena = lazy(() => import("../pages/NuevaContrasena"));
 const Dashboard = lazy(() => import("../pages/Dashboard"));
 const Perfil = lazy(() => import("../pages/Perfil"));
 
@@ -23,6 +25,7 @@ const NuevaCita = lazy(() => import("../pages/NuevaCita"));
 const Disponibilidad = lazy(() => import("../pages/Disponibilidad"));
 const CitasEspecialista = lazy(() => import("../pages/CitasEspecialista"));
 const CitasAdmin = lazy(() => import("../pages/CitasAdmin"));
+const Notificaciones = lazy(() => import("../pages/Notificaciones"));
 const GestionUsuarios = lazy(() => import("../pages/GestionUsuarios"));
 const DashboardAdmin = lazy(() => import("../pages/DashboardAdmin"));
 
@@ -47,6 +50,16 @@ const AppRoutes = () => {
         <Route
           path="/registro"
           element={<Registro />}
+        />
+
+        <Route
+          path="/recuperar-contrasena"
+          element={<RecuperarContrasena />}
+        />
+
+        <Route
+          path="/nueva-contrasena"
+          element={<NuevaContrasena />}
         />
 
         <Route
@@ -110,6 +123,15 @@ const AppRoutes = () => {
           element={
             <RoleRoute roles={["especialista"]}>
               <CitasEspecialista />
+            </RoleRoute>
+          }
+        />
+
+        <Route
+          path="/notificaciones"
+          element={
+            <RoleRoute roles={["especialista"]}>
+              <Notificaciones />
             </RoleRoute>
           }
         />

@@ -10,8 +10,21 @@ import { prisma } from '../config/prisma.js';
 import AppError from '../utils/AppError.js';
 import { LIMITE_POR_DEFECTO } from '../schemas/disponibilidad.schema.js';
 import { esFechaHoraPasada } from '../utils/fechaHora.js';
+import notificacionService from './notificacion.service.js';
+import logger from '../utils/logger.js';
 
 const MENSAJE_FECHA_PASADA = 'No se pueden crear franjas en el pasado. Selecciona una fecha y hora futuras (hora de Colombia).';
+
+async function notificarDisponibilidadSinInterrumpirOperacion(veterinarioId, disponibilidad, accion) {
+  try {
+    await notificacionService.notificarCambioDisponibilidad({ veterinarioId, disponibilidad, accion });
+  } catch (error) {
+    logger.error(
+      { event: 'notification.persistence_failed', error_code: error?.code || error?.name || 'ERROR' },
+      'No se pudo persistir una notificación de disponibilidad',
+    );
+  }
+}
 
 function validarFranjaFutura(fecha, hora) {
   if (esFechaHoraPasada(fecha, hora)) {
@@ -132,12 +145,18 @@ async function crear(datos) {
 
   // 3. Crear la disponibilidad
   try {
-    return await disponibilidadModel.create({
+    const creada = await disponibilidadModel.create({
       id_usuario: datos.id_usuario,
       fecha: datos.fecha,
       hora: datos.hora,
       estado: datos.estado || 'disponible',
     });
+    await notificarDisponibilidadSinInterrumpirOperacion(
+      creada.id_usuario,
+      creada,
+      'agregada a tu agenda',
+    );
+    return creada;
   } catch (error) {
     // Si por alguna razón se escapa el duplicado, la BD lo detecta (unique constraint)
     if (error.code === 'P2002' || error.code === '23505') {
@@ -167,7 +186,23 @@ async function actualizar(id, cambios) {
   }
 
   try {
-    return await disponibilidadModel.update(id, cambios);
+    const actualizada = await disponibilidadModel.update(id, cambios);
+    const cambioPropietario = actual.id_usuario !== actualizada.id_usuario;
+    const cambioCampos = ['id_usuario', 'fecha', 'hora', 'estado'].some((campo) =>
+      cambios[campo] !== undefined && String(actual[campo]) !== String(actualizada[campo]));
+    if (cambioCampos && cambioPropietario) {
+      await Promise.all([
+        notificarDisponibilidadSinInterrumpirOperacion(actual.id_usuario, actual, 'retirada de tu agenda'),
+        notificarDisponibilidadSinInterrumpirOperacion(actualizada.id_usuario, actualizada, 'asignada a tu agenda'),
+      ]);
+    } else if (cambioCampos) {
+      await notificarDisponibilidadSinInterrumpirOperacion(
+        actualizada.id_usuario,
+        actualizada,
+        'actualizada',
+      );
+    }
+    return actualizada;
   } catch (error) {
     if (error.code === 'P2002' || error.code === '23505') {
       throw AppError.conflict('Ya existe una disponibilidad para ese especialista, fecha y hora');
@@ -196,7 +231,15 @@ async function eliminar(id) {
   }
 
   try {
-    return await disponibilidadModel.remove(id);
+    const eliminada = await disponibilidadModel.remove(id);
+    if (eliminada) {
+      await notificarDisponibilidadSinInterrumpirOperacion(
+        actual.id_usuario,
+        { ...actual, id_disponibilidad: null },
+        'retirada de tu agenda',
+      );
+    }
+    return eliminada;
   } catch (error) {
     // Prisma señala la restricción de clave foránea con P2003.
     if (error.code === 'P2003') {

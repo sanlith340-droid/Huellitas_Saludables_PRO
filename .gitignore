@@ -79,7 +79,6 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.development.local
-.env.test
 .env.test.local
 .env.production.local
 .env.local
@@ -148,3 +147,4 @@ node_modules/
 npm-debug.log
 *.log
 .DS_Store
+back/app/generated/prisma/

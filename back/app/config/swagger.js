@@ -364,6 +364,34 @@ const options = {
           },
         },
       },
+      '/api/auth/forgot-password': {
+        post: {
+          summary: 'Solicitar recuperación de contraseña',
+          description: 'Respuesta genérica para evitar enumeración. Requiere SMTP configurado para enviar el enlace.',
+          tags: ['Auth'],
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: { type: 'object', required: ['correo'], properties: { correo: { type: 'string', format: 'email' } } } } },
+          },
+          responses: { 200: { description: 'Solicitud procesada con mensaje genérico' }, 400: { description: 'Datos inválidos' }, 429: { description: 'Demasiadas solicitudes' }, 503: { description: 'SMTP no configurado o no disponible' } },
+        },
+      },
+      '/api/auth/verify-reset-token': {
+        post: {
+          summary: 'Validar enlace de recuperación',
+          tags: ['Auth'],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['token'], properties: { token: { type: 'string', minLength: 64, maxLength: 64 } } } } } },
+          responses: { 200: { description: 'Token válido' }, 400: { description: 'Token inválido, vencido o usado' }, 429: { description: 'Demasiadas solicitudes' } },
+        },
+      },
+      '/api/auth/reset-password': {
+        post: {
+          summary: 'Cambiar contraseña con enlace de un solo uso',
+          tags: ['Auth'],
+          requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', required: ['token', 'contrasena'], properties: { token: { type: 'string', minLength: 64, maxLength: 64 }, contrasena: { type: 'string', minLength: 4, maxLength: 72, format: 'password' } } } } } },
+          responses: { 200: { description: 'Contraseña actualizada y token consumido' }, 400: { description: 'Token inválido, vencido o usado / datos inválidos' }, 429: { description: 'Demasiadas solicitudes' } },
+        },
+      },
       '/api/auth/registro-admin': {
         post: {
           summary: 'Registrar usuario por administrador',

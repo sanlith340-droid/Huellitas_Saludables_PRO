@@ -9,6 +9,7 @@ import authModel from '../models/auth.model.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ok, created } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
+import passwordResetService from '../services/passwordReset.service.js';
 
 const login = asyncHandler(async (req, res) => {
   const { correo, contrasena } = req.body;
@@ -71,5 +72,20 @@ const logout = asyncHandler(async (req, res) => {
   return ok(res, null, 'Sesión cerrada correctamente');
 });
 
-export { login, registro, registroAdmin, perfil, logout };
-export default { login, registro, registroAdmin, perfil, logout };
+const forgotPassword = asyncHandler(async (req, res) => {
+  const result = await passwordResetService.solicitarRecuperacion(req.body.correo);
+  return ok(res, null, result.message);
+});
+
+const verifyResetToken = asyncHandler(async (req, res) => {
+  const result = await passwordResetService.verificarToken(req.body.token);
+  return ok(res, result, 'El enlace es válido.');
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const result = await passwordResetService.restablecerContrasena(req.body);
+  return ok(res, null, result.message);
+});
+
+export { login, registro, registroAdmin, perfil, logout, forgotPassword, verifyResetToken, resetPassword };
+export default { login, registro, registroAdmin, perfil, logout, forgotPassword, verifyResetToken, resetPassword };

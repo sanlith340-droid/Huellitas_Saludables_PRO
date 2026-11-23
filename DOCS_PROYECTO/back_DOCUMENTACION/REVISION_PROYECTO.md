@@ -59,7 +59,7 @@ En la revisión histórica, el proyecto tenía capas claras, migraciones, autori
 
 | # | Hallazgo | Evidencia | Acción recomendada |
 |---|---|---|---|
-| M1 | **RF09 y RF15 están a medias.** Notificaciones y auditoría solo escriben en consola; el README antiguo los presentaba como requisitos cubiertos. | `notificacion.service.js` · `auditLog.js` | Declararlos como parciales (ya hecho en el README nuevo) y planificarlos |
+| M1 | **RF15 sigue parcial.** La auditoría se registra de forma estructurada, pero no se persiste. RF09 cuenta ahora con avisos in-app persistentes para especialistas; no incluye correo/SMS/push. | `back/app/services/notificacion.service.js` · `back/app/middlewares/auditLog.js` | Mantener la auditoría persistida como pendiente y aplicar la migración `20261123190000_notificacion_in_app` antes de desplegar esta versión |
 | M2 | **Token en `localStorage`.** Es un compromiso habitual en SPAs, pero queda expuesto ante XSS. | `front/src/services/api.ts` | Registrar la decisión como DT y evaluar cookie `HttpOnly` + `SameSite` |
 | M3 | **Sin pruebas de frontend ni E2E.** La "pirámide de pruebas" del PDF queda sin cima y sin la capa del cliente. | `docs/test/README.md` lo reconoce | Vitest + Testing Library; después Playwright para el flujo login → cita |
 | M4 | **Decisiones documentadas solo para el backend.** Faltan frontend (React/Vite/TS, Nginx como proxy, `localStorage`) y despliegue. | `docs/back/Decisiones…` | Añadir DT-013 en adelante |
@@ -180,7 +180,7 @@ El ER actualizado (en Mermaid) está en el README, sección 4. Si lo necesitas d
 10. Redactar el documento de RNF.
 
 **Fase 4 — Evolución**
-11. Notificaciones y auditoría reales (RF09, RF15).
+11. Auditoría persistida (RF15); RF09 se implementa mediante notificaciones in-app persistentes.
 12. Pruebas de frontend y E2E.
 13. Definir despliegue de producción.
 

@@ -212,6 +212,10 @@ function Login() {
           </form>
 
           <p className="form-footer">
+            <Link to="/recuperar-contrasena">¿Olvidaste tu contraseña?</Link>
+          </p>
+
+          <p className="form-footer">
             ¿Aún no tienes cuenta? <Link to="/registro">Regístrate aquí</Link>
           </p>
         </div>

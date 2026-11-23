@@ -10,7 +10,7 @@ Casi todas las rutas necesitan iniciar sesión. Primero pide un token en `POST /
 Authorization: Bearer <token>
 ```
 
-El healthcheck `GET /health` y las rutas `POST /api/auth/login` y `POST /api/auth/registro` son públicas. `GET /api/auth/test` **no** es pública aunque su nombre pueda confundir: necesita JWT. Crear cuentas de personal (`/api/auth/registro-admin`) es solo para `admin`.
+El healthcheck `GET /health` y las rutas `POST /api/auth/login`, `POST /api/auth/registro`, `POST /api/auth/forgot-password`, `POST /api/auth/verify-reset-token` y `POST /api/auth/reset-password` son públicas. `GET /api/auth/test` **no** es pública aunque su nombre pueda confundir: necesita JWT. Crear cuentas de personal (`/api/auth/registro-admin`) es solo para `admin`.
 
 Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. Si una ruta solo dice JWT, significa que pide una sesión válida, pero el código de esa ruta no exige un rol particular.
 
@@ -24,6 +24,9 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `POST` | `/api/auth/registro-admin` | `admin` | Crea cuentas de personal. |
 | `GET` | `/api/auth/perfil` | JWT | Devuelve el perfil de la sesión. |
 | `POST` | `/api/auth/logout` | JWT | Cierra la sesión: revoca en el servidor el token usado en la petición. |
+| `POST` | `/api/auth/forgot-password` | Pública | Envía por correo un enlace de un solo uso. Responde siempre con el mismo mensaje para no revelar si el correo existe; devuelve 503 si el SMTP no está configurado. |
+| `POST` | `/api/auth/verify-reset-token` | Pública | Comprueba que el token del enlace siga vigente y sin usar; 400 si no lo está. |
+| `POST` | `/api/auth/reset-password` | Pública | Cambia la contraseña y consume el token; el enlace deja de servir y el anterior de esa cuenta queda invalidado. |
 | `GET` | `/api/auth/test` | JWT | Prueba la ruta del módulo de autenticación. |
 | `GET` | `/api/mascotas` | JWT | Muestra las mascotas. |
 | `GET` | `/api/mascotas/{id}` | JWT | Busca una mascota por ID. |
@@ -46,6 +49,9 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `PUT` | `/api/citas/{id}` | `usuario`, `recepcionista`, `admin` | Edita una cita. |
 | `PATCH` | `/api/citas/{id}/cancelar` | `usuario`, `recepcionista`, `admin` | Cancela una cita. |
 | `PATCH` | `/api/citas/{id}/estado` | `especialista` (solo sus citas), `admin` | El especialista marca la cita como `atendido` o `cancelado`. Body: `{ "estado": "atendido" \| "cancelado", "liberar_horario": true }`. Al cancelar, `liberar_horario` (por defecto `true`) deja el horario `disponible`; con `false` queda `ocupado`. Una cita ya atendida o cancelada devuelve 409. |
+| `GET` | `/api/notificaciones` | `especialista` | Lista hasta 50 avisos persistentes del especialista autenticado e incluye el total de no leídas. |
+| `PATCH` | `/api/notificaciones/leer-todas` | `especialista` | Marca como leídas todas las notificaciones propias pendientes. |
+| `PATCH` | `/api/notificaciones/{id}/leida` | `especialista` | Marca como leída una notificación propia; responde 404 si no existe o pertenece a otra persona. |
 | `GET` | `/api/historia` | `especialista` | Lista historias clínicas. |
 | `GET` | `/api/historia/{id}` | `especialista` | Busca una historia clínica. |
 | `GET` | `/api/historia/mascota/{id_mascota}` | `especialista` | Busca historias de una mascota. |
@@ -61,8 +67,8 @@ Lo que aparece entre `{llaves}` se reemplaza con el dato real; por ejemplo, `/ap
 - `401`: falta el token, no sirve, venció, la cuenta ya no existe o el token fue revocado con `POST /api/auth/logout` (mensaje «La sesión ha sido cerrada. Inicia sesión nuevamente.»).
 - `403`: el usuario inició sesión, pero su rol no puede hacer esa acción.
 - `404`: no se encontró la ruta o el dato solicitado.
-- `429`: se superó el límite de cinco solicitudes a `POST /api/auth/login` o `POST /api/auth/registro` por IP durante 15 minutos. El cuerpo conserva el formato común (`success: false`, `message`, `code: RATE_LIMIT_EXCEEDED`, `details.retryAfterSeconds`) y la respuesta incluye `Retry-After`.
-- `503`: el healthcheck no pudo conectar con PostgreSQL, o el middleware no pudo consultar la lista de revocación de tokens (en ese caso la petición no se autoriza).
+- `429`: se superó el límite de cinco solicitudes a `POST /api/auth/login`, `POST /api/auth/registro` o a las tres rutas de recuperación de contraseña, por IP durante 15 minutos. El cuerpo conserva el formato común (`success: false`, `message`, `code: RATE_LIMIT_EXCEEDED`, `details.retryAfterSeconds`) y la respuesta incluye `Retry-After`.
+- `503`: el healthcheck no pudo conectar con PostgreSQL, el middleware no pudo consultar la lista de revocación de tokens (en ese caso la petición no se autoriza) o la recuperación de contraseña no tiene SMTP configurado.
 
 El límite de login y el de registro son independientes. El contador en memoria aplica a cada instancia del backend; si se ejecutan varias instancias, se debe configurar un almacén compartido compatible con `express-rate-limit` para tener un contador global.
 

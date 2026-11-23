@@ -1,8 +1,10 @@
 node_modules
+npm-debug.log*
 .env
 .env.*
 !.env.example
-coverage
-app/generated/prisma
-*.log
+dist
 .git
+.gitignore
+coverage
+*.log

@@ -179,16 +179,32 @@ Las migraciones contienen claves foráneas y `CHECK` para rol, tipo de propietar
 
 ### 5.3 Base de datos prevista: qué está definido y qué no
 
-El plan adjunto plantea recuperación de contraseña por correo, edición de perfiles de usuario/mascota, historias clínicas desde la vista especialista y seguimiento de mascotas por cuidadores. **No define un esquema futuro cerrado** para esas funciones; por lo tanto, este documento no afirma que ya existan tablas nuevas para ellas.
+El plan adjunto plantea recuperación de contraseña por correo, edición de perfiles de usuario/mascota, historias clínicas desde la vista especialista y seguimiento de mascotas por cuidadores. **No define un esquema futuro cerrado** para esas funciones. A la fecha de esta versión ya están implementadas la recuperación de contraseña (sección 5.4) y las notificaciones in-app del especialista (`notificacion`); el resto sigue siendo diseño pendiente.
 
-Cuando se apruebe el alcance, las extensiones posibles que deben diseñarse —no son modelos implementados— incluyen:
+Las extensiones que todavía deben diseñarse —y que por ahora no son modelos nuevos— son:
 
-- **Recuperación de contraseña:** mecanismo con token no reutilizable, almacenamiento seguro (idealmente del hash del token), expiración y fecha de consumo; integrar migración/versionado con Prisma.
 - **Perfil de usuario/mascota:** primero confirmar qué campos se pueden editar y por quién. Si bastan columnas actuales, quizá no se requiera tabla nueva; cualquier columna o relación nueva necesita migración.
 - **Seguimiento del cuidador:** definir antes el rol del cuidador, quién puede leer/escribir, qué eventos se registran y retención. Luego diseñar una entidad de seguimiento vinculada a mascota y actor, con marcas de tiempo y límites de acceso. El nombre y campos definitivos quedan pendientes de requisitos.
 - **Historias desde la vista especialista:** el backend ya expone operaciones clínicas; completar la interfaz no exige necesariamente un modelo nuevo si el flujo funcional no cambia.
 
 Toda evolución de esquema se debe versionar en `back/prisma/migrations/`, probar contra una base aislada y preservar el historial clínico y las auditorías. No se recomienda borrado físico automático de citas/franjas antiguas: hoy se conserva el historial y el proceso automático cancela citas vencidas.
+
+### 5.4 Recuperación de contraseña implementada
+
+La funcionalidad dejó de ser una extensión prevista y hoy existe en código, con la migración `20261123150000_password_reset_token`:
+
+| Aspecto | Decisión implementada | Evidencia |
+|---|---|---|
+| Token | 32 bytes aleatorios (`randomBytes`) enviados en hexadecimal; en la base solo se guarda el hash SHA-256 | `back/app/services/passwordReset.service.js` |
+| Reutilización | Se marca `usado_en` dentro de una transacción y solo la primera carrera obtiene `count = 1`; el resto recibe 400 | `passwordResetToken.model.js` (`consume`) |
+| Vigencia | 30 minutos por defecto, configurable con `PASSWORD_RESET_TOKEN_TTL_MINUTES` (1–1440) | `passwordReset.service.js` |
+| Enlaces previos | Al emitir uno nuevo se invalidan los anteriores de la misma cuenta | `invalidatePrevious` |
+| Enumeración de cuentas | La respuesta es idéntica exista o no el correo | `MENSAJE_SOLICITUD` |
+| Entrega | SMTP obligatorio (`SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`) y `FRONTEND_URL` para el enlace; sin ellos responde 503 | `passwordResetEmail.service.js` |
+| Fallo de envío | Si el correo no sale, el token recién creado se anula para no dejar enlaces vivos | `solicitarRecuperacion` |
+| Interfaz | `/recuperar-contrasena` y `/nueva-contrasena?token=…`, con validación previa del enlace | `front/src/pages/RecuperarContrasena.tsx` · `NuevaContrasena.tsx` |
+
+Pendiente de decisión: el correo saliente usa SMTP real y no hay proveedor definido para producción; además, la entrega de correo no está cubierta por pruebas automatizadas (sí el flujo con el envío simulado).
 
 ## 6. Reglas de negocio RN01–RN50
 

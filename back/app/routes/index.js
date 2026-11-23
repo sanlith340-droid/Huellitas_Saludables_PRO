@@ -12,6 +12,7 @@ import mascotaRoutes from './mascota.routes.js';
 import usuarioRoutes from './usuario.routes.js';
 import citaRoutes from './cita.routes.js';
 import disponibilidadRoutes from './disponibilidad.routes.js';
+import notificacionRoutes from './notificacion.routes.js';
 import historiaRoutes from './historia.routes.js';// ← NUEVO
 import razaRoutes from './raza.routes.js';
 
@@ -25,6 +26,7 @@ router.use('/mascotas', mascotaRoutes);
 router.use('/usuarios', usuarioRoutes);
 router.use('/citas', citaRoutes);
 router.use('/disponibilidad', disponibilidadRoutes);
+router.use('/notificaciones', notificacionRoutes);
 router.use('/historia', historiaRoutes);  // ← NUEVO
 router.use('/razas', razaRoutes);
 

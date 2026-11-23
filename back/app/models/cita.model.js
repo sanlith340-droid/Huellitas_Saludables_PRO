@@ -346,7 +346,7 @@ async function cambiarEstadoConTransaccion(id_cita, estado, {
 }
 
 /** Cancela en bloques citas pendientes/confirmadas cuyo horario local ya venció. */
-async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100 } = {}) {
+async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100, incluirCitas = false } = {}) {
   const momento = aMarcaTiempoOpcional(ahora);
   const limiteSeguro = aLimiteEntero(limite, { minimo: 1, maximo: 1000 });
   return prisma.$transaction(async (tx) => {
@@ -379,6 +379,13 @@ async function cancelarVencidasAutomaticamente({ ahora = null, limite = 100 } = 
       });
     }
 
+    if (incluirCitas) {
+      const citas = vencidas.length === 0 ? [] : await tx.cita.findMany({
+        where: { id_cita: { in: vencidas.map(({ id_cita }) => id_cita) } },
+        include: INCLUDE_CITA,
+      });
+      return { cantidad: vencidas.length, citas: citas.map(aplanar) };
+    }
     return vencidas.length;
   }, { timeout: 30000 });
 }

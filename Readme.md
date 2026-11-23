@@ -46,7 +46,7 @@ Centraliza en una sola aplicación el flujo operativo de una veterinaria: el due
 |---|---|
 | `usuario` (dueño) | Registrar mascotas, solicitar, editar y cancelar citas |
 | `recepcionista` | Gestionar disponibilidad de especialistas, crear/editar/cancelar citas |
-| `especialista` | Ver sus citas, consultar y crear/actualizar historias clínicas |
+| `especialista` | Ver sus citas y notificaciones, consultar y crear/actualizar historias clínicas |
 | `admin` | Crear cuentas de personal, gestionar disponibilidad y citas, registrar mascotas |
 
 ### Requisitos funcionales cubiertos
@@ -55,9 +55,12 @@ Centraliza en una sola aplicación el flujo operativo de una veterinaria: el due
 |---|---|---|---|
 | RF07 | El dueño solicita citas según disponibilidad | `POST /api/citas` · `services/cita.service.js` | ✅ Implementado |
 | RF08 | Recepción gestiona disponibilidad y agenda | CRUD en `routes/disponibilidad.routes.js` | ✅ Implementado |
-| RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` | ⚠️ Stub: evento de registro genérico, sin envío real |
+| RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` · `GET/PATCH /api/notificaciones` · pantalla del especialista | ✅ Avisos in-app persistentes para citas nuevas, modificaciones, cambios de estado (incluida la cancelación automática) y disponibilidad; no se configura correo/SMS/push. Requiere aplicar migraciones Prisma. |
 | RF10 | El veterinario consulta sus citas asignadas | `GET /api/citas/especialista/:id` · pantalla `CitasEspecialista` | ✅ Implementado |
+| RF11 | El especialista registra o actualiza la historia de una cita atendida | `GET/POST/PUT /api/historia` · formulario desde la agenda del especialista | ⚠️ Parcial: diagnóstico, tratamiento, peso y observaciones; vacunas no están modeladas |
 | RF15 | Auditoría de acciones de admin/recepción | `middlewares/auditLog.js` | ⚠️ Registro estructurado; aún no persistido |
+
+**Recuperación de contraseña (transversal a la autenticación).** El usuario pide el enlace en `/recuperar-contrasena`; el backend genera un token aleatorio de 32 bytes, guarda **solo su hash SHA-256** en `password_reset_token`, lo invalida a los 30 minutos (`PASSWORD_RESET_TOKEN_TTL_MINUTES`) y lo consume una única vez. Al emitir uno nuevo se anulan los anteriores de esa cuenta, la respuesta es siempre genérica para no revelar si el correo existe, y el envío exige SMTP configurado; sin SMTP la ruta responde `503`. Rutas: `POST /api/auth/forgot-password`, `/verify-reset-token` y `/reset-password`; pantallas: `/recuperar-contrasena` y `/nueva-contrasena`.
 
 ### Flujo principal
 
@@ -226,11 +229,11 @@ erDiagram
 
 - Documentación interactiva: **`/api-docs`** (Swagger). Detalle de campos en `back/app/config/swagger.js` y `back/app/schemas/`.
 - Formato de autenticación: `Authorization: Bearer <token>`.
-- Rutas públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro`.
+- Rutas públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro` y las tres de recuperación de contraseña.
 
 | Recurso | Rutas principales | Quién escribe |
 |---|---|---|
-| Auth | `/api/auth/login` · `/registro` · `/registro-admin` · `/perfil` | Público · `admin` (registro-admin) |
+| Auth | `/api/auth/login` · `/registro` · `/registro-admin` · `/perfil` · `/forgot-password` · `/verify-reset-token` · `/reset-password` | Público · `admin` (registro-admin) |
 | Mascotas | `GET/POST /api/mascotas` · `GET /api/mascotas/{id}` | `usuario`, `admin` |
 | Razas · Usuarios | `GET /api/razas` · `GET /api/usuarios/especialistas` · `GET /api/usuarios/{id}` | Lectura con JWT |
 | Disponibilidad | `GET/POST/PUT/DELETE /api/disponibilidad` · `GET …/especialista/{id}` | `recepcionista`, `admin` |
@@ -244,18 +247,18 @@ Lista completa con roles: [`docs/back/API.md`](docs/back/API.md). Códigos habit
 ## 5. Calidad y pruebas
 
 ```text
-          ▲  E2E (navegador)        → no existe
-         ╱ ╲
-        ╱   ╲ Integración (API+BD)  → Vitest + Supertest
-       ╱─────╲
-      ╱       ╲ Unitarias           → 7 archivos
+         ▲  E2E (navegador)        → no existe
+        ╱ ╲
+       ╱   ╲ Integración (API+BD)  → 15 archivos Vitest + Supertest
+      ╱─────╲
+     ╱       ╲ Unitarias           → 14 archivos
      ╱─────────╲
 ```
 
 | Indicador | Valor |
 |---|---|
-| Archivos de prueba | 23 en `back/tests/` (11 unitarios y 12 de integración, según el árbol revisado) |
-| Casos de prueba | 334 aprobados en una ejecución histórica registrada en la bitácora del 13/11/2026; no se reejecutó para esta actualización |
+| Archivos de prueba | 29 en `back/tests/` (14 unitarios y 15 de integración) |
+| Casos de prueba | 383 aprobados el 23/11/2026 con `npm test` sobre PostgreSQL 16 local, incluida la recuperación de contraseña y los avisos in-app |
 | Cubre | Autenticación, validación, JWT, contraseñas, SQL, usuarios, mascotas, disponibilidad, citas, historias clínicas y cancelación automática |
 | Falta o es parcial | Frontend automatizado/E2E, sistema completo, aceptación formal, rendimiento/carga/estrés, compatibilidad y pruebas formales de usabilidad |
 | Aislamiento | Compose de pruebas usa PostgreSQL temporal; en local verificar `DB_HOST` y `DB_NAME_TEST` antes de ejecutar, ya que el sufijo `_test` no garantiza que el host sea local |
@@ -334,9 +337,12 @@ Los servicios tienen dependencias de arranque; PostgreSQL y backend definen *hea
 | `DB_NAME_TEST` | Base **desechable** para pruebas |
 | `JWT_SECRET` | Secreto de firma de tokens — **obligatorio cambiarlo** |
 | `JWT_EXPIRES_IN` | Vigencia del token (defecto `8h`) |
-| `CORS_ORIGIN` | Orígenes permitidos — *hoy el backend no la usa* (ver seguridad) |
+| `CORS_ORIGIN` | Orígenes permitidos — lista separada por comas; el backend solo acepta coincidencias exactas (ver seguridad) |
 | `VITE_API_URL` | URL de la API para el frontend (`/api` en Docker) |
 | `DB_SEED` | `true` carga datos demo en el primer arranque |
+| `PASSWORD_RESET_TOKEN_TTL_MINUTES` | Vigencia del enlace de recuperación (por defecto `30`) |
+| `FRONTEND_URL` | URL pública del frontend, sin barra final; se usa para armar el enlace del correo |
+| `SMTP_HOST` · `SMTP_PORT` · `SMTP_SECURE` · `SMTP_USER` · `SMTP_PASS` · `SMTP_FROM` | Servidor de correo saliente; si falta alguno, la recuperación responde `503` |
 
 ### CI/CD
 **Aún no hay pipeline configurado.** Propuesta mínima en el [backlog](#10-backlog-técnico): `install → lint → type-check → test → build` en cada *pull request*.
@@ -472,7 +478,7 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 | 🟠 Media | Instalar y configurar ESLint (hoy `npm run lint` falla) | Calidad |
 | 🟠 Media | Añadir alertas/monitorización de errores sin datos personales | Calidad |
 | 🟠 Media | `helmet` + *rate limiting* en login | Seguridad |
-| 🟠 Media | Notificaciones reales (RF09) y auditoría persistida (RF15) | Funcional |
+| 🟠 Media | Persistir auditoría (RF15); RF09 ya cuenta con notificaciones in-app, no correo ni SMS | Funcional |
 | 🟡 Baja | Pruebas de frontend (Vitest + Testing Library) y E2E (Playwright) | Calidad |
 | 🟡 Baja | Definir despliegue de producción (HTTPS, secretos, backups de BD) | DevOps |
 | 🟡 Baja | Documentar decisiones del frontend y despliegue (nuevos DT) | Documentación |
@@ -481,9 +487,9 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 
 - ✅ Esquema versionado con migraciones, restricciones y *trigger* de disponibilidad
 - ✅ API por capas con validación Joi y autorización por rol
-- ✅ JWT con verificación del usuario en base de datos
+- ✅ JWT con verificación del usuario en base de datos y revocación de sesión por `jti`
 - ✅ Swagger en `/api-docs`
-- ✅ 241 casos de prueba Vitest de integración/unitarias del backend
+- ⚠️ Los conteos históricos de pruebas (241 y 334) no están conciliados; el ZIP revisado contiene 27 archivos de pruebas backend, pero no se ejecutó para esta actualización
 - ✅ Docker Compose con *healthchecks* y entorno de pruebas aislado
 - ✅ Frontend con rutas protegidas por rol; compila con `tsc` sin errores
 

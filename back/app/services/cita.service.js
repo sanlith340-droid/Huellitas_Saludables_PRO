@@ -5,6 +5,19 @@ import disponibilidadModel from '../models/disponibilidad.model.js';
 import usuarioModel from '../models/usuario.model.js';
 import AppError from '../utils/AppError.js';
 import { esFechaHoraPasada, obtenerAhora } from '../utils/fechaHora.js';
+import notificacionService from './notificacion.service.js';
+import logger from '../utils/logger.js';
+
+async function notificarSinInterrumpirOperacion(operacion) {
+  try {
+    await operacion();
+  } catch (error) {
+    logger.error(
+      { event: 'notification.persistence_failed', error_code: error?.code || error?.name || 'ERROR' },
+      'No se pudo persistir una notificación de cita',
+    );
+  }
+}
 
 function lanzarErrorDeCita(error, id_cita) {
   switch (error?.code) {
@@ -96,13 +109,18 @@ async function crear({ id_mascota, id_disponibilidad, motivo, solicitante }) {
   }
 
   try {
-    return await citaModel.crearConTransaccion({
+    const cita = await citaModel.crearConTransaccion({
       id_mascota,
       id_disponibilidad,
       id_recepcionista,
       motivo,
       ahora: process.env.NODE_ENV === 'test' ? obtenerAhora() : null,
     });
+    await notificarSinInterrumpirOperacion(() => notificacionService.notificarNuevaCita({
+      veterinarioId: cita.id_especialista,
+      cita,
+    }));
+    return cita;
   } catch (error) {
     lanzarErrorDeCita(error, null);
   }
@@ -135,9 +153,20 @@ async function editar(id_cita, cambios, solicitante) {
   }
 
   try {
-    return await citaModel.editarConTransaccion(id_cita, cambios, {
+    const citaActualizada = await citaModel.editarConTransaccion(id_cita, cambios, {
       ahora: process.env.NODE_ENV === 'test' ? obtenerAhora() : null,
     });
+    const cambioRelevante = ['id_disponibilidad', 'id_mascota', 'motivo'].some((campo) =>
+      cambios[campo] !== undefined && String(cambios[campo]) !== String(cita[campo]));
+    if (cambioRelevante) {
+      const destinatarios = [...new Set([cita.id_especialista, citaActualizada.id_especialista].filter(Boolean))];
+      await Promise.all(destinatarios.map((veterinarioId) =>
+        notificarSinInterrumpirOperacion(() => notificacionService.notificarCambioCita({
+          veterinarioId,
+          cita: citaActualizada,
+        }))));
+    }
+    return citaActualizada;
   } catch (error) {
     lanzarErrorDeCita(error, id_cita);
   }
@@ -159,12 +188,17 @@ async function cancelar(id_cita, solicitante) {
   }
 
   try {
-    return await citaModel.cancelarConTransaccion(id_cita, {
+    const citaCancelada = await citaModel.cancelarConTransaccion(id_cita, {
       idUsuarioActor: solicitante.id,
       rolActor: solicitante.rol,
       origen: 'manual',
       motivo: `Cancelada manualmente por el rol ${solicitante.rol}.`,
     });
+    await notificarSinInterrumpirOperacion(() => notificacionService.notificarCambioEstadoCita({
+      veterinarioId: citaCancelada.id_especialista,
+      cita: citaCancelada,
+    }));
+    return citaCancelada;
   } catch (error) {
     lanzarErrorDeCita(error, id_cita);
   }
@@ -190,7 +224,7 @@ async function cambiarEstadoPorEspecialista(id_cita, { estado, liberar_horario }
   }
 
   try {
-    return await citaModel.cambiarEstadoConTransaccion(id_cita, estado, {
+    const citaActualizada = await citaModel.cambiarEstadoConTransaccion(id_cita, estado, {
       liberarHorario: liberar_horario !== false,
       auditoria: estado === 'cancelado'
         ? {
@@ -200,14 +234,31 @@ async function cambiarEstadoPorEspecialista(id_cita, { estado, liberar_horario }
             motivo: `Cancelada manualmente por el rol ${solicitante.rol}.`,
           }
         : undefined,
-    });
+      });
+    // Evita un aviso redundante cuando el propio especialista cambia el estado.
+    if (solicitante.rol !== 'especialista') {
+      await notificarSinInterrumpirOperacion(() => notificacionService.notificarCambioEstadoCita({
+        veterinarioId: citaActualizada.id_especialista,
+        cita: citaActualizada,
+      }));
+    }
+    return citaActualizada;
   } catch (error) {
     lanzarErrorDeCita(error, id_cita);
   }
 }
 
 async function cancelarVencidasAutomaticamente(opciones) {
-  return citaModel.cancelarVencidasAutomaticamente(opciones);
+  const resultado = await citaModel.cancelarVencidasAutomaticamente({
+    ...opciones,
+    incluirCitas: true,
+  });
+  await Promise.all(resultado.citas.map((cita) =>
+    notificarSinInterrumpirOperacion(() => notificacionService.notificarCambioEstadoCita({
+      veterinarioId: cita.id_especialista,
+      cita,
+    }))));
+  return resultado.cantidad;
 }
 
 export {

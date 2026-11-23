@@ -33,6 +33,9 @@ const MENSAJE_SESION_CERRADA = 'La sesión ha sido cerrada. Inicia sesión nueva
 const PUBLIC_ROUTES = [
   '/api/auth/login',
   '/api/auth/registro',
+  '/api/auth/forgot-password',
+  '/api/auth/verify-reset-token',
+  '/api/auth/reset-password',
   '/health'
 ];
 

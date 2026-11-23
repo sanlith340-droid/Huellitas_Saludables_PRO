@@ -1,78 +1,526 @@
-# Backend — Huellitas Saludables
+# 🐾 Huellitas Saludables
 
-API Node.js 22 + Express 4 en ESM, PostgreSQL y Prisma ORM 7. Prisma Client se genera como ESM en `app/generated/prisma` y se usa desde el singleton `app/config/prisma.js`. El modelo Prisma contiene los siete modelos: `Usuario`, `Raza`, `Mascota`, `UsuarioMascota`, `Disponibilidad`, `Cita` e `HistoriaClinica`.
+# INTEGRANTES
+|**Santiago Buitrago Goyeneche** |
+|**Sara Jasmin Cruz**|
+|**Jorge ALejandro Torres**|
 
-## Requisitos y configuración
+Sistema web para la gestión de una veterinaria: registro de mascotas, agendamiento de citas según la disponibilidad de los especialistas e historias clínicas, con acceso diferenciado por rol.
 
-Instala Node.js 22 o posterior y PostgreSQL 12 o posterior. Desde `back/`, instala las dependencias y copia el archivo de ejemplo:
+| TECNOLOGIAS| |
+|---|---|
+| **Frontend** | React 18 · TypeScript · Vite · Nginx |
+| **Backend** | Node.js 22 · Express 4 · Prisma ORM 7 ESM |
+| **Base de datos** | PostgreSQL 16 |
+| **Autenticación** | JWT (`Authorization: Bearer <token>`) + autorización por roles |
+| **Despliegue** | Docker Compose (3 contenedores: Back, Front , BD )  |
+| **Documentación API** | Swagger / OpenAPI en `/api-docs` |
+| **Estado** | En desarrollo · apto para entorno académico/demo, **no listo para producción** (ver [Seguridad](#9-seguridad-y-riesgos-conocidos)) |
+
+---
+
+## Índice
+
+1. [Visión del proyecto](#1-visión-del-proyecto)
+2. [Stack tecnológico](#2-stack-tecnológico)
+3. [Arquitectura](#3-arquitectura)
+4. [Datos e interfaces](#4-datos-e-interfaces)
+5. [Calidad y pruebas](#5-calidad-y-pruebas)
+6. [Infraestructura y DevOps](#6-infraestructura-y-devops)
+7. [Puesta en marcha](#7-puesta-en-marcha)
+8. [Decisiones técnicas](#8-decisiones-técnicas)
+9. [Seguridad y riesgos conocidos](#9-seguridad-y-riesgos-conocidos)
+10. [Backlog técnico](#10-backlog-técnico)
+11. [Documentación y estructura del repositorio](#11-documentación-y-estructura-del-repositorio)
+
+---
+
+## 1. Visión del proyecto
+
+### Qué resuelve
+Centraliza en una sola aplicación el flujo operativo de una veterinaria: el dueño registra sus mascotas y pide cita; recepción administra la agenda de los especialistas; el especialista consulta sus citas y deja la historia clínica.
+
+### Roles
+
+| Rol | Qué puede hacer |
+|---|---|
+| `usuario` (dueño) | Registrar mascotas, solicitar, editar y cancelar citas |
+| `recepcionista` | Gestionar disponibilidad de especialistas, crear/editar/cancelar citas |
+| `especialista` | Ver sus citas, consultar y crear/actualizar historias clínicas |
+| `admin` | Crear cuentas de personal, gestionar disponibilidad y citas, registrar mascotas |
+
+### Requisitos funcionales cubiertos
+
+| RF | Requisito | Implementación | Estado |
+|---|---|---|---|
+| RF07 | El dueño solicita citas según disponibilidad | `POST /api/citas` · `services/cita.service.js` | ✅ Implementado |
+| RF08 | Recepción gestiona disponibilidad y agenda | CRUD en `routes/disponibilidad.routes.js` | ✅ Implementado |
+| RF09 | Notificar a los veterinarios sobre citas y cambios | `services/notificacion.service.js` | ⚠️ Stub: evento de registro genérico, sin envío real |
+| RF10 | El veterinario consulta sus citas asignadas | `GET /api/citas/especialista/:id` · pantalla `CitasEspecialista` | ✅ Implementado |
+| RF15 | Auditoría de acciones de admin/recepción | `middlewares/auditLog.js` | ⚠️ Registro estructurado; aún no persistido |
+
+### Flujo principal
+
+```mermaid
+flowchart LR
+    A[Recepción define\ndisponibilidad] --> B[Dueño registra\nmascota]
+    B --> C[Dueño solicita cita\nen una franja libre]
+    C --> D[Franja pasa a 'ocupado'\n+ notificación al especialista]
+    D --> E[Especialista atiende\ny registra historia clínica]
+```
+
+---
+
+## 2. Stack tecnológico
+
+| Capa | Tecnología | Versión | Para qué se usa |
+|---|---|---|---|
+| Runtime | Node.js ESM | 22 (imagen `node:22-alpine`) | Ejecutar la API y Prisma Client generado |
+| API | Express | ^4.18 | Rutas y middlewares |
+| ORM | Prisma ORM + `@prisma/adapter-pg` | ^7.10 / ^8.23 | Modelos, relaciones y consultas |
+| Migraciones | Prisma Migrate | ^7.10 | Versionar el esquema PostgreSQL y ejecutar la semilla |
+| Base de datos | PostgreSQL | 16 (`postgres:16-alpine`) | Persistencia relacional |
+| Autenticación | `jsonwebtoken` | ^9 | Emitir y verificar JWT (expiración por defecto: 8 h) |
+| Validación | Joi | ^17.13 | Validar y normalizar entradas HTTP |
+| Docs API | `swagger-jsdoc` + `swagger-ui-express` | ^6.2 / ^5 | OpenAPI en `/api-docs` |
+| Pruebas | Vitest + Supertest | ^4 / ^7 | Pruebas unitarias e integración del backend |
+| Frontend | React + TypeScript | ^18.3 / ^5.7 | SPA |
+| Build/Dev | Vite | ^6 | Bundler y servidor de desarrollo |
+| Ruteo / HTTP | `react-router-dom` / `axios` | ^7 / ^1.7 | Navegación y consumo de la API |
+| Servidor web | Nginx | 1.27-alpine | Sirve la SPA y hace proxy a la API |
+| Contenedores | Docker + Compose v2 | — | Orquestación local y de pruebas |
+
+> El catálogo completo de tecnologías, responsabilidades y motivos está en [Tecnologías, responsabilidades y motivos](docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md); las decisiones principales también se resumen en el [registro de decisiones técnicas](#8-decisiones-técnicas).
+
+---
+
+## 3. Arquitectura
+
+### Vista general
+
+```mermaid
+flowchart LR
+    U[Navegador] -->|HTTP :8080| N[Nginx\nSPA React]
+    N -->|/api · /health · /api-docs| B[Backend\nExpress :3000]
+    B -->|Prisma Client| P[(PostgreSQL 16)]
+```
+
+- En **Docker**, Nginx sirve la SPA y reenvía `/api`, `/health` y `/api-docs` al backend (`VITE_API_URL=/api`).
+- En **desarrollo local**, Vite corre aparte (puerto `5173`) y habla con `http://localhost:3000/api`.
+
+### Patrón del backend: capas
+
+```mermaid
+flowchart LR
+    R[routes] --> V[middlewares:\nJWT · roles · Joi · auditoría] --> C[controllers] --> S[services\nreglas de negocio] --> M[models\nPrisma Client] --> D[(PostgreSQL)]
+```
+
+| Capa | Carpeta | Responsabilidad |
+|---|---|---|
+| Rutas | `back/app/routes/` | Declaran endpoints y los roles permitidos |
+| Middlewares | `back/app/middlewares/` | `identifyUser` (JWT), `validate` (Joi), `auditLog`, `errorHandler` |
+| Controladores | `back/app/controllers/` | Adaptan HTTP ↔ servicios |
+| Servicios | `back/app/services/` | Lógica de negocio (citas, disponibilidad, historias…) |
+| Modelos | `back/app/models/` | Consultas Prisma; el schema fuente está en `back/prisma/schema.prisma` |
+| Esquemas | `back/app/schemas/` | Validaciones Joi por dominio |
+
+### Frontend
+
+| Ruta | Pantalla | Acceso |
+|---|---|---|
+| `/` · `/login` · `/registro` | Inicio, ingreso, registro | Público |
+| `/dashboard` | Panel principal | Sesión iniciada |
+| `/mascotas` · `/mascotas/nueva` | Lista y alta de mascotas | Sesión iniciada (la API valida el rol) |
+| `/citas/nueva` | Solicitar cita | Sesión iniciada |
+| `/disponibilidad` | Administrar horarios | `recepcionista`, `admin` |
+| `/citas/especialista` | Citas asignadas | `especialista` |
+
+Las rutas protegidas usan `PrivateRoute` y `RoleRoute`. **El frontend solo mejora la navegación; la seguridad real la aplica el backend.**
+
+### Flujo de autenticación
+
+1. `POST /api/auth/login` con correo y contraseña → la API devuelve un JWT.
+2. El frontend lo guarda en `localStorage`; `axios` lo adjunta en cada petición.
+3. El backend verifica la firma y confirma que el usuario siga existiendo, leyendo su **rol vigente desde la base de datos**.
+4. Si responde `401`, el frontend borra la sesión y vuelve a `/login`.
+
+---
+
+## 4. Datos e interfaces
+
+### Modelo entidad-relación
+
+> Fuente de verdad: `back/prisma/schema.prisma` y `back/prisma/migrations/`.
+
+```mermaid
+erDiagram
+    RAZA ||--o{ MASCOTA : "clasifica"
+    USUARIO }o--o{ MASCOTA : "usuario_mascota"
+    USUARIO ||--o{ DISPONIBILIDAD : "especialista define"
+    USUARIO ||--o{ CITA : "recepcionista registra"
+    MASCOTA ||--o{ CITA : "tiene"
+    DISPONIBILIDAD ||--o| CITA : "se asigna a"
+    CITA ||--o| HISTORIA_CLINICA : "genera"
+
+    USUARIO {
+        string id_usuario PK "VARCHAR(10), ej. USU001"
+        string nombre
+        string apellidos
+        string telefono
+        string correo UK
+        string direccion
+        string contrasena
+        string especializacion "solo especialistas"
+        string tipo "principal | acudiente"
+        string rol "admin | recepcionista | especialista | usuario"
+        datetime fecha_registro
+    }
+    RAZA {
+        int id_raza PK
+        string nombre
+        datetime fecha_registro
+    }
+    MASCOTA {
+        int id_mascota PK
+        string nombre
+        date fecha_nacimiento
+        string especie "perro | gato"
+        string genero "macho | hembra"
+        int id_raza FK
+        datetime fecha_registro
+    }
+    DISPONIBILIDAD {
+        int id_disponibilidad PK
+        string id_usuario FK "especialista"
+        date fecha
+        time hora
+        string estado "disponible | ocupado"
+    }
+    CITA {
+        int id_cita PK
+        string id_recepcionista FK
+        int id_mascota FK
+        int id_disponibilidad FK "única entre citas no canceladas"
+        string motivo
+        string estado "pendiente | confirmado | cancelado | atendido"
+    }
+    HISTORIA_CLINICA {
+        int id_historia_clinica PK
+        int id_cita FK "UNIQUE"
+        decimal peso
+        string diagnostico
+        string tratamiento
+        string observaciones
+        datetime fecha_registro
+    }
+```
+
+### Reglas de integridad (en base de datos)
+
+- **Una franja, una cita activa:** un índice único parcial impide duplicar `id_disponibilidad` entre citas cuyo estado no sea `cancelado`; un *trigger* marca la franja como `ocupado` al insertar una cita.
+- **Sin franjas duplicadas:** `UNIQUE (id_usuario, fecha, hora)` en `disponibilidad`.
+- **Una historia por cita:** `historia_clinica.id_cita` es `UNIQUE`.
+- Claves foráneas con `ON DELETE RESTRICT` y restricciones `CHECK` para estados.
+
+### Contrato de la API
+
+- Documentación interactiva: **`/api-docs`** (Swagger). Detalle de campos en `back/app/config/swagger.js` y `back/app/schemas/`.
+- Formato de autenticación: `Authorization: Bearer <token>`.
+- Rutas públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro`.
+
+| Recurso | Rutas principales | Quién escribe |
+|---|---|---|
+| Auth | `/api/auth/login` · `/registro` · `/registro-admin` · `/perfil` | Público · `admin` (registro-admin) |
+| Mascotas | `GET/POST /api/mascotas` · `GET /api/mascotas/{id}` | `usuario`, `admin` |
+| Razas · Usuarios | `GET /api/razas` · `GET /api/usuarios/especialistas` · `GET /api/usuarios/{id}` | Lectura con JWT |
+| Disponibilidad | `GET/POST/PUT/DELETE /api/disponibilidad` · `GET …/especialista/{id}` | `recepcionista`, `admin` |
+| Citas | `GET/POST/PUT /api/citas` · `PATCH /api/citas/{id}/cancelar` · `GET …/especialista/{id}` | `usuario`, `recepcionista`, `admin` |
+| Historia clínica | `GET/POST/PUT /api/historia` · `GET …/mascota/{id}` · `GET …/cita/{id}` | `especialista` |
+
+Lista completa con roles: [`docs/back/API.md`](docs/back/API.md). Códigos habituales: `400` validación · `401` token ausente/inválido · `403` rol sin permiso · `404` no encontrado · `503` sin base de datos.
+
+---
+
+## 5. Calidad y pruebas
+
+```text
+          ▲  E2E (navegador)        → no existe
+         ╱ ╲
+        ╱   ╲ Integración (API+BD)  → Vitest + Supertest
+       ╱─────╲
+      ╱       ╲ Unitarias           → 7 archivos
+     ╱─────────╲
+```
+
+| Indicador | Valor |
+|---|---|
+| Archivos de prueba | 23 en `back/tests/` (11 unitarios y 12 de integración, según el árbol revisado) |
+| Casos de prueba | 334 aprobados en una ejecución histórica registrada en la bitácora del 13/11/2026; no se reejecutó para esta actualización |
+| Cubre | Autenticación, validación, JWT, contraseñas, SQL, usuarios, mascotas, disponibilidad, citas, historias clínicas y cancelación automática |
+| Falta o es parcial | Frontend automatizado/E2E, sistema completo, aceptación formal, rendimiento/carga/estrés, compatibilidad y pruebas formales de usabilidad |
+| Aislamiento | Compose de pruebas usa PostgreSQL temporal; en local verificar `DB_HOST` y `DB_NAME_TEST` antes de ejecutar, ya que el sufijo `_test` no garantiza que el host sea local |
+
+> **Precaución:** el setup crea y elimina la base indicada en `DB_NAME_TEST`. El validador exige un nombre seguro terminado en `_test` y distinto de `DB_NAME`, pero no demuestra que `DB_HOST` sea local. No apuntes a producción ni a una base con datos que quieras conservar.
 
 ```bash
+cd back
+cp .env.test.example .env.test      # ajusta credenciales de PostgreSQL
 npm ci
-cp .env.example .env
+npm test                            # toda la suite (en serie)
+npm run test:coverage               # con cobertura → back/coverage/
 ```
 
-Configura `.env` con el puerto, JWT y la conexión a PostgreSQL. Puedes definir `DATABASE_URL`, o los campos `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. No subas `.env` al repositorio. Las pruebas deben tener un `DB_NAME_TEST` separado que termine en `_test` y no sea igual a `DB_NAME`.
-
-`npm ci` ejecuta `prisma generate` automáticamente. También puedes regenerar el cliente con `npm run prisma:generate`; validar el schema con `npx prisma validate`.
-
-## Migraciones y preservación de datos
-
-Las migraciones versionadas están en `prisma/migrations/`. La migración `0_init` contiene las siete tablas, claves, restricciones, el índice parcial de citas activas y los triggers PostgreSQL que actualizan la disponibilidad y el estado de la cita al crear una historia clínica.
+Sin PostgreSQL local, usa la base temporal de Docker:
 
 ```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit --exit-code-from tests
+docker compose -f docker-compose.test.yml down -v
+```
+
+Consulta el [Plan Maestro de Pruebas](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) y la [guía de ejecución](docs/test/EJECUCION.md) para el alcance, las 18 categorías y los controles de seguridad de la base de pruebas.
+
+### Estados de interfaz (carga, vacío, error y guardado)
+
+Ninguna pantalla se queda en blanco. Mientras se consulta la API aparece la escena del
+perrito corriendo (o un esqueleto con la forma del contenido), cuando no hay datos se
+muestra una ilustración con una acción concreta y, si la API falla, un mensaje explicado
+con botón **Reintentar**. Los formularios deshabilitan su botón y muestran "Guardando..."
+con una huella girando.
+
+| Estado | Componente | Dónde se ve |
+|---|---|---|
+| Carga de página | `LoadingState` (`pagina`) | Mis mascotas, agendar cita, perfil |
+| Carga dentro de tarjeta | `LoadingState` (`panel`, `en-linea`) | Panel de citas, disponibilidad |
+| Carga con forma de contenido | `Esqueletos.tsx` | Panel del tutor, administración, personal |
+| Vacío | `EmptyState` | Listas y agendas sin registros |
+| Error de API | `ErrorState` | Cualquier consulta fallida, con reintento |
+| Guardando | `BotonEnvio` / `SpinnerHuella` | Todos los formularios y acciones |
+| Progreso global | `BarraCargaGlobal` + `loadingStore` | Barra superior con huellas |
+| Sin conexión | `AvisoSinConexion` | Aviso flotante al perder la red |
+
+En desarrollo existe la vitrina **`/estados`**, que reúne todas las variantes en una sola
+página para revisarlas o mostrarlas. El detalle completo está en
+[Estados de interfaz](DOCS_PROYECTO/ESTADOS_DE_INTERFAZ.md).
+
+---
+
+## 6. Infraestructura y DevOps
+
+### Entornos
+
+| Entorno | Cómo se levanta | Notas |
+|---|---|---|
+| Local con Docker | `docker compose up -d --build` | Puerto `8080`; migraciones automáticas al iniciar |
+| Local sin Docker | `npm run dev` en `back/` y `front/` | Requiere PostgreSQL propio |
+| Pruebas | `docker-compose.test.yml` o `npm test` | BD temporal (`tmpfs` en Docker) |
+| Producción | — | **No definido todavía** (ver backlog) |
+
+### Contenedores (`docker-compose.yml`)
+
+| Servicio | Imagen | Función |
+|---|---|---|
+| `db` | `postgres:16-alpine` | Datos persistidos en el volumen `postgres_data` |
+| `backend` | Build de `back/Dockerfile` | Espera a la BD → migra → (opcional) siembra → inicia la API |
+| `frontend` | Build multi-etapa + `nginx:1.27-alpine` | Sirve la SPA y hace proxy a la API |
+
+Los servicios tienen dependencias de arranque; PostgreSQL y backend definen *healthchecks*. Detalles en [`docs/back/DOCKER.md`](docs/back/DOCKER.md).
+
+### Variables de entorno
+
+| Variable | Descripción |
+|---|---|
+| `APP_PORT` | Puerto publicado por Nginx (por defecto `8080`) |
+| `DB_NAME` · `DB_USER` · `DB_PASSWORD` | Conexión a PostgreSQL |
+| `DB_NAME_TEST` | Base **desechable** para pruebas |
+| `JWT_SECRET` | Secreto de firma de tokens — **obligatorio cambiarlo** |
+| `JWT_EXPIRES_IN` | Vigencia del token (defecto `8h`) |
+| `CORS_ORIGIN` | Orígenes permitidos — *hoy el backend no la usa* (ver seguridad) |
+| `VITE_API_URL` | URL de la API para el frontend (`/api` en Docker) |
+| `DB_SEED` | `true` carga datos demo en el primer arranque |
+
+### CI/CD
+**Aún no hay pipeline configurado.** Propuesta mínima en el [backlog](#10-backlog-técnico): `install → lint → type-check → test → build` en cada *pull request*.
+
+---
+
+## 7. Puesta en marcha
+
+### Opción A — Docker (recomendada)
+
+Requiere Docker Engine y Docker Compose v2.
+
+```bash
+cp .env.docker.example .env
+# Edita .env: cambia como mínimo DB_PASSWORD y JWT_SECRET.
+# Para cargar datos de demostración en el primer arranque: DB_SEED=true
+
+docker compose up -d --build
+docker compose ps
+```
+
+Las migraciones se aplican solas al arrancar el backend. Abre:
+
+- App → <http://localhost:8080>
+- Salud de la API → <http://localhost:8080/health>
+- Swagger → <http://localhost:8080/api-docs>
+
+Si ya levantaste el sistema sin `DB_SEED` y quieres datos demo después:
+
+```bash
+docker compose exec backend npm run seed
+```
+
+Detener sin perder datos: `docker compose down`.
+**`docker compose down -v` borra también el volumen de PostgreSQL.**
+
+> **Linux — `permission denied` con Docker:** agrega tu usuario al grupo `docker` (`sudo usermod -aG docker $USER`) y abre una sesión nueva, o usa `newgrp docker`.
+
+### Opción B — Sin Docker
+
+Requiere Node.js 22, npm y PostgreSQL 16 en ejecución, con la base `DB_NAME` ya creada.
+
+```bash
+# Backend
+cd back
+npm install
+cp .env.example .env        # completa credenciales de PostgreSQL y un JWT_SECRET propio
 npm run migrate
-npm run migrate:status
+npm run seed                # opcional: datos demo
+npm run dev                 # http://localhost:3000
+
+# Frontend (otra terminal)
+cd front
+npm install
+npm run dev                 # http://localhost:5173
 ```
 
-`npm run migrate` no resetea ni borra datos. En una base vacía crea el schema. Si detecta una base ya existente, verifica tablas, columnas, constraints, índice parcial y triggers; únicamente cuando coinciden con el modelo esperado registra `0_init` como aplicado y continúa. Si detecta un schema parcial o diferente, aborta sin modificar filas. Haz un respaldo antes de cualquier actualización.
-
-Existe también `npm run migrate:baseline`, que registra manualmente `0_init` como aplicado sin aplicar su SQL. Úsalo únicamente cuando hayas verificado por separado que la base existente corresponde exactamente al baseline y tengas un respaldo. No se utiliza para bases vacías.
-
-Para crear y aplicar una migración de desarrollo después de editar `schema.prisma`, utiliza `npm run migrate:dev` en una base local de desarrollo. No ejecutes `db:reset` sobre datos que deban conservarse; ese comando es destructivo.
-
-## Semillas de desarrollo
+Genera un secreto JWT aleatorio con:
 
 ```bash
-npm run seed
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
 
-La semilla `prisma/seed.js` es idempotente para los registros demo: crea usuarios, razas, mascotas, asociaciones, disponibilidades, una cita y su historia clínica si faltan. Las contraseñas de demo son `123456`; usa esos datos exclusivamente en desarrollo/pruebas, nunca en producción. Docker solo ejecuta la semilla si `DB_SEED=true` y `NODE_ENV` no es `production`.
+### Datos de demostración
+La semilla Prisma (`back/prisma/seed.js`) crean usuarios de cada rol (`ADM001`, `REC001`, `USU001`, especialistas…), razas, mascotas, disponibilidad, citas e historias. **Son solo para desarrollo**: sus contraseñas están en el propio *seeder* y no deben existir en un entorno real.
 
-## Ejecutar la API
+### Comandos útiles
 
-```bash
-npm run dev
+| Carpeta | Comando | Para qué sirve |
+|---|---|---|
+| `back/` | `npm run dev` / `npm start` | Iniciar la API (con recarga / normal) |
+| `back/` | `npm run migrate` · `migrate:status` | Aplicar / consultar migraciones Prisma |
+| `back/` | `npm run seed` | Cargar datos demo de desarrollo |
+| `back/` | `npm run db:reset` | ⚠️ Borra y recrea todo |
+| `back/` | `npm test` · `npm run test:coverage` | Pruebas / cobertura |
+| `front/` | `npm run dev` | Servidor de desarrollo |
+| `front/` | `npm run build` | Chequeo de tipos + build de producción |
+| `front/` | `npm run type-check` | Solo chequeo de tipos |
+
+---
+
+## 8. Decisiones técnicas
+
+El registro maestro de arquitectura, reglas de negocio y decisiones técnicas de frontend, backend y base de datos está en [`docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md`](docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md). La documentación anterior de decisiones backend debe leerse junto con ese documento porque puede conservar datos históricos ya actualizados en el código.
+
+| ID | Decisión | En una línea |
+|---|---|---|
+| DT-001 | Node.js + JavaScript | Backend ya implementado; carga de trabajo mayormente de I/O |
+| DT-002 | Express | Middlewares componibles para auth, validación y errores |
+| DT-003 | PostgreSQL 16 | Integridad referencial y transacciones para el dominio de citas |
+| DT-004 | Prisma ORM 7 ESM | Modelos y relaciones tipados sobre PostgreSQL |
+| DT-005 | Prisma Migrate + semilla + restricciones en BD | Esquema reproducible; la BD protege la integridad aunque falle la app |
+| DT-006 | JWT | Autenticación sin sesión de servidor; rol re-leído desde la BD |
+| DT-007 | Autorización por roles en el backend | Un token válido no concede acceso a todo |
+| DT-008 | Joi | Validación explícita en el borde HTTP |
+| DT-009 | Arquitectura por capas | Separa transporte, negocio y datos |
+| DT-010 | Vitest + Supertest + BD aislada | Pruebas de integración repetibles |
+| DT-011 | OpenAPI / Swagger UI | Contrato consultable desde el navegador |
+| DT-012 | dotenv + Docker + entrypoint | Configuración por entorno; migra al iniciar |
+
+> El documento maestro distingue decisiones observadas de motivaciones históricas no comprobadas, e incluye las 45 reglas originales, cinco reglas complementarias (RN46–RN50) y el estado de las 18 tareas del plan adjunto.
+
+---
+
+## 9. Seguridad y riesgos conocidos
+
+Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
+
+| # | Riesgo | Dónde | Estado |
+|---|---|---|---|
+| 1 | Contraseñas procesadas con scrypt; credenciales demo conocidas no son apropiadas para producción | `back/app/utils/password.js` · `back/prisma/seed.js` | 🟡 Usar solo demo/test |
+| 2 | `JWT_SECRET` y credenciales de BD con valores por defecto de desarrollo | `utils/jwt.js` · `docker-compose.yml` | 🔴 Abierto |
+| 3 | CORS depende de `CORS_ORIGIN`; restringirlo a los dominios reales de despliegue | `back/app/app.js` | 🟡 Configurar en producción |
+| 4 | Sin límite de intentos de login ni cabeceras de seguridad (`helmet`) | `back/app/app.js` | 🟠 Abierto |
+| 5 | Token en `localStorage` (expuesto ante XSS) | `front/src/services/api.ts` | 🟡 A evaluar |
+| 6 | Pino limita producción a errores y redacta datos sensibles; los `500` responden un mensaje genérico | `back/app/utils/logger.js` · `errorHandler.js` | ✅ Corregido |
+| 7 | Sin revocación inmediata de tokens (solo expiración) | `utils/jwt.js` | 🟡 A evaluar |
+| 8 | La suite de pruebas elimina la base de `DB_NAME_TEST` | `tests/setup/globalSetup.js` | 🟡 Mitigado con aviso |
+
+**Buenas prácticas:** no subas `.env` reales ni claves a Git ni a un ZIP compartido; usa un gestor de secretos en despliegue; sirve siempre por HTTPS fuera de tu equipo.
+
+---
+
+## 10. Backlog técnico
+
+| Prioridad | Tarea | Dimensión |
+|---|---|---|
+| 🟠 Media | Revisar rotación y política de credenciales demo antes de cualquier despliegue | Seguridad |
+| 🔴 Alta | Fallar al iniciar en producción si falta `JWT_SECRET`; quitar *fallbacks* | Seguridad |
+| 🟡 Baja | Revisar la lista `CORS_ORIGIN` por entorno en el despliegue real | Seguridad |
+| 🔴 Alta | Rotar secretos expuestos y limpiar `back/.env.example` | Seguridad |
+| 🟠 Media | Pipeline CI (GitHub Actions): install → lint → type-check → test → build | DevOps |
+| 🟠 Media | Instalar y configurar ESLint (hoy `npm run lint` falla) | Calidad |
+| 🟠 Media | Añadir alertas/monitorización de errores sin datos personales | Calidad |
+| 🟠 Media | `helmet` + *rate limiting* en login | Seguridad |
+| 🟠 Media | Notificaciones reales (RF09) y auditoría persistida (RF15) | Funcional |
+| 🟡 Baja | Pruebas de frontend (Vitest + Testing Library) y E2E (Playwright) | Calidad |
+| 🟡 Baja | Definir despliegue de producción (HTTPS, secretos, backups de BD) | DevOps |
+| 🟡 Baja | Documentar decisiones del frontend y despliegue (nuevos DT) | Documentación |
+
+### Hecho
+
+- ✅ Esquema versionado con migraciones, restricciones y *trigger* de disponibilidad
+- ✅ API por capas con validación Joi y autorización por rol
+- ✅ JWT con verificación del usuario en base de datos
+- ✅ Swagger en `/api-docs`
+- ✅ 241 casos de prueba Vitest de integración/unitarias del backend
+- ✅ Docker Compose con *healthchecks* y entorno de pruebas aislado
+- ✅ Frontend con rutas protegidas por rol; compila con `tsc` sin errores
+
+---
+
+## 11. Documentación y estructura del repositorio
+
+| Documento | Contenido |
+|---|---|
+| [`docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md`](docs/back/ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md) | Documento maestro: arquitectura de tres capas, stack frontend/backend/BD, RN01–RN50, estado de las 18 tareas y evolución prevista. |
+| [`docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md`](docs/back/TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md) | Función, responsabilidad, versión, motivos documentados o inferidos, límites y evidencia de las tecnologías del proyecto. |
+| [`docs/README.md`](docs/README.md) | Índice de la documentación organizada |
+| [`docs/arranque.md`](docs/arranque.md) | Iniciar con Docker o en desarrollo local |
+| [`docs/front/README.md`](docs/front/README.md) | Organización, responsabilidades y comandos del frontend |
+| [`docs/test/README.md`](docs/test/README.md) | Índice y estado de la documentación de pruebas |
+| [`docs/test/PLAN_MAESTRO_DE_PRUEBAS.md`](docs/test/PLAN_MAESTRO_DE_PRUEBAS.md) | Las 18 categorías, cobertura actual, brechas y escenarios propuestos |
+| [`docs/test/EJECUCION.md`](docs/test/EJECUCION.md) | Comandos de pruebas y seguridad de DB_NAME_TEST |
+| [`docs/back/DOCKER.md`](docs/back/DOCKER.md) | Referencia detallada del despliegue local con Docker |
+| [`docs/back/ARQUITECTURA.md`](docs/back/ARQUITECTURA.md) | Arquitectura y relaciones del backend |
+| [`docs/back/API.md`](docs/back/API.md) | Rutas y roles de la API |
+| [`docs/back/DESARROLLO.md`](docs/back/DESARROLLO.md) | Desarrollo backend, migraciones, semilla y pruebas |
+| [`docs/back/MENSAJES_DE_ERROR_POR_ROL.md`](docs/back/MENSAJES_DE_ERROR_POR_ROL.md) | Mensajes de permisos (backend y frontend) |
+
+```text
+Huellitas_Saludables_PRO/
+├── back/                    # API Express + Prisma ORM 7
+│   ├── app/                 #   routes · controllers · services · models · schemas · middlewares
+│   ├── prisma/              #   schema, migraciones y semilla
+│   └── tests/               #   unit/ · integration/ · setup/
+├── front/                   # SPA React + TypeScript + Vite
+│   └── src/                 #   pages · components · routes · context · services
+├── database/                # Scripts SQL históricos de referencia (la app usa migraciones)
+├── docs/                    # única carpeta de documentación
+│   ├── arranque.md           # inicio local/Docker
+│   ├── back/                 # documentación backend/técnica
+│   ├── front/                # guía del frontend
+│   └── test/                 # plan maestro y ejecución de pruebas
+├── docker-compose.yml       # db + backend + frontend
+└── docker-compose.test.yml  # pruebas con BD temporal
 ```
-
-Para iniciar en modo normal:
-
-```bash
-npm start
-```
-
-La API conserva las rutas y el formato público existentes. PostgreSQL sigue usando nombres de tabla y columna en snake_case; los modelos aplanan los resultados Prisma para mantener las formas consumidas por el frontend.
-
-## Regla de contraseñas
-
-Las contraseñas se guardan únicamente como hash **bcrypt** (12 rondas, salt generado por bcrypt) y se validan con `bcrypt.compare()`. Las nuevas contraseñas admiten como máximo 72 bytes (límite de bcrypt). Los hashes scrypt de la versión anterior se migran solos a bcrypt en el siguiente login correcto; las contraseñas que aún estén en texto plano se migran con:
-
-```bash
-npm run passwords:migrate                                   # solo analiza, no modifica nada
-npm run passwords:migrate -- --aplicar --confirmo-respaldo  # migra (hacer respaldo antes)
-```
-
-Detalle completo en `docs/back/BITACORA_BCRYPT.md`. Las consultas SQL crudas y su protección contra SQL Injection se documentan en `docs/back/BITACORA_SQL_INJECTION.md`.
-
-El login, el registro público y el registro administrativo rechazan cualquier carácter de espacio en la contraseña, incluidos espacios al inicio, al final o en medio, tabulaciones, saltos de línea y espacios Unicode. La API responde con `400 BAD_REQUEST` y `La contraseña no puede contener espacios.`; el frontend muestra el mismo mensaje antes de enviar el formulario. Los espacios siguen permitidos en nombres, apellidos y direcciones.
-
-## Pruebas
-
-```bash
-cp .env.test.example .env.test
-# Revisa DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME_TEST y JWT_SECRET.
-npm test
-```
-
-Vitest prepara la base aislada, aplica las migraciones Prisma y la semilla, y luego los tests pueden reiniciarla. El helper exige que la base termine en `_test` y sea distinta de `DB_NAME`; solo esa base se elimina/recrea. El usuario PostgreSQL necesita permisos para crear y eliminar esa base de prueba. No apuntes la configuración de pruebas a producción.
-
-Docker ejecuta `npm run migrate` antes de iniciar `npm start`. Para activar datos demo en un entorno no productivo, define `DB_SEED=true`.

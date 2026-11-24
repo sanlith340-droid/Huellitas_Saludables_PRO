@@ -6,9 +6,6 @@
 
 import Joi from 'joi';
 
-/**
- * Crear historia clínica
- */
 const crearHistoriaSchema = Joi.object({
   id_cita: Joi.number().integer().positive().required()
     .messages({
@@ -22,58 +19,49 @@ const crearHistoriaSchema = Joi.object({
       'number.positive': 'El peso debe ser un número positivo',
       'number.max': 'El peso no puede ser mayor a 999.99'
     }),
-  diagnostico: Joi.string().max(200).required()
+  diagnostico: Joi.string().trim().min(1).max(200).required()
     .messages({
       'string.base': 'El diagnóstico debe ser un texto',
+      'string.empty': 'El diagnóstico no puede estar vacío',
       'string.max': 'El diagnóstico no puede exceder 200 caracteres',
       'any.required': 'El diagnóstico es requerido'
     }),
-  tratamiento: Joi.string().max(200).required()
+  tratamiento: Joi.string().trim().min(1).max(200).required()
     .messages({
       'string.base': 'El tratamiento debe ser un texto',
+      'string.empty': 'El tratamiento no puede estar vacío',
       'string.max': 'El tratamiento no puede exceder 200 caracteres',
       'any.required': 'El tratamiento es requerido'
     }),
-  observaciones: Joi.string().max(500).optional()
+  observaciones: Joi.string().trim().max(500).allow('').optional()
     .messages({
       'string.base': 'Las observaciones deben ser un texto',
       'string.max': 'Las observaciones no pueden exceder 500 caracteres'
     })
 });
 
-/**
- * Actualizar historia clínica
- */
 const actualizarHistoriaSchema = Joi.object({
   peso: Joi.number().positive().max(999.99).optional(),
-  diagnostico: Joi.string().max(200).optional(),
-  tratamiento: Joi.string().max(200).optional(),
-  observaciones: Joi.string().max(500).optional()
+  diagnostico: Joi.string().trim().min(1).max(200).optional(),
+  tratamiento: Joi.string().trim().min(1).max(200).optional(),
+  observaciones: Joi.string().trim().max(500).allow('').optional()
 }).min(1)
   .messages({
     'object.min': 'Debe proporcionar al menos un campo para actualizar'
   });
 
-/**
- * ID Param
- */
 const idParamSchema = Joi.object({
   id: Joi.number().integer().positive().required()
 });
 
-/** GET /historia/mascota/:id_mascota */
 const idMascotaParamSchema = Joi.object({
   id_mascota: Joi.number().integer().positive().required()
 });
 
-/** GET /historia/cita/:id_cita */
 const idCitaParamSchema = Joi.object({
   id_cita: Joi.number().integer().positive().required()
 });
 
-/**
- * Listar historias (query params)
- */
 const listarHistoriaQuerySchema = Joi.object({
   id_mascota: Joi.number().integer().positive().optional(),
   id_especialista: Joi.string().max(10).optional(),
@@ -81,5 +69,19 @@ const listarHistoriaQuerySchema = Joi.object({
   fecha_fin: Joi.date().iso().optional()
 });
 
-export { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascotaParamSchema, idCitaParamSchema, listarHistoriaQuerySchema };
-export default { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascotaParamSchema, idCitaParamSchema, listarHistoriaQuerySchema };
+export {
+  crearHistoriaSchema,
+  actualizarHistoriaSchema,
+  idParamSchema,
+  idMascotaParamSchema,
+  idCitaParamSchema,
+  listarHistoriaQuerySchema
+};
+export default {
+  crearHistoriaSchema,
+  actualizarHistoriaSchema,
+  idParamSchema,
+  idMascotaParamSchema,
+  idCitaParamSchema,
+  listarHistoriaQuerySchema
+};

@@ -5,7 +5,8 @@ import { ok, created } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
 
 const listar = asyncHandler(async (req, res) => {
-  const mascotas = await mascotaService.listar();
+  const idUsuario = req.user?.rol === 'usuario' ? req.user.id : undefined;
+  const mascotas = await mascotaService.listar(idUsuario);
   return ok(res, mascotas, 'Mascotas y propietarios listados correctamente');
 });
 

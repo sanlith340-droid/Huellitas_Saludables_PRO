@@ -1342,7 +1342,7 @@ const options = {
         get: {
           summary: 'Obtener historias por mascota',
           tags: ['Historia Clínica'],
-          description: 'SOLO ESPECIALISTAS',
+          description: 'Especialistas consultan su ámbito; el propietario autenticado solo puede consultar historias de una mascota vinculada a su cuenta. Una mascota ajena responde 404 genérico.',
           security: [{ apiKey: [] }],
           parameters: [
             { $ref: '#/components/parameters/UserId' },

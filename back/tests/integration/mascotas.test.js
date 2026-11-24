@@ -43,6 +43,8 @@ describe('Mascotas - /api/mascotas', () => {
       const max = res.body.data.find((f) => f.mascota === 'Max');
       expect(max).toBeDefined();
       expect(max.raza).toBe('Labrador Retriever');
+      expect(res.body.data.some((f) => f.mascota === 'Rocky')).toBe(false);
+      expect(res.body.data.every((f) => ['USU001', 'USU008', 'USU010'].includes(f.propietario_id))).toBe(true);
     });
 
     it('sin token devuelve 401', async () => {
@@ -195,5 +197,29 @@ describe('Mascotas - /api/mascotas', () => {
         expect(res.status).toBe(400);
       }
     );
+
+    it('rechaza la sexta mascota con un mensaje de límite (409)', async () => {
+      const lista = await request(app)
+        .get('/api/mascotas')
+        .set('Authorization', `Bearer ${tokenUsuario}`);
+      const mascotasIniciales = lista.body.data.length;
+
+      for (let indice = mascotasIniciales; indice < 5; indice += 1) {
+        const res = await request(app)
+          .post('/api/mascotas')
+          .set('Authorization', `Bearer ${tokenUsuario}`)
+          .send({ ...bodyValido(), nombre: `Limite_${Date.now()}_${indice}` });
+        expect(res.status).toBe(201);
+      }
+
+      const res = await request(app)
+        .post('/api/mascotas')
+        .set('Authorization', `Bearer ${tokenUsuario}`)
+        .send({ ...bodyValido(), nombre: `Sexta_${Date.now()}` });
+
+      expect(res.status).toBe(409);
+      expect(res.body.code).toBe('MASCOTAS_LIMITE_ALCANZADO');
+      expect(res.body.message).toContain('límite de 5 mascotas');
+    });
   });
 });

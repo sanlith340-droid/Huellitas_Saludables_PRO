@@ -3,8 +3,8 @@ import mascotaModel from '../models/mascota.model.js';
 import razaModel from '../models/raza.model.js';
 import AppError from '../utils/AppError.js';
 
-async function listar() {
-  return mascotaModel.findAll();
+async function listar(id_usuario) {
+  return mascotaModel.findAll(id_usuario ? { id_usuario } : {});
 }
 
 async function obtenerPorId(id_mascota) {
@@ -46,6 +46,13 @@ async function crearConUsuario(datos, id_usuario) {
       id_usuario
     });
   } catch (error) {
+    if (error?.code === 'MASCOTAS_LIMITE_ALCANZADO') {
+      throw new AppError(
+        'Has alcanzado el límite de 5 mascotas por usuario.',
+        409,
+        'MASCOTAS_LIMITE_ALCANZADO'
+      );
+    }
     if (error?.code === 'P2002') {
       throw AppError.conflict('Ya existe una mascota con esos datos');
     }

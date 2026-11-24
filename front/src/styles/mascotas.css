@@ -1,0 +1,237 @@
+.mascotas-page {
+  padding-bottom: 72px;
+}
+
+.mascotas-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 48px 0 22px;
+}
+
+.mascotas-hero h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin-bottom: 10px;
+}
+
+.mascotas-hero__eyebrow,
+.mascotas-panel__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 9px;
+  color: var(--sage-400);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.mascotas-hero__lead {
+  max-width: 590px;
+  color: var(--ink-600);
+  font-size: 1.02rem;
+}
+
+.mascotas-hero__action {
+  flex-shrink: 0;
+  box-shadow: 0 8px 18px rgba(54, 89, 57, .15);
+}
+
+.mascotas-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin: 18px 0 24px;
+  padding: 17px 20px;
+  border: 1px solid var(--sand-200);
+  border-radius: var(--radius-md);
+  background: linear-gradient(105deg, #f8fbf4, #edf5e8);
+}
+
+.mascotas-summary__icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 13px;
+  background: var(--pine-700);
+  color: white;
+  font-size: 1.15rem;
+}
+
+.mascotas-summary strong,
+.mascotas-summary span {
+  display: block;
+}
+
+.mascotas-summary strong {
+  color: var(--pine-900);
+  font-family: var(--font-display);
+  font-size: 1rem;
+}
+
+.mascotas-summary span {
+  margin-top: 2px;
+  color: var(--ink-600);
+  font-size: .84rem;
+}
+
+.mascotas-panel {
+  padding: 27px;
+  border: 1px solid rgba(168, 191, 170, .55);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, .88);
+  box-shadow: var(--shadow-card);
+}
+
+.mascotas-panel__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.mascotas-panel__eyebrow {
+  margin-bottom: 4px;
+  font-size: .7rem;
+}
+
+.mascotas-panel h2 {
+  font-size: 1.3rem;
+}
+
+.mascotas-count {
+  display: grid;
+  min-width: 35px;
+  height: 35px;
+  padding: 0 10px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--sand-200);
+  color: var(--pine-700);
+  font-weight: 800;
+}
+
+.mascotas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.mascota-card {
+  display: flex;
+  min-height: 214px;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 18px;
+  border: 1.5px solid var(--sand-200);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink-900);
+  text-align: left;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.mascota-card:hover,
+.mascota-card:focus-visible {
+  border-color: var(--sage-400);
+  box-shadow: 0 12px 24px rgba(44, 71, 48, .11);
+  transform: translateY(-3px);
+}
+
+.mascota-card--activo {
+  border-color: var(--pine-700);
+  box-shadow: 0 0 0 3px rgba(54, 89, 57, .12), 0 12px 24px rgba(44, 71, 48, .1);
+}
+
+.mascota-card__top,
+.mascota-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mascota-card__avatar {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 15px;
+  background: var(--sand-100);
+  color: var(--pine-700);
+  font-size: 1.35rem;
+}
+
+.mascota-card__arrow {
+  color: var(--sage-400);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.mascota-card__name {
+  margin-top: 20px;
+  color: var(--pine-900);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.mascota-card__meta,
+.mascota-card__breed {
+  color: var(--ink-600);
+  font-size: .86rem;
+}
+
+.mascota-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 5px;
+  text-transform: capitalize;
+}
+
+.mascota-card__meta i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--sand-300);
+}
+
+.mascota-card__breed {
+  margin-top: 12px;
+  color: var(--pine-700);
+  font-weight: 700;
+}
+
+.mascota-card__footer {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid var(--sand-200);
+  color: var(--ink-600);
+  font-size: .76rem;
+}
+
+.mascota-card__action {
+  color: var(--pine-700);
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .mascotas-hero {
+    align-items: stretch;
+    flex-direction: column;
+    padding-top: 32px;
+  }
+
+  .mascotas-hero__action {
+    width: 100%;
+  }
+
+  .mascotas-panel {
+    padding: 20px 16px;
+  }
+}

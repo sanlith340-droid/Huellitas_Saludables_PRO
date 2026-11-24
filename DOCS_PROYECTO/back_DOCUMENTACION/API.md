@@ -28,7 +28,7 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `POST` | `/api/auth/verify-reset-token` | Pública | Comprueba que el token del enlace siga vigente y sin usar; 400 si no lo está. |
 | `POST` | `/api/auth/reset-password` | Pública | Cambia la contraseña y consume el token; el enlace deja de servir y el anterior de esa cuenta queda invalidado. |
 | `GET` | `/api/auth/test` | JWT | Prueba la ruta del módulo de autenticación. |
-| `GET` | `/api/mascotas` | JWT | Muestra las mascotas. |
+| `GET` | `/api/mascotas` | JWT | Muestra mascotas. Para el rol `usuario`, el backend devuelve únicamente mascotas vinculadas al usuario autenticado y no expone los copropietarios de esas mascotas. |
 | `GET` | `/api/mascotas/{id}` | JWT | Busca una mascota por ID. |
 | `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota. |
 | `GET` | `/api/usuarios/especialistas` | JWT | Muestra especialistas. |
@@ -54,7 +54,7 @@ Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. 
 | `PATCH` | `/api/notificaciones/{id}/leida` | `especialista` | Marca como leída una notificación propia; responde 404 si no existe o pertenece a otra persona. |
 | `GET` | `/api/historia` | `especialista` | Lista historias clínicas. |
 | `GET` | `/api/historia/{id}` | `especialista` | Busca una historia clínica. |
-| `GET` | `/api/historia/mascota/{id_mascota}` | `especialista` | Busca historias de una mascota. |
+| `GET` | `/api/historia/mascota/{id_mascota}` | `especialista`, `usuario` propietario | Busca historias de una mascota. El propietario solo puede consultar una mascota vinculada a su cuenta; una mascota ajena responde `404` genérico para no revelar su existencia. |
 | `GET` | `/api/historia/cita/{id_cita}` | `especialista` | Busca la historia de una cita. |
 | `POST` | `/api/historia` | `especialista` | Crea una historia clínica. |
 | `PUT` | `/api/historia/{id}` | `especialista` | Actualiza una historia clínica. |

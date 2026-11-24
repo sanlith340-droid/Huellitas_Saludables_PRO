@@ -489,7 +489,9 @@ Estos puntos deben resolverse **antes de exponer el sistema a usuarios reales**:
 - ✅ API por capas con validación Joi y autorización por rol
 - ✅ JWT con verificación del usuario en base de datos y revocación de sesión por `jti`
 - ✅ Swagger en `/api-docs`
-- ⚠️ Los conteos históricos de pruebas (241 y 334) no están conciliados; el ZIP revisado contiene 27 archivos de pruebas backend, pero no se ejecutó para esta actualización
+- ✅ Validación vigente: suite backend completa con 389/389 pruebas aprobadas en 29 archivos; prueba específica del límite de mascotas con 22/22 aprobadas
+- ✅ Límite de cinco mascotas por usuario: la sexta devuelve HTTP 409 con `MASCOTAS_LIMITE_ALCANZADO` y el frontend muestra un estado visual con `vacio-mascotas.webp`
+- ✅ Prueba viva desde navegador: se confirmó el título `Ya tienes 5 mascotas registradas`, la imagen relacionada y el enlace `Ver mis mascotas`; evidencia en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_PRUEBA_VIVA_LIMITE_MASCOTAS.md`
 - ✅ Docker Compose con *healthchecks* y entorno de pruebas aislado
 - ✅ Frontend con rutas protegidas por rol; compila con `tsc` sin errores
 

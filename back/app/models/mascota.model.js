@@ -6,6 +6,14 @@
 
 import { prisma } from '../config/prisma.js';
 
+const MAXIMO_MASCOTAS_POR_USUARIO = 5;
+
+function errorDominio(code, message = code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 const camposUsuario = {
   id_usuario: true,
   nombre: true,
@@ -28,15 +36,21 @@ function fechaParaPrisma(value) {
   return value;
 }
 
-async function findAll() {
+async function findAll({ id_usuario } = {}) {
+  const where = id_usuario
+    ? { propietarios: { some: { id_usuario } } }
+    : undefined;
+  const propietarios = {
+    ...(id_usuario ? { where: { id_usuario } } : {}),
+    select: {
+      usuario: { select: camposUsuario },
+    },
+  };
   const mascotas = await prisma.mascota.findMany({
+    where,
     include: {
       raza: { select: { id_raza: true, nombre: true } },
-      propietarios: {
-        select: {
-          usuario: { select: camposUsuario },
-        },
-      },
+      propietarios,
     },
     orderBy: { id_mascota: 'asc' },
   });
@@ -114,6 +128,14 @@ async function perteneceAUsuario(id_mascota, id_usuario) {
 
 async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_raza, id_usuario }) {
   return prisma.$transaction(async (transaction) => {
+    const cantidadMascotas = await transaction.usuarioMascota.count({ where: { id_usuario } });
+    if (cantidadMascotas >= MAXIMO_MASCOTAS_POR_USUARIO) {
+      throw errorDominio(
+        'MASCOTAS_LIMITE_ALCANZADO',
+        'Has alcanzado el límite de 5 mascotas por usuario.'
+      );
+    }
+
     const nuevaMascota = await transaction.mascota.create({
       data: {
         nombre,
@@ -133,5 +155,5 @@ async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_r
   });
 }
 
-export { findAll, findById, perteneceAUsuario, crearConUsuario };
+export { findAll, findById, perteneceAUsuario, crearConUsuario, MAXIMO_MASCOTAS_POR_USUARIO };
 export default { findAll, findById, perteneceAUsuario, crearConUsuario };

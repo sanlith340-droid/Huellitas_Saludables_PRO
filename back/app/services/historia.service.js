@@ -53,6 +53,17 @@ async function obtenerPorMascota(id_mascota, especialistaId) {
   });
 }
 
+/** Consulta de propietario: lectura únicamente si la mascota le pertenece. */
+async function obtenerPorMascotaDeUsuario(id_mascota, usuarioId) {
+  const pertenece = await mascotaModel.perteneceAUsuario(id_mascota, usuarioId);
+  if (!pertenece) {
+    // Respuesta genérica para no revelar si existe una mascota ajena.
+    throw AppError.notFound('No se encontraron historias clínicas para esta mascota');
+  }
+
+  return historiaModel.findAll({ id_mascota });
+}
+
 async function obtenerPorCita(id_cita, especialistaId) {
   const cita = await citaModel.findById(id_cita);
 
@@ -171,5 +182,5 @@ async function actualizar(id_historia_clinica, cambios, especialistaId) {
   }
 }
 
-export { listar, obtenerPorId, obtenerPorMascota, obtenerPorCita, crear, actualizar };
-export default { listar, obtenerPorId, obtenerPorMascota, obtenerPorCita, crear, actualizar };
+export { listar, obtenerPorId, obtenerPorMascota, obtenerPorMascotaDeUsuario, obtenerPorCita, crear, actualizar };
+export default { listar, obtenerPorId, obtenerPorMascota, obtenerPorMascotaDeUsuario, obtenerPorCita, crear, actualizar };

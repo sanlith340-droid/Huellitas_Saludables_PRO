@@ -41,11 +41,13 @@ const obtener = asyncHandler(async (req, res) => {
  * GET /api/historia/mascota/:id_mascota
  */
 const obtenerPorMascota = asyncHandler(async (req, res) => {
-  if (!req.user || req.user.rol !== 'especialista') {
-    throw AppError.forbidden('Solo los especialistas pueden ver historias clínicas');
+  if (!req.user || !['especialista', 'usuario'].includes(req.user.rol)) {
+    throw AppError.forbidden('Solo especialistas y propietarios pueden ver historias clínicas');
   }
 
-  const historias = await historiaService.obtenerPorMascota(req.params.id_mascota, req.user.id);
+  const historias = req.user.rol === 'usuario'
+    ? await historiaService.obtenerPorMascotaDeUsuario(req.params.id_mascota, req.user.id)
+    : await historiaService.obtenerPorMascota(req.params.id_mascota, req.user.id);
   return ok(res, historias, 'Historias clínicas de la mascota listadas correctamente');
 });
 

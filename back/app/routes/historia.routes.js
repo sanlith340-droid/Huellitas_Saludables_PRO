@@ -3,7 +3,8 @@
  * routes/historia.routes.js
  * Endpoints de historia clínica.
  * 
- * NOTA: Todos los endpoints requieren rol ESPECIALISTA
+ * Las consultas por mascota también permiten al propietario autenticado;
+ * las demás consultas y todas las mutaciones permanecen restringidas.
  */
 
 import expressPkg from 'express';
@@ -16,7 +17,7 @@ import { crearHistoriaSchema, actualizarHistoriaSchema, idParamSchema, idMascota
 const router = Router();
 
 // ============================================================
-// TODOS LOS ENDPOINTS REQUIEREN ROL ESPECIALISTA
+// Las mutaciones y consultas administrativas requieren rol especialista.
 // ============================================================
 
 /**
@@ -47,7 +48,7 @@ router.get(
  */
 router.get(
   '/mascota/:id_mascota',
-  requireRole('especialista'),
+  requireRole('especialista', 'usuario'),
   validate(idMascotaParamSchema, 'params'),
   controller.obtenerPorMascota
 );

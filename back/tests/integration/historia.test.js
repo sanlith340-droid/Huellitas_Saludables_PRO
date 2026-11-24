@@ -147,6 +147,15 @@ describe('Historia Clínica - /api/historia', () => {
       expect(res.status).toBe(403);
     });
 
+    it.each(['diagnostico', 'tratamiento'])('rechaza %s compuesto solo por espacios', async (campo) => {
+      const res = await request(app)
+        .post('/api/historia')
+        .set('Authorization', `Bearer ${tokenEspecialista}`)
+        .send({ id_cita: 1, diagnostico: 'Diagnóstico válido', tratamiento: 'Tratamiento válido', [campo]: '   ' });
+
+      expect(res.status).toBe(400);
+    });
+
     // TEST NEGATIVO: cita no existe.
     it('cita inexistente devuelve 404', async () => {
       const res = await request(app)
@@ -346,6 +355,32 @@ describe('Historia Clínica - /api/historia', () => {
           historia => String(historia.especialista_id) === 'ESP001'
         )
       ).toBe(false);
+    });
+
+    it('propietario consulta las historias de su propia mascota (200)', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.MAX.id}`)
+        .set('Authorization', `Bearer ${tokenUsuario}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body.data)).toBe(true);
+    });
+
+    it('propietario no puede consultar una mascota ajena y recibe 404 genérico', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.ROCKY.id}`)
+        .set('Authorization', `Bearer ${tokenUsuario}`);
+
+      expect(res.status).toBe(404);
+      expect(res.body.message).toBe('No se encontraron historias clínicas para esta mascota');
+    });
+
+    it('admin no puede usar la consulta de propietario (403)', async () => {
+      const res = await request(app)
+        .get(`/api/historia/mascota/${MASCOTAS.MAX.id}`)
+        .set('Authorization', `Bearer ${tokenAdmin}`);
+
+      expect(res.status).toBe(403);
     });
 
     it('sin token devuelve 401', async () => {

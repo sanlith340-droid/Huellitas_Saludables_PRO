@@ -15,3 +15,7 @@ La regla cubre backend, frontend, Docker, PostgreSQL, migraciones, API, navegado
 ## Protección de información
 
 Las auditorías no deben incluir contraseñas, tokens, secretos, credenciales, datos clínicos ni datos personales. Los logs deben sanitizarse antes de copiarse.
+
+## Actualización — 24 de noviembre de 2026
+
+Se registró la prueba viva del límite de mascotas en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_PRUEBA_VIVA_LIMITE_MASCOTAS.md`. La validación cubrió el inicio de sesión demo, la navegación a `/mascotas/nueva`, el rechazo de una sexta mascota y la comprobación visual de la imagen, el mensaje y el enlace de administración.

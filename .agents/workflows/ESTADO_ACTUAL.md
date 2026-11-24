@@ -1,67 +1,53 @@
-# Estado actual del proyecto
+# Estado actual de Huellitas Saludables
 
-**Última actualización:** 23 de noviembre de 2026
-**Rama de referencia:** `PRO_HUELLITAS_SALUDABLES`
-**Propósito:** permitir que otro modelo continúe sin depender de la conversación anterior.
+**Fecha de actualización:** 24 de noviembre de 2026, UTC-05.
 
-## Entrega fusionada
+## Funcionalidad completada
 
-- Código de trabajo: `back/` y `front/`.
-- Entrega ZIP: `/home/ubuntu/work/entrega/Huellitas_Saludables_PRO_FUSION_2026-11-23.zip`.
-- Informe: `/home/ubuntu/work/entrega/INFORME_FUSION.md`.
-- Bitácora principal: `DOCS_PROYECTO/back_DOCUMENTACION/BITACORA_FUSION_RF09_Y_RECUPERACION.md`.
+El flujo de historias clínicas está integrado: el especialista crea y edita una historia desde una cita atendida y el propietario selecciona una mascota para consultar únicamente sus historias. El backend valida pertenencia, roles y textos no vacíos; las mascotas ajenas responden con un `404` genérico.
 
-## Funcionalidades verificadas
+También se validaron recuperación de contraseña con SMTP local de pruebas, notificaciones in-app y aislamiento de notificaciones por rol.
 
-- Recuperación de contraseña con token hash SHA-256, TTL predeterminado de 30 minutos, un solo uso e invalidación de tokens anteriores.
-- Notificaciones in-app persistentes para especialistas.
-- Frontend para solicitar recuperación, definir contraseña nueva y consultar notificaciones.
-- 383 pruebas aprobadas en 29 archivos durante la verificación de la fusión.
-- Cinco migraciones aplicadas correctamente sobre una base vacía.
-- Build del frontend exitoso.
-- Flujo de recuperación probado con SMTP local; no se probó un proveedor SMTP externo real.
+## Mejora visual completada
 
-## Pendientes conocidos
+Se rediseñaron las vistas del propietario `/mascotas` y de historia clínica. Las mascotas ahora se muestran como tarjetas con resumen, especie, género, raza y acción de consulta. La historia clínica presenta un encabezado de consulta protegida, tarjetas por atención y bloques diferenciados para diagnóstico, tratamiento, peso, especialista, motivo y observaciones. Se conservaron seguridad, roles, permisos, endpoints y lógica backend.
 
-- Configurar y probar credenciales SMTP reales para producción.
-- Revisar el filtro de pertenencia por propietario en algunas consultas GET.
-- Actualizar manuales DOCX/PDF con recuperación y notificaciones.
-- Resolver o documentar el estado de ESLint del frontend.
-- Auditoría persistida RF15 permanece pendiente.
+## Seed demo validado
 
-## Cómo continuar
+El `back/prisma/seed.js` recuperado contiene usuarios demo, 30 mascotas distribuidas en 10 propietarios/acudientes —3 por usuario—, datos base, franjas demo, citas, historias, notificaciones y cancelaciones. Se ejecutó dos veces sobre PostgreSQL local y mantuvo conteos estables: 17 usuarios, 30 mascotas, 134 disponibilidades, 36 citas, 30 historias, 9 notificaciones y 3 cancelaciones.
 
-1. Leer `/AGENTS.md`.
-2. Leer `.agents/README.md` y esta hoja de estado.
-3. Leer la bitácora relacionada antes de modificar código.
-4. Seleccionar la Rule, Skill y Workflow aplicables.
-5. Ejecutar una verificación inicial antes de cambiar archivos.
-6. Documentar cada cambio y actualizar esta hoja al finalizar.
+En `NODE_ENV=test` carga únicamente el conjunto base compatible con fixtures. La demo se activa con una ejecución normal o explícitamente con `SEED_DEMO=true`.
 
-## Formato para actualizar este documento
+## Validación de continuidad — 24 de noviembre de 2026
 
-Al terminar una sesión, agregar o actualizar:
+- Backend: `npm test` → **388/388 pruebas aprobadas en 29 archivos**.
+- Frontend: `npm run build` → **compilación exitosa**.
+- PostgreSQL local: cinco migraciones aplicadas en `proyectohs_test` durante la suite y en `proyectohs` mediante `prisma migrate deploy`.
+- Idempotencia del seed: dos ejecuciones consecutivas sin duplicados.
+- Auditoría: `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_CONTINUIDAD_VALIDACION.md`.
 
-- fecha y modelo o responsable;
-- objetivo trabajado;
-- archivos modificados;
-- pruebas ejecutadas y resultado;
-- decisiones tomadas;
-- pendientes y riesgos;
-- siguiente paso recomendado.
+## Hallazgos y limitaciones
 
-## Cambio más reciente: estructura de agentes
+- La copia validada no usa Docker porque Docker no está instalado en este entorno; se usó PostgreSQL 16 local temporal.
+- Hay una discrepancia entre una nota previa del estado —20 mascotas y 20 historias para `USU001`— y el `seed.js` recuperado, que implementa 3 mascotas y 3 historias por cada uno de 10 usuarios. No se debe afirmar la ampliación a 20 para `USU001` hasta confirmar cuál requisito prevalece.
+- `/citas/nueva` puede mostrar disponibilidad dependiente del conjunto de datos demo. No se agregaron franjas fuera del seed validado.
+- El backend reportó 8 vulnerabilidades transitivas durante `npm ci`; no se actualizaron dependencias.
 
-Se creó `AGENTS.md` como lectura obligatoria, junto con `.agents/README.md`, Rules, Skills, Workflows, perfil de coordinación y procedimiento de transferencia entre modelos. La decisión está registrada en `DOCS_PROYECTO/back_DOCUMENTACION/BITACORA_AGENTS_Y_CONTINUIDAD.md`.
+## Reglas de continuidad
 
-La próxima sesión debe comenzar leyendo `AGENTS.md`, después `.agents/README.md`, este archivo y la bitácora anterior.
+Leer primero `AGENTS.md`, después `.agents/README.md`, las reglas/skills aplicables y este archivo. No modificar migraciones ni `schema.prisma` sin autorización explícita. Toda nueva ejecución debe quedar registrada en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/`.
 
-## Política más reciente: autorización previa
+## Siguiente paso
 
-Antes de aplicar cambios importantes, se debe presentar una solicitud con rutas exactas, explicación técnica, explicación sencilla, impacto, riesgos, pruebas y reversión. La autorización explícita es obligatoria antes de editar. Las plantillas están en `.agents/templates/` y el procedimiento en `.agents/workflows/autorizacion-cambio-importante.md`.
+Confirmar con el usuario si debe conservarse el seed validado de 3 mascotas por usuario o aplicar la ampliación descrita en la nota previa a 20 mascotas y 20 historias para `USU001`. Si se elige la ampliación, solicitar/aplicar el cambio de seed y repetir la suite, migraciones y validación de idempotencia.
 
-## Política más reciente: alcance por Rule y auditoría obligatoria
 
-Cada Rule ahora especifica archivos que el modelo puede tocar, archivos protegidos que no puede tocar sin autorización y la ubicación documental del cambio. Toda prueba o ejecución de la IA relacionada con levantar, correr, compilar, migrar, consultar o probar el proyecto debe registrarse en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/`.
+## Límite de mascotas — 24 de noviembre de 2026
 
-La plantilla está en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/PLANTILLA_AUDITORIA_IA.md` y la decisión está registrada en `DOCS_PROYECTO/back_DOCUMENTACION/BITACORA_AUDITORIAS_IA.md`.
+Se implementó y validó un máximo de cinco mascotas por usuario. La API rechaza la sexta con HTTP 409 y código `MASCOTAS_LIMITE_ALCANZADO`. El frontend muestra el mensaje `Ya tienes 5 mascotas registradas` junto con la ilustración existente `vacio-mascotas.webp`, recomendaciones y enlace al listado.
+
+La prueba específica quedó en 22/22 y la suite completa en 389/389 pruebas aprobadas en 29 archivos. El frontend compiló correctamente. La auditoría está en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_LIMITE_MASCOTAS.md`.
+
+La prueba viva del 24 de noviembre de 2026 quedó aprobada: desde el navegador se inició sesión, se abrió `/mascotas/nueva`, se intentó registrar una sexta mascota y se confirmó en el DOM la imagen `vacio-mascotas.webp`, el título `Ya tienes 5 mascotas registradas`, la descripción, recomendaciones y el enlace `Ver mis mascotas`. La auditoría está en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_PRUEBA_VIVA_LIMITE_MASCOTAS.md`.
+
+Se implementó el filtro de historias clínicas por año y mes en `HistoriaClinicaMascota`. La prueba viva confirmó que Max muestra únicamente la atención del periodo elegido: noviembre de 2026 mostró la atención del 27/11/2026 y agosto de 2026 mostró la atención del 19/08/2026. La auditoría está en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-24_FILTRO_HISTORIAS_ANIO_MES.md`.

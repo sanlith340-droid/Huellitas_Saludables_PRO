@@ -6,6 +6,7 @@ Esta carpeta reúne la estrategia de pruebas y las instrucciones para ejecutar l
 |---|---|
 | [Plan Maestro de Pruebas](PLAN_MAESTRO_DE_PRUEBAS.md) | Las 18 categorías solicitadas, su definición, estado observado, brechas, escenarios, criterios y orden recomendado. |
 | [Ejecución de pruebas](EJECUCION.md) | Cómo ejecutar unitarias e integración con Docker o PostgreSQL local, con advertencias para proteger la base de datos. |
+| [Seed demo del 27 de noviembre](SEED_DEMO_27_NOVIEMBRE.md) | Preparación, recorrido manual y conteos esperados para la demostración integrada. |
 
 ## Resumen actual
 

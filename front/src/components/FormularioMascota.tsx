@@ -3,6 +3,7 @@ import api from "../services/api";
 import ErrorState from "./ErrorState";
 import LoadingState from "./feedback/LoadingState";
 import BotonEnvio from "./feedback/BotonEnvio";
+import EmptyState from "./feedback/EmptyState";
 import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 
 const ESTADO_INICIAL = {
@@ -47,6 +48,7 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
   const [errorRazas, setErrorRazas] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [limiteAlcanzado, setLimiteAlcanzado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [form, setForm] = useState(ESTADO_INICIAL);
 
@@ -84,12 +86,14 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
     }));
     setMensaje("");
     setError("");
+    setLimiteAlcanzado(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje("");
     setError("");
+    setLimiteAlcanzado(false);
     setEnviando(true);
 
     try {
@@ -102,7 +106,12 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
       setForm(ESTADO_INICIAL);
       onMascotaRegistrada?.();
     } catch (err) {
-      setError(mensajeDeError(err, "No se pudo registrar la mascota."));
+      const codigo = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
+      if (codigo === "MASCOTAS_LIMITE_ALCANZADO") {
+        setLimiteAlcanzado(true);
+      } else {
+        setError(mensajeDeError(err, "No se pudo registrar la mascota."));
+      }
     } finally {
       setEnviando(false);
     }
@@ -134,6 +143,16 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
         <LoadingState variante="en-linea" etiqueta="Cargando razas..." />
       )}
 
+      {limiteAlcanzado ? (
+        <EmptyState
+          ilustracion="mascotas"
+          variante="tarjeta"
+          titulo="Ya tienes 5 mascotas registradas"
+          descripcion="Alcanzaste el límite de mascotas por usuario. Puedes consultar y administrar tus fichas actuales desde el listado."
+          sugerencias={["Revisa tus mascotas registradas antes de intentar crear otra.", "Si necesitas reemplazar una ficha, contacta a la clínica."]}
+          accion={{ etiqueta: "Ver mis mascotas", to: "/mascotas" }}
+        />
+      ) : (
       <form onSubmit={handleSubmit} noValidate>
         <div className="field">
           <label htmlFor="nombre">Nombre</label>
@@ -213,6 +232,7 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
           disabled={cargandoRazas || Boolean(errorRazas)}
         />
       </form>
+      )}
 
       {mensaje && (
         <p className="message message-success" role="status">

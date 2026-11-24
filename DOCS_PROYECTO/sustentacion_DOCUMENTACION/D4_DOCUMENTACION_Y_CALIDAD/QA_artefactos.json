@@ -1,0 +1,217 @@
+{
+  "proyecto": "Huellitas Saludables",
+  "carpeta_entrega": "Proyecto Final Huellitas Saludables - ADSO",
+  "version_expediente": "1.2",
+  "fecha_preparacion": "2026-11-20",
+  "estado_aceptacion": "Pendiente; acta sin nombres ni firmas.",
+  "condicion_operativa_reportada": "El usuario informa que actualmente no hay especialistas registrados; no se verificó independientemente la base de datos. Disponibilidad, citas e historia clínica requieren cuentas/datos de prueba antes de validación funcional.",
+  "fuentes": {
+    "project4_url": "https://github.com/users/joretopa7-stack/projects/4",
+    "repositorio": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_",
+    "captura_project4": "2026-11-20 09:42 COT (hora local consignada en la captura heredada); no es consulta dinámica actual.",
+    "codigo": "Aplicativo actualizado entregado por separado; se revisó estáticamente la navegación y las guardas de ruta; build frontend ejecutado después de retirar los accesos rápidos de citas y disponibilidad del panel admin.",
+    "documentacion": "Documentación del proyecto y PDF Taller 5 recibidos; matrices/documentos adaptados para esta entrega."
+  },
+  "navegacion_por_rol": {
+    "menus": {
+      "usuario": [
+        "Mi panel",
+        "Mascotas",
+        "Solicitar cita",
+        "Perfil"
+      ],
+      "especialista": [
+        "Mis citas",
+        "Perfil"
+      ],
+      "recepcionista": [
+        "Agenda",
+        "Perfil"
+      ],
+      "admin": [
+        "Panel de administración",
+        "Personal",
+        "Disponibilidad",
+        "Citas",
+        "Perfil"
+      ]
+    },
+    "acciones_panel_admin": [
+      "Gestionar personal"
+    ],
+    "botones_rapidos_retirados_panel_admin": [
+      "Disponibilidad",
+      "Citas de la clínica"
+    ],
+    "guardas_agregadas": [
+      "/mascotas",
+      "/mascotas/nueva",
+      "/citas/nueva"
+    ],
+    "estado": "El panel conserva el acceso rápido a Personal; Citas y Disponibilidad siguen en el menú por rol, pero ya no aparecen como botones rápidos del panel. Build frontend con código 0; validación manual/navegador y aceptación pendientes."
+  },
+  "metricas": {
+    "columnas_project4": {
+      "Backlog": 0,
+      "QUE HACER": 9,
+      "HACIENDO": 1,
+      "HECHO": 7
+    },
+    "RF_incluidos": 14,
+    "RNF_incluidos": 15,
+    "historias_US_incluidas": 14,
+    "criterios_GWT_incluidos_no_ejecutados": 56,
+    "reglas_RN_incluidas": 45,
+    "pruebas_manuales_reportadas_no_ejecutadas": 140,
+    "casos_manual_detalle_recibido": 0,
+    "candidatos_GWT_no_ejecutados": 56,
+    "observaciones_estaticas_cobertura_reportadas_no_itemizadas": 36,
+    "vitest_previo_reportado_por_usuario": {
+      "aprobadas": 336,
+      "total": 336,
+      "archivos_reportados": 24,
+      "log_recibido": false,
+      "reejecutado_en_esta_entrega": false
+    },
+    "build_frontend_actual": {
+      "comando": "npm run build",
+      "resultado": "Código 0; tsc -b y Vite 6.4.6; 161 módulos transformados",
+      "log": "Evidencias-Pruebas/Build_frontend_2026-11-20.log"
+    },
+    "sha256_zip_aplicativo": "01dfe6a7213c33abf728d915dcbd9b6cc5ea47f710001f5d45e7da66f82a88ba",
+    "lint": "No ejecutado en esta entrega.",
+    "pruebas_backend_manual_smoke_y_aceptacion": "No ejecutadas en esta entrega.",
+    "tarjetas_registradas_en_RTM": 17,
+    "tarjetas_observadas_en_captura_project4": 18
+  },
+  "distinciones": {
+    "tecnico": "La presencia de componentes/código no implica prueba funcional.",
+    "pruebas": "Build es verificación de compilación; pruebas no ejecutadas se mantienen pendientes.",
+    "aceptacion": "No emitida ni firmada; acta sin identidades."
+  },
+  "validacion_final": {
+    "libros_xlsx": {
+      "cantidad": 6,
+      "formulas_detectadas": 0,
+      "marcadores_error_excel_detectados": 0,
+      "observacion": "Los 6 libros se abrieron y verificaron con openpyxl: 0 fórmulas y 0 marcadores de error de Excel detectados."
+    },
+    "documentos": {
+      "docx": 4,
+      "pdf": 4,
+      "acta": "Pendiente; sin nombres ni firmas."
+    },
+    "apartados_dossier": 7,
+    "precondicion_especialistas": "Pendiente según información reportada por el usuario; no verificada independientemente.",
+    "integridad": "Los 4 PDF se regeneraron y verificaron; Inventario_Evidencias.csv y QA_artefactos.json se excluyen mutuamente de sus listados de hashes.",
+    "pruebas_y_codigo": "No se ejecutaron Vitest, backend tests, pruebas manuales, lint, smoke o aceptación. El build frontend está respaldado por el log actual.",
+    "hashes": "SHA-256 y tamaño de todos los archivos del expediente salvo QA_artefactos.json e Inventario_Evidencias.csv; ambos manifiestos se excluyen mutuamente.",
+    "discrepancia_tablero_RTM": "La captura heredada consigna 18 tarjetas; la RTM final contiene 17 filas de tarjetas. No se atribuye la diferencia a una causa sin evidencia; requiere conciliación."
+  },
+  "archivos": [
+    {
+      "ruta": "Acta_Aceptacion_Final.docx",
+      "tamano_bytes": 41203,
+      "sha256": "2c7a668ac51f0470acaafb7b647fcf251df15ddd518c6c2b2ffa3d2175721066"
+    },
+    {
+      "ruta": "Acta_Aceptacion_Final.pdf",
+      "tamano_bytes": 66872,
+      "sha256": "c71ad49e9ba7e0a22f0ebb0eb1468f5fac68fcb0b3531072da1ae1b78937c84f"
+    },
+    {
+      "ruta": "Bitacora_Aseguramiento_de_Calidad.xlsx",
+      "tamano_bytes": 7749,
+      "sha256": "b93cb6fb7dcb71a3df8d4510e0b4b6d9bcb4305ccf0f202d3889ee12be625bce"
+    },
+    {
+      "ruta": "Control_Incidencias_y_Defectos.xlsx",
+      "tamano_bytes": 9030,
+      "sha256": "3b9b10ff362a91de59194c9b0cd831e34e9a45c7887a2d47944e4a0847ef260a"
+    },
+    {
+      "ruta": "Criterios_Finalizacion.xlsx",
+      "tamano_bytes": 6617,
+      "sha256": "8fdec6e006ba7179658484e0ed62d70067b38cd4e72941fab56f40043d39353c"
+    },
+    {
+      "ruta": "Dossier_Calidad_Software.docx",
+      "tamano_bytes": 45807,
+      "sha256": "6e5a1c37015be83f3b80834f064da8b50ee8605ee93626f1ba6777d5448e9f8b"
+    },
+    {
+      "ruta": "Dossier_Calidad_Software.pdf",
+      "tamano_bytes": 174617,
+      "sha256": "9a29323e221528f52f5f52c373fe68322f94274bd1b77ef25ec8d9f151a41704"
+    },
+    {
+      "ruta": "Especificacion_Requerimientos_Adaptada.docx",
+      "tamano_bytes": 44946,
+      "sha256": "c11bd4aad24db6d126953bcf450fc67aeca5210cad48abb8f189cf35d181726f"
+    },
+    {
+      "ruta": "Especificacion_Requerimientos_Adaptada.pdf",
+      "tamano_bytes": 111600,
+      "sha256": "25741128f8ab3591dc8bc06fe5f61fad7c8b2694182096b0c963f5ccce34ae53"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Build_frontend_2026-11-20.log",
+      "tamano_bytes": 2795,
+      "sha256": "b6ac06ae1da14ccaaf06e6c7b6a63402b9ec36ff0216dcd74a72f57c472c7085"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Proveniencia.md",
+      "tamano_bytes": 2125,
+      "sha256": "6da9092f224b60e2a150c7505fb96119b509faf19a22f16c5c1b446539298bb3"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Reporte_Ejecucion_y_Revision.md",
+      "tamano_bytes": 4451,
+      "sha256": "58397f22f62225ae1b1c8b47d13bfe8ca439ca4fb794da345d55142ea6ac4044"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Revision_Estatica_Codigo.md",
+      "tamano_bytes": 9998,
+      "sha256": "ec4c325e06e475c7f01e1e43228cbb18306057a01a710207b7f75c18159fc5d1"
+    },
+    {
+      "ruta": "Historias_de_Usuario_Adaptadas.xlsx",
+      "tamano_bytes": 15596,
+      "sha256": "950a1cb525fba818e11179d7e6861e01bd585866ef06bbb2a37e6fd85869389b"
+    },
+    {
+      "ruta": "Informe_Adaptacion.md",
+      "tamano_bytes": 4673,
+      "sha256": "b4573a20e990971099418257a0bf340aba99e9c610e873c5c577e984f3865557"
+    },
+    {
+      "ruta": "Matriz_Casos_de_Prueba.xlsx",
+      "tamano_bytes": 22170,
+      "sha256": "35c5189bb0331d54733c29ff5a403b130aae49bc0d438eadc08604f761f373a7"
+    },
+    {
+      "ruta": "Matriz_Trazabilidad_RTM.xlsx",
+      "tamano_bytes": 41229,
+      "sha256": "192ecbcf78a510b2044b19d3e004f9808d820fa0c0d3f5b54a21e92ed0250a3a"
+    },
+    {
+      "ruta": "README_DE_ENTREGA.md",
+      "tamano_bytes": 3819,
+      "sha256": "9a2fa965089ac9f1a101c25017c165adb68521e71029af8ddfbcb82e33abda45"
+    },
+    {
+      "ruta": "Reglas_de_Negocio_Adaptadas.docx",
+      "tamano_bytes": 42229,
+      "sha256": "d434f18671cf6ecc706d8dfc655fae140c3fd4c92ce7be20c9111f23edf6781b"
+    },
+    {
+      "ruta": "Reglas_de_Negocio_Adaptadas.pdf",
+      "tamano_bytes": 104711,
+      "sha256": "ad119c90537d07239194aef55aa65b86c9403d57161d9b208242be34166c721f"
+    }
+  ],
+  "archivos_excluidos_por_autorreferencia": [
+    "QA_artefactos.json",
+    "Inventario_Evidencias.csv"
+  ]
+}

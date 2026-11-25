@@ -36,7 +36,7 @@ type ErrorCampo = {
  * Valida todos los campos y devuelve TODOS los problemas encontrados,
  * uno por cada regla incumplida, para mostrarlos en columna.
  */
-function validarRegistro(form: typeof ESTADO_INICIAL): ErrorCampo[] {
+function validarRegistro(form: typeof ESTADO_INICIAL, aceptaPoliticas: boolean): ErrorCampo[] {
   const errores: ErrorCampo[] = [];
 
   if (!form.nombre.trim()) {
@@ -93,6 +93,10 @@ function validarRegistro(form: typeof ESTADO_INICIAL): ErrorCampo[] {
     });
   }
 
+  if (!aceptaPoliticas) {
+    errores.push({ campo: "aceptaPoliticas", mensaje: "Debes aceptar la Política de Tratamiento de Datos Personales y los Términos y Condiciones para crear tu cuenta." });
+  }
+
   return errores;
 }
 
@@ -105,6 +109,7 @@ function Registro() {
   const [exito, setExito] = useState(false);
   const [cargando, setCargando] = useState(false);
   const [errorApi, setErrorApi] = useState<unknown>(null);
+  const [aceptaPoliticas, setAceptaPoliticas] = useState(false);
 
   const camposInvalidos = new Set(errores.map((error) => error.campo));
   const esInvalido = (campo: string) => (camposInvalidos.has(campo) ? true : undefined);
@@ -128,7 +133,7 @@ function Registro() {
     setMensaje("");
     setExito(false);
 
-    const problemas = validarRegistro(form);
+    const problemas = validarRegistro(form, aceptaPoliticas);
     setErrores(problemas);
     if (problemas.length > 0) return;
 
@@ -140,11 +145,13 @@ function Registro() {
         ...form,
         correo: form.correo.trim(),
         telefono: form.telefono.trim(),
+        aceptaPoliticas: true,
       });
 
       setExito(true);
       setMensaje("Cuenta creada. Ya puedes iniciar sesión.");
       setForm(ESTADO_INICIAL);
+      setAceptaPoliticas(false);
 
       setTimeout(() => navigate("/login"), 1500);
     } catch (error) {
@@ -301,7 +308,24 @@ function Registro() {
               </span>
             </div>
 
-            <ListaErrores errores={errores.map((error) => error.mensaje)} />
+            <div className="registro-consentimiento" aria-invalid={camposInvalidos.has("aceptaPoliticas")}>
+              <input
+                id="aceptaPoliticas"
+                type="checkbox"
+                checked={aceptaPoliticas}
+                onChange={(event) => setAceptaPoliticas(event.target.checked)}
+                aria-describedby={camposInvalidos.has("aceptaPoliticas") ? "acepta-politicas-error" : undefined}
+                required
+              />
+              <label htmlFor="aceptaPoliticas">
+                He leído y acepto la <Link to="/legal/tratamiento-datos" target="_blank" rel="noreferrer">Política de Tratamiento de Datos Personales</Link> y los <Link to="/legal/terminos" target="_blank" rel="noreferrer">Términos y Condiciones</Link>.
+              </label>
+            </div>
+            {camposInvalidos.has("aceptaPoliticas") && (
+              <p className="field__error" id="acepta-politicas-error" role="alert">Debes aceptar ambos documentos para crear tu cuenta.</p>
+            )}
+
+            <ListaErrores errores={errores.filter((error) => error.campo !== "aceptaPoliticas").map((error) => error.mensaje)} />
 
             {errorApi && (
               <ErrorState

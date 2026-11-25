@@ -16,7 +16,7 @@ async function obtenerPorId(id_mascota) {
 }
 
 async function crearConUsuario(datos, id_usuario) {
-  const { nombre, fecha_nacimiento, especie, genero, id_raza } = datos;
+  const { nombre, fecha_nacimiento, especie, genero, id_raza, foto_url } = datos;
 
   // Validar raza
   const raza = await razaModel.findById(id_raza);
@@ -43,6 +43,7 @@ async function crearConUsuario(datos, id_usuario) {
       especie,
       genero,
       id_raza,
+      foto_url: foto_url || null,
       id_usuario
     });
   } catch (error) {

@@ -16,6 +16,7 @@ import {
   clasificarContrasenaGuardada,
 } from '../utils/password.js';
 import logger from '../utils/logger.js';
+import { VERSION_POLITICAS_VIGENTE } from '../constants/legal.js';
 
 async function login({ correo, contrasena }) {
   const usuario = await authModel.findByEmail(correo);
@@ -71,8 +72,13 @@ async function registro(datosUsuario) {
     correo,
     direccion,
     contrasena,
-    tipo
+    tipo,
+    aceptaPoliticas
   } = datosUsuario;
+
+  if (aceptaPoliticas !== true) {
+    throw AppError.badRequest('Debes aceptar la Política de Tratamiento de Datos Personales y los Términos y Condiciones.');
+  }
 
   const emailExists = await authModel.existsByEmail(correo);
   if (emailExists) {
@@ -93,7 +99,9 @@ async function registro(datosUsuario) {
     contrasena: hashedPassword,
     especializacion: null,
     tipo: tipo || 'principal',
-    rol: 'usuario'
+    rol: 'usuario',
+    fecha_aceptacion_politicas: new Date(),
+    version_politicas_aceptadas: VERSION_POLITICAS_VIGENTE
   });
 
   const { contrasena: _, ...usuarioSinPassword } = nuevoUsuario;

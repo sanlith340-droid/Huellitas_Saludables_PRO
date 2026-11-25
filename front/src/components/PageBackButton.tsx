@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { useAuth } from "../context/AuthContext";
 import mascot from "../assets/huellitas-mascota-web.jpg";
+import { rutaInicioPorRol } from "../utils/roleMessages";
 
 function PageBackButton() {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ function PageBackButton() {
       return;
     }
 
-    const esTutor = usuario?.rol?.toLowerCase() === "usuario";
-    navigate(autenticado && esTutor ? "/dashboard" : "/", { replace: true });
+    navigate(autenticado ? rutaInicioPorRol(usuario?.rol) : "/", { replace: true });
   };
 
   return (

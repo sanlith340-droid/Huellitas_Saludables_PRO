@@ -12,6 +12,7 @@ const ESTADO_INICIAL = {
   especie: "perro",
   genero: "macho",
   id_raza: "",
+  foto_url: "",
 };
 
 const RAZAS_POR_ESPECIE = {
@@ -94,12 +95,27 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
     setMensaje("");
     setError("");
     setLimiteAlcanzado(false);
+
+    if (!form.nombre.trim() || !form.fecha_nacimiento || !form.id_raza) {
+      setError("Completa el nombre, la fecha de nacimiento y la raza antes de continuar.");
+      return;
+    }
+    if (form.foto_url.trim()) {
+      try {
+        if (new URL(form.foto_url).protocol !== "https:") throw new Error("HTTPS requerido");
+      } catch {
+        setError("La fotografía debe tener una URL pública válida que comience con https://.");
+        return;
+      }
+    }
+
     setEnviando(true);
 
     try {
       const response = await api.post("/mascotas", {
         ...form,
         id_raza: Number(form.id_raza),
+        foto_url: form.foto_url.trim() || null,
       });
 
       setMensaje(response.data?.message || "Mascota registrada correctamente.");
@@ -222,6 +238,20 @@ function FormularioMascota({ onMascotaRegistrada = null }) {
               ))}
             </select>
           </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="foto_url">Fotografía (opcional)</label>
+          <input
+            id="foto_url"
+            type="url"
+            name="foto_url"
+            placeholder="https://ejemplo.com/foto-de-mi-mascota.jpg"
+            value={form.foto_url}
+            onChange={handleChange}
+            autoComplete="url"
+          />
+          <span className="field__hint">Pega un enlace HTTPS público a la foto. Si lo dejas vacío, aparecerá una ilustración de referencia.</span>
         </div>
 
         <BotonEnvio

@@ -69,6 +69,7 @@ async function findAll({ id_usuario } = {}) {
         fecha_nacimiento: fechaComoDia(m.fecha_nacimiento),
         especie: m.especie,
         genero: m.genero,
+        foto_url: m.foto_url,
         id_raza: m.raza ? m.raza.id_raza : null,
         raza: m.raza ? m.raza.nombre : null,
         propietario_id: u ? u.id_usuario : null,
@@ -104,6 +105,7 @@ async function findById(id_mascota, { transaction } = {}) {
     fecha_nacimiento: fechaComoDia(m.fecha_nacimiento),
     especie: m.especie,
     genero: m.genero,
+    foto_url: m.foto_url,
     raza: {
       id_raza: m.raza ? m.raza.id_raza : null,
       nombre: m.raza ? m.raza.nombre : null,
@@ -126,7 +128,7 @@ async function perteneceAUsuario(id_mascota, id_usuario) {
   return Boolean(asociacion);
 }
 
-async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_raza, id_usuario }) {
+async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_raza, id_usuario, foto_url }) {
   return prisma.$transaction(async (transaction) => {
     const cantidadMascotas = await transaction.usuarioMascota.count({ where: { id_usuario } });
     if (cantidadMascotas >= MAXIMO_MASCOTAS_POR_USUARIO) {
@@ -143,6 +145,7 @@ async function crearConUsuario({ nombre, fecha_nacimiento, especie, genero, id_r
         especie,
         genero,
         id_raza: Number(id_raza),
+        foto_url: foto_url || null,
       },
       select: { id_mascota: true },
     });

@@ -47,6 +47,7 @@ describe('services/auth.service', () => {
         correo,
         direccion: 'Calle Test',
         contrasena: 'segura123',
+        aceptaPoliticas: true,
       });
 
       expect(res.usuario.rol).toBe('usuario');
@@ -59,7 +60,7 @@ describe('services/auth.service', () => {
         authService.registro({
           nombre: 'X', apellidos: 'Y', telefono: '300',
           correo: 'pedro.gonzalez@gmail.com',
-          direccion: 'X', contrasena: 'segura123',
+          direccion: 'X', contrasena: 'segura123', aceptaPoliticas: true,
         })
       ).rejects.toMatchObject({ statusCode: 409, code: 'CONFLICT' });
     });

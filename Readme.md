@@ -177,6 +177,8 @@ erDiagram
         string tipo "principal | acudiente"
         string rol "admin | recepcionista | especialista | usuario"
         datetime fecha_registro
+        datetime fecha_aceptacion_politicas "nullable para cuentas previas"
+        string version_politicas_aceptadas "nullable para cuentas previas"
     }
     RAZA {
         int id_raza PK
@@ -190,6 +192,7 @@ erDiagram
         string especie "perro | gato"
         string genero "macho | hembra"
         int id_raza FK
+        string foto_url "URL HTTPS opcional"
         datetime fecha_registro
     }
     DISPONIBILIDAD {
@@ -241,6 +244,14 @@ erDiagram
 | Historia clínica | `GET/POST/PUT /api/historia` · `GET …/mascota/{id}` · `GET …/cita/{id}` | `especialista` |
 
 Lista completa con roles: [`docs/back/API.md`](docs/back/API.md). Códigos habituales: `400` validación · `401` token ausente/inválido · `403` rol sin permiso · `404` no encontrado · `503` sin base de datos.
+
+### Layout, consentimiento y tarjetas de mascotas
+
+Todas las rutas se presentan dentro de `MainLayout`, que comparte navegación y pie institucional. El pie obtiene teléfono, correo, dirección, horario y enlaces de Facebook/Instagram/WhatsApp desde las variables `VITE_CONTACT_*` y `VITE_SOCIAL_*` de `front/.env.example`; deben completarse con datos reales antes de publicar. Los enlaces sociales vacíos se muestran como no configurados, no como perfiles ficticios.
+
+El registro público requiere `aceptaPoliticas: true`. La API crea el sello de tiempo y registra la versión vigente en el servidor (`back/app/constants/legal.js`); la versión visible de los documentos está en `front/src/config/siteInfo.ts`, por lo que ambas deben actualizarse coordinadamente cuando cambien los textos. Las tres páginas legales son borradores de demostración que requieren completar datos institucionales y aprobación jurídica antes del uso público. Las cuentas preexistentes y creadas por administración conservan los campos de consentimiento en `NULL`.
+
+Las tarjetas de mascotas muestran una foto HTTPS opcional (`foto_url`) y usan una imagen local de respaldo si no hay foto o la URL falla. Los cambios de esquema se despliegan con la migración `back/prisma/migrations/20261124220000_consentimiento_y_foto_mascota`; ejecutar `npm run migrate` desde `back/` contra la base de datos objetivo después de configurar su conexión y antes de desplegar el nuevo backend.
 
 ---
 

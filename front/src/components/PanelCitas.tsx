@@ -40,6 +40,7 @@ interface PanelCitasProps {
   descripcion: string;
   // Endpoint que devuelve las citas a mostrar. Vacío = aún no se puede cargar.
   urlCitas: string;
+  rolVista?: "admin" | "especialista" | "recepcion";
 }
 
 const MENSAJES_CARGA = [
@@ -94,7 +95,7 @@ function formatearHora(hora: string) {
   return String(hora || "").slice(0, 5);
 }
 
-function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
+function PanelCitas({ titulo, descripcion, urlCitas, rolVista = "admin" }: PanelCitasProps) {
   const [citas, setCitas] = useState<Cita[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState("");
@@ -225,6 +226,22 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
       }
     } catch (err) {
       setErrorAccion(mensajeDeError(err, "No se pudo actualizar la cita."));
+    } finally {
+      setAccionandoId(null);
+    }
+  };
+
+  const cancelarComoRecepcion = async (cita: Cita) => {
+    setAccionandoId(cita.id_cita);
+    setErrorAccion("");
+    setAviso("");
+    try {
+      const respuesta = await api.patch(`/citas/${cita.id_cita}/cancelar`);
+      reemplazarCita(respuesta.data.data);
+      setCancelandoId(null);
+      setAviso(`La cita de ${cita.mascota_nombre} se canceló.`);
+    } catch (err) {
+      setErrorAccion(mensajeDeError(err, "No se pudo cancelar la cita."));
     } finally {
       setAccionandoId(null);
     }
@@ -419,24 +436,34 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
                     {cancelandoId === cita.id_cita && (
                       <div className="cancel-confirm">
                         <p>¿Cancelar la cita de {cita.mascota_nombre}?</p>
-                        <label className="cancel-confirm__check">
-                          <input
-                            type="checkbox"
-                            checked={liberarHorario}
-                            onChange={(e) => setLiberarHorario(e.target.checked)}
-                          />
-                          Dejar el horario disponible para nuevas citas
-                        </label>
+                        {rolVista !== "recepcion" && (
+                          <label className="cancel-confirm__check">
+                              <input
+                                type="checkbox"
+                                checked={liberarHorario}
+                                onChange={(e) => setLiberarHorario(e.target.checked)}
+                              />
+                              Dejar el horario disponible para nuevas citas
+                          </label>
+                        )}
                         <div className="cita-actions">
                           <button
                             type="button"
                             className="btn btn-danger btn-sm"
                             disabled={accionandoId === cita.id_cita}
                             aria-busy={accionandoId === cita.id_cita || undefined}
-                            onClick={() => decidir(cita, "cancelado")}
+                            onClick={() =>
+                              rolVista === "recepcion"
+                                ? void cancelarComoRecepcion(cita)
+                                : void decidir(cita, "cancelado")
+                            }
                           >
                             {accionandoId === cita.id_cita ? <SpinnerHuella /> : <FaBan />}
-                            {accionandoId === cita.id_cita ? "Guardando..." : "Sí, cancelar"}
+                            {accionandoId === cita.id_cita
+                              ? "Guardando..."
+                              : rolVista === "recepcion"
+                                ? "Confirmar cancelación"
+                                : "Sí, cancelar"}
                           </button>
                           <button
                             type="button"
@@ -470,7 +497,7 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
                       </span>
                     )}
 
-                    {cita.estado === "atendido" && (
+                    {rolVista === "especialista" && cita.estado === "atendido" && (
                       <button
                         type="button"
                         className="btn btn-outline btn-sm"
@@ -492,16 +519,18 @@ function PanelCitas({ titulo, descripcion, urlCitas }: PanelCitasProps) {
 
                     {esAccionable(cita.estado) && cancelandoId !== cita.id_cita && (
                       <div className="cita-actions">
-                        <button
-                          type="button"
-                          className="btn btn-primary btn-sm"
-                          disabled={accionandoId === cita.id_cita}
-                          aria-busy={accionandoId === cita.id_cita || undefined}
-                          onClick={() => decidir(cita, "atendido")}
-                        >
-                          {accionandoId === cita.id_cita ? <SpinnerHuella /> : <FaCheck />}
-                          {accionandoId === cita.id_cita ? "Guardando..." : "Atendida"}
-                        </button>
+                        {rolVista !== "recepcion" && (
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            disabled={accionandoId === cita.id_cita}
+                            aria-busy={accionandoId === cita.id_cita || undefined}
+                            onClick={() => void decidir(cita, "atendido")}
+                          >
+                            {accionandoId === cita.id_cita ? <SpinnerHuella /> : <FaCheck />}
+                            {accionandoId === cita.id_cita ? "Guardando..." : "Atendida"}
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-outline-danger btn-sm"

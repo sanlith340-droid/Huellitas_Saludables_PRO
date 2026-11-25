@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import { FiMenu, FiX } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import { rutaInicioPorRol } from "../utils/roleMessages";
 import huLogo from "../assets/hu.png";
 
 type NavItem = {
@@ -19,13 +20,6 @@ type NavItem = {
   to: string;
   icon: typeof FaHome;
   activePaths?: string[];
-};
-
-const ROLE_HOME_PATH: Record<string, string> = {
-  usuario: "/dashboard",
-  especialista: "/citas/especialista",
-  recepcionista: "/disponibilidad",
-  admin: "/admin",
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -49,10 +43,11 @@ const ITEMS_BY_ROLE: Record<string, NavItem[]> = {
   ],
   recepcionista: [
     { label: "Agenda", to: "/disponibilidad", icon: FaCalendarAlt },
+    { label: "Citas", to: "/citas/recepcion", icon: FaCalendarCheck, activePaths: ["/citas"] },
     { label: "Perfil", to: "/perfil", icon: FaUserCircle },
   ],
   admin: [
-    { label: "Panel de administración", to: "/admin", icon: FaHome },
+    { label: "Panel", to: "/admin", icon: FaHome },
     { label: "Personal", to: "/usuarios/admin", icon: FaUsers, activePaths: ["/usuarios"] },
     { label: "Disponibilidad", to: "/disponibilidad", icon: FaCalendarAlt },
     { label: "Citas", to: "/citas/admin", icon: FaCalendarCheck, activePaths: ["/citas"] },
@@ -66,9 +61,9 @@ function Navbar() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   const rol = usuario?.rol?.toLowerCase() || "";
-  const inicioPath = autenticado ? ROLE_HOME_PATH[rol] || "/dashboard" : "/";
+  const inicioPath = autenticado ? rutaInicioPorRol(rol) : "/";
   const items: NavItem[] = autenticado
-    ? ITEMS_BY_ROLE[rol] || [{ label: "Mi panel", to: "/dashboard", icon: FaHome }]
+    ? ITEMS_BY_ROLE[rol] || [{ label: "Perfil", to: "/perfil", icon: FaUserCircle }]
     : [{ label: "Inicio", to: "/", icon: FaHome }];
 
   useEffect(() => {

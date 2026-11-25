@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ErrorState from "./ErrorState";
-import { mensajeAccesoPorRol } from "../utils/roleMessages";
+import { mensajeAccesoPorRol, rutaInicioPorRol } from "../utils/roleMessages";
 
 function RoleRoute({ roles, children }) {
   const { usuario, autenticado } = useAuth();
@@ -17,7 +17,7 @@ function RoleRoute({ roles, children }) {
           variant="denied"
           title="Tu acceso está protegido"
           description={mensajeAccesoPorRol(usuario?.rol)}
-          to="/dashboard"
+          to={rutaInicioPorRol(usuario?.rol)}
           actionLabel="Ir a mi inicio"
         />
       </div>

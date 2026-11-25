@@ -8,6 +8,7 @@
 
 import request from 'supertest';
 import app from '../../app/app.js';
+import { VERSION_POLITICAS_VIGENTE } from '../../app/constants/legal.js';
 import { resetDatabase } from '../setup/dbHelper.js';
 
 describe('Auth - /api/auth', () => {
@@ -168,11 +169,25 @@ describe('Auth - /api/auth', () => {
           direccion: 'Calle Test 123',
           contrasena: 'segura123',
           tipo: 'principal',
+          aceptaPoliticas: true,
         });
 
       expect(res.status).toBe(201);
       expect(res.body.data.usuario.rol).toBe('usuario');
       expect(res.body.data.token).toMatch(/^eyJ/);
+      expect(res.body.data.usuario.version_politicas_aceptadas).toBe(VERSION_POLITICAS_VIGENTE);
+      expect(new Date(res.body.data.usuario.fecha_aceptacion_politicas).toString()).not.toBe('Invalid Date');
+    });
+
+    it.each([undefined, false])('rechaza registro sin aceptación expresa (%s)', async (aceptaPoliticas) => {
+      const body = {
+        nombre: 'Consentimiento', apellidos: 'No aceptado', telefono: '3001234567',
+        correo: `consentimiento_${Date.now()}_${Math.random().toString(36).slice(2)}@test.com`,
+        direccion: 'Calle Test', contrasena: 'segura123',
+      };
+      if (aceptaPoliticas !== undefined) body.aceptaPoliticas = aceptaPoliticas;
+      const res = await request(app).post('/api/auth/registro').send(body);
+      expect(res.status).toBe(400);
     });
 
     // TEST NEGATIVO: correo ya registrado
@@ -182,7 +197,7 @@ describe('Auth - /api/auth', () => {
         .send({
           nombre: 'X', apellidos: 'Y', telefono: '3001234567',
           correo: 'pedro.gonzalez@gmail.com',   // Ya existe
-          direccion: 'Calle X', contrasena: 'segura123',
+          direccion: 'Calle X', contrasena: 'segura123', aceptaPoliticas: true,
         });
 
       expect(res.status).toBe(409);
@@ -198,7 +213,7 @@ describe('Auth - /api/auth', () => {
           apellidos: 'B'.repeat(150),
           telefono: '3001234567',
           correo: `limite_${Date.now()}@test.com`,
-          direccion: 'X', contrasena: 'segura123',
+          direccion: 'X', contrasena: 'segura123', aceptaPoliticas: true,
         });
 
       expect(res.status).toBe(201);
@@ -219,14 +234,14 @@ describe('Auth - /api/auth', () => {
     });
 
     // TEST PARAMETRIZADO: probamos faltando cada campo obligatorio
-    it.each(['nombre', 'apellidos', 'telefono', 'correo', 'direccion', 'contrasena'])(
+    it.each(['nombre', 'apellidos', 'telefono', 'correo', 'direccion', 'contrasena', 'aceptaPoliticas'])(
       'sin %s devuelve 400',
       async (campoFaltante) => {
         // Creamos un body completo
         const body = {
           nombre: 'A', apellidos: 'B', telefono: '3001234567',
           correo: `faltante_${Date.now()}@test.com`,
-          direccion: 'X', contrasena: 'segura123',
+          direccion: 'X', contrasena: 'segura123', aceptaPoliticas: true,
         };
         // Le quitamos el campo que queremos probar
         delete body[campoFaltante];
@@ -245,7 +260,7 @@ describe('Auth - /api/auth', () => {
           .send({
             nombre: 'Teléfono', apellidos: 'Inválido', telefono,
             correo: `tel_${Date.now()}_${Math.random().toString(36).slice(2)}@test.com`,
-            direccion: 'Calle X', contrasena: 'segura123',
+            direccion: 'Calle X', contrasena: 'segura123', aceptaPoliticas: true,
           });
 
         expect(res.status).toBe(400);
@@ -260,7 +275,7 @@ describe('Auth - /api/auth', () => {
         .send({
           nombre: 'Correo', apellidos: 'Con Espacio', telefono: '3001234567',
           correo: 'correo con espacio@test.com',
-          direccion: 'Calle X', contrasena: 'segura123',
+          direccion: 'Calle X', contrasena: 'segura123', aceptaPoliticas: true,
         });
 
       expect(res.status).toBe(400);

@@ -2614,6 +2614,7 @@ input:focus-visible {
 }
 
 .navbar__inner {
+  max-width: 1440px;
   min-height: 76px;
   gap: 20px;
   padding-top: 10px;
@@ -3060,7 +3061,7 @@ input:focus-visible {
   font-size: 0.85rem;
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1360px) {
   .navbar__inner {
     gap: 12px;
   }
@@ -3086,7 +3087,7 @@ input:focus-visible {
   }
 }
 
-@media (max-width: 780px) {
+@media (max-width: 1280px) {
   .navbar__inner {
     flex-wrap: wrap;
     justify-content: space-between;

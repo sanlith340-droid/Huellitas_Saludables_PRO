@@ -1,7 +1,7 @@
 # Estado actual de Huellitas Saludables
 
-**Fecha de actualización / corte:** 26 de noviembre de 2026, UTC-05.  
-**Fuente más reciente de resultados:** `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md`. Este corte resume lo que ya está acreditado; no registra ejecuciones nuevas.
+**Fecha de actualización / corte:** 26 de noviembre de 2026, UTC−05.  
+**Fuente más reciente de resultados:** `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-26_DESPLIEGUE_RENDER.md` (despliegue verificado en Render), complementaria a la auditoría de la prueba local del 25/11. Docker/Compose sigue sin validarse.
 
 ## Resumen vigente para continuidad
 
@@ -13,7 +13,8 @@
 - **Seguridad:** los servicios backend aplican autorización por rol y pertenencia para consultas protegidas: el propietario solo accede a sus mascotas y citas propias; un especialista solo consulta sus citas asignadas; recepción/administración tienen los alcances declarados por endpoint. Los recursos ajenos protegidos se ocultan con 404 en los flujos descritos. La interfaz no reemplaza la comprobación backend.
 - **Mascotas:** límite de cinco por usuario; la sexta responde HTTP 409 con `MASCOTAS_LIMITE_ALCANZADO` y se presenta el estado visual correspondiente.
 - **Historias clínicas:** el propietario consulta únicamente historias de sus mascotas y filtra por año/mes disponibles; el flujo es de solo lectura.
-- **No acreditado en el informe más reciente:** ejecución remota de CI, despliegue a producción, pruebas E2E y una nueva ejecución de backup/restore. El informe describe el ensayo local previo de backup/restore, pero no debe presentarse como repetido en este cierre. Existe configuración de CI en el repositorio, lo cual no acredita un run remoto.
+- **Despliegue:** acreditado desde el 26/11/2026 en Render (frontend, API y PostgreSQL 16), con verificación de `/health`, login, catálogos y recorrido completo en navegador hasta el panel de administración. Véase la sección «Despliegue en Render» más abajo.
+- **No acreditado todavía:** ejecución remota de CI, pruebas E2E, una nueva ejecución de backup/restore y el envío real de correo (la credencial SMTP de Brevo es rechazada). El informe del 25/11 describe el ensayo local previo de backup/restore, pero no debe presentarse como repetido. Existe configuración de CI en el repositorio, lo cual no acredita un run remoto.
 
 Enlaces: [auditoría de cierre 25/11](../../DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md) · [pendientes manuales](../../DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md) · [README del proyecto](../../Readme.md) · [índice de documentación](../../DOCS_PROYECTO/README.md).
 
@@ -69,6 +70,21 @@ La auditoría de prueba viva documenta que el filtro año/mes muestra solo atenc
 
 Leer primero `AGENTS.md`, después `.agents/README.md`, las reglas/skills aplicables y este archivo. No modificar migraciones ni `schema.prisma` sin autorización explícita. Toda nueva prueba o ejecución permitida debe registrarse en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/`; separar evidencia previa de cualquier ejecución nueva.
 
+## Prueba local de arranque y suite — 25 de noviembre de 2026
+
+En sandbox aislado sin Docker se instaló PostgreSQL 16.15 y se usaron una base de arranque vacía y una base `_test` desechable. La opción B de `DOCS_PROYECTO/arranque.md` funcionó: `npm run migrate` aplicó seis migraciones; `npm run dev` de backend inició en 3000; `/health` y `/api-docs` respondieron HTTP 200; Vite inició en 5173 y `/` respondió HTTP 200. La suite backend aprobó 410/410 pruebas en 31 archivos; frontend build y lint aprobaron; backend lint terminó con 0 errores y 4 advertencias. `npm ci` en backend reportó 8 vulnerabilidades (4 moderadas, 4 altas). Se detuvieron los servidores, se eliminaron las dos bases temporales/rol y se detuvo PostgreSQL. Docker Compose no se pudo probar porque Docker no está instalado. Véase la auditoría enlazada arriba para comandos y límites.
+
+## Despliegue en Render — 26 de noviembre de 2026
+
+- Rama desplegada: `SUSTENTACION4º` del repositorio `sanlith340-droid/Huellitas_Saludables_PRO`, en la región Ohio con planes Free.
+- Recursos: base PostgreSQL 16 `huellitas-db` (caduca el 26/12/2026), API Docker `huellitas-api` y sitio estático `huellitas-web`.
+- URLs verificadas: frontend https://huellitas-web-28qj.onrender.com · API https://huellitas-api-l0dx.onrender.com · salud `/health` · Swagger `/api-docs/`.
+- Verificación: `/health` 200 con base conectada; login de administrador 200 con CORS correcto; `/api/mascotas`, `/api/razas` y `/api/disponibilidad` 200; recorrido en navegador desde `/login` hasta el panel de administración con datos reales (7 cuentas de personal, 3 especialistas, 3 recepcionistas, 1 administrador).
+- Datos demo: el primer arranque se hizo con `NODE_ENV=development` y `DB_SEED=true`; después se cambió a `production` con `DB_SEED=false`.
+- SMTP: Render Free bloquea la salida a los puertos 25, 465 y 587; se usa `SMTP_PORT=2525`, que sí funciona. Con la clave nueva de Brevo (`c53625001@smtp-brevo.com`) la autenticación se acepta y `POST /api/auth/forgot-password` responde 200 en unos 4 s, con el envío registrado como *Sent* en Brevo. La clave anterior de la imagen estaba revocada (535).
+- Limitaciones del plan Free: la base caduca a los 30 días, el servicio se suspende tras 15 minutos sin tráfico y no hay discos persistentes.
+- Fuente: `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-26_DESPLIEGUE_RENDER.md` y `DOCS_PROYECTO/sustentacion_DOCUMENTACION/D3_IMPLANTACION_Y_DESPLIEGUE/GUIA_DESPLIEGUE_Y_AMBIENTES.md`.
+
 ## Siguiente paso
 
-Atender los pendientes del documento `DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md`. No afirmar despliegue, ejecución remota de CI, E2E, restauración reciente, aceptación formal ni resultado de un estado de migraciones sin evidencia fechada. La decisión sobre el seed señalada en el registro histórico del 24/11 no fue reevaluada por la auditoría del 25/11.
+Atender los pendientes del documento `DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md` y sustituir la credencial SMTP de Brevo para habilitar la recuperación de contraseña en el despliegue. No afirmar ejecución remota de CI, E2E, restauración reciente, aceptación formal ni resultado de un estado de migraciones sin evidencia fechada; el despliegue del 26/11 sí está acreditado con la auditoría enlazada. La decisión sobre el seed señalada en el registro histórico del 24/11 no fue reevaluada por la auditoría del 25/11.

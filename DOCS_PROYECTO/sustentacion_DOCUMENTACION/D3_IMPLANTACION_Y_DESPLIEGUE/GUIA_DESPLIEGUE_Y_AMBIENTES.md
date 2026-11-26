@@ -1,6 +1,6 @@
 # Guía de despliegue y configuración por ambiente
 
-Esta guía describe opciones y controles esperados. **No acredita un despliegue realizado.** A la fecha de revisión no se verificó una URL pública; Docker no estuvo disponible en el entorno local de esta revisión.
+Esta guía describe opciones y controles esperados y, desde el 26 de noviembre de 2026, registra también el despliegue efectivamente realizado en Render (véase la sección 2). Docker Compose sigue sin probarse porque Docker no estuvo disponible en el entorno de revisión.
 
 ## 1. Ambientes previstos
 
@@ -17,7 +17,24 @@ La copia revisada no incluye plantillas `.env`; crear la configuración de cada 
 
 El repositorio incluye `render.yaml` como Blueprint. Procedimiento previsto: subir el código al repositorio autorizado, importar el Blueprint, completar manualmente variables privadas, revisar plan/retención de base, aplicar migraciones y verificar endpoints. Tras el despliegue, comprobar `/health`, `/api-docs`, login y un flujo autorizado; registrar URL, fecha, responsables y resultados.
 
-**Estado actual:** no se importó el Blueprint ni se verificó una URL. No entregar un enlace inventado ni presentar la configuración como un servicio activo.
+**Estado actual (26/11/2026): despliegue realizado y verificado.** En lugar de importar el Blueprint se crearon los recursos con la API de Render, que permite fijar el contexto Docker y el comando de build del sitio estático con precisión:
+
+| Recurso | Nombre | Configuración |
+|---|---|---|
+| Base de datos | `huellitas-db` | PostgreSQL 16, plan Free, Ohio, caduca el 26/12/2026 |
+| API | `huellitas-api` | Docker, contexto `./back`, `./back/Dockerfile`, health check `/health`, plan Free |
+| Frontend | `huellitas-web` | Sitio estático, build `cd front && npm run build`, publicación `front/dist`, rewrite `/*` → `/index.html`, `VITE_API_URL` apuntando a la API |
+
+- Frontend: https://huellitas-web-28qj.onrender.com
+- API: https://huellitas-api-l0dx.onrender.com · Swagger: `/api-docs/` · Salud: `/health`
+
+Verificado: `/health` con base conectada, login de administrador con CORS correcto, catálogos (`/api/mascotas`, `/api/razas`, `/api/disponibilidad`) y recorrido completo en navegador desde `/login` hasta el panel de administración con datos reales.
+
+**SMTP:** el plan Free de Render bloquea la salida a los puertos 25, 465 y 587. Se configuró `SMTP_PORT=2525` (alternativa de Brevo), con lo que la conexión ya se establece; queda pendiente sustituir la clave SMTP de Brevo, que el proveedor rechaza con `535 Authentication failed`.
+
+**Limitaciones del plan Free:** la base caduca a los 30 días (26/12/2026), el servicio se suspende tras 15 minutos sin tráfico y no hay discos persistentes. Para uso permanente hay que pasar a planes pagos.
+
+Detalle completo en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-26_DESPLIEGUE_RENDER.md`.
 
 ## 3. Opción documentada: Docker Compose
 
@@ -31,4 +48,4 @@ En el entorno que el equipo elija, guardar evidencia fechada de `/health`, inici
 
 ## 5. Estado de cierre
 
-El criterio D3.7 queda pendiente hasta tener un entorno externo accesible, URL comprobada, separación efectiva de ambientes y evidencia de una verificación funcional. Las capturas de `EVIDENCIA_CAPTURAS_ACTUAL/` corresponden al entorno local y datos de demostración; no sustituyen esas evidencias.
+El criterio D3.7 cuenta desde el 26/11/2026 con un entorno externo accesible y URL comprobada (véase la sección 2). Queda como pendiente la separación efectiva de ambientes y el envío de correo con una credencial SMTP válida. Las capturas de `EVIDENCIA_CAPTURAS_ACTUAL/` corresponden al entorno local y datos de demostración; las nuevas evidencias del despliegue se registran en `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-26_DESPLIEGUE_RENDER.md`.

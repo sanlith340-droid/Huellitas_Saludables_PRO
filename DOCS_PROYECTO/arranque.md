@@ -94,4 +94,9 @@ El paquete frontend no declara un script de pruebas de componentes ni un E2E. Pa
 - [Guía frontend](front_DOCUMENTACION/README.md)
 - [Estados de interfaz](ESTADOS_DE_INTERFAZ.md)
 - [Ejecución de pruebas](test_DOCUMENTACION/EJECUCION.md)
-- [Auditoría más reciente disponible (25/11/2026)](auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md)
+- [Prueba local de arranque y suite (25/11/2026)](auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_PRUEBA_ARRANQUE_Y_SUITE.md)
+- [Auditoría de cierre T4 (25/11/2026)](auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md)
+
+### Resultado de comprobación local
+
+La opción de desarrollo sin Docker (PostgreSQL local, backend y Vite) se probó en un sandbox aislado el 25/11/2026: migraciones aplicadas, `/health`, `/api-docs` y frontend respondieron HTTP 200; la suite backend y el build finalizaron correctamente. **Docker Compose no se probó**, porque Docker no estaba disponible en ese entorno. Detalle y límites en la [auditoría de arranque](auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_PRUEBA_ARRANQUE_Y_SUITE.md).

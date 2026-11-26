@@ -146,7 +146,7 @@ El backend usa Vitest y Supertest para pruebas unitarias e integración. La conf
 
 Docker Compose coordina PostgreSQL, backend y frontend. Nginx sirve los activos de la SPA y funciona como proxy hacia la API. La solución admite desarrollo y demostración local; el README del proyecto advierte que el despliegue de producción aún no está definido.
 
-La configuración se endureció según el estado de continuidad del 25 de noviembre de 2026: Compose exige `DB_PASSWORD` y `JWT_SECRET`, `databaseUrl.js` falla en producción sin credenciales y el origen CORS predeterminado es `http://localhost:8080`. Mantén secretos propios y allowlists exactas por entorno; no hay despliegue real todavía y este resumen no sustituye una validación de producción.
+La configuración se endureció según el estado de continuidad del 25 de noviembre de 2026: Compose exige `DB_PASSWORD` y `JWT_SECRET`, `databaseUrl.js` falla en producción sin credenciales y el origen CORS predeterminado es `http://localhost:8080`. Mantén secretos propios y allowlists exactas por entorno; el despliegue Render del 26/11/2026 está acreditado; este resumen no sustituye la validación de operación, E2E ni aceptación formal.
 
 ## 5. Base de datos: estado actual y evolución prevista
 
@@ -341,7 +341,7 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 5. **Credenciales/CORS:** el estado del 25/11/2026 registra variables de credenciales exigidas y `http://localhost:8080` como CORS predeterminado. Configurar allowlist exacta para cada despliegue.
 6. **Límite de intentos y revocación:** los controles están implementados; la evidencia backend más reciente registrada es 410/410 en 31 archivos. Esta edición documental no volvió a ejecutar la suite.
 7. **Datos personales:** usuarios autenticados pueden consultar rutas por ID que pueden exponer correo, teléfono o dirección. Revisar minimización de datos y permisos conforme a la política de privacidad del producto.
-8. **Swagger y README:** se actualizaron las guías Markdown en este cambio; la especificación Swagger debe tratarse conforme al estado real de `back/app/config/swagger.js`. El estado actual consigna ESLint 9 y CI, pero no hay despliegue real todavía.
+8. **Swagger y README:** se actualizaron las guías Markdown en este cambio; la especificación Swagger debe tratarse conforme al estado real de `back/app/config/swagger.js`. El estado actual consigna ESLint 9 y CI, pero el despliegue Render del 26/11/2026 está acreditado; Docker Compose aún no se ha validado.
 9. **Producción:** el README caracteriza el proyecto como desarrollo/demo y no listo para producción. Antes de desplegar públicamente se necesitan secretos gestionados, CORS restringido, rate limiting, política de sesión, privacidad, backups/restauración y pruebas de seguridad operativa.
 
 ## 9. Próximos pasos documentales y técnicos sugeridos

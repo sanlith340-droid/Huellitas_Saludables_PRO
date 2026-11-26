@@ -13,7 +13,7 @@
 2. Cada integrante debe preparar y ensayar la explicación del sistema completo, además del tema de profundidad sugerido.
 3. Acordar quién ejecuta la demostración, qué entorno y cuentas sintéticas se usarán, qué datos se modificarán y cómo se restablecerá la base después.
 4. Registrar fecha, presentes/total y resultado del ensayo en el espacio previsto; no marcarlo como realizado hasta que ocurra.
-5. Evitar presentar URL externa, despliegue o backup/restore como hechos: esos puntos continúan pendientes según D3.
+5. El despliegue Render sí puede presentarse como hecho porque cuenta con auditoría y URLs verificadas del 26/11/2026. No presentar backup/restore, E2E, CI remoto, cobertura o aceptación formal como hechos; SMTP solo está acreditado hasta la aceptación del proveedor, no hasta la recepción en un buzón demo.
 
 ## No presentar como evidencia
 

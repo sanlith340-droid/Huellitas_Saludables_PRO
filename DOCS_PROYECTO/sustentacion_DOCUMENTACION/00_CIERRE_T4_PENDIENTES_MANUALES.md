@@ -10,7 +10,7 @@ Esta lista distingue evidencia documental, comprobaciones locales y trabajo que 
 | 4 | D2 — Errores e integridad | 🟡 Pruebas y esquema existentes, sin demostración exhaustiva | Ejecutar casos válidos/ inválidos, integridad referencial, concurrencia y registrar resultados |
 | 5 | D2 — Roles/permisos | 🟡 Código con controles por rol/propietario y pruebas de integración | Validar en staging permisos de lectura/escritura, recursos ajenos y comportamiento UI/API |
 | 6 | D2* — IoT/móvil | ➖ No hay evidencia | Confirmar con equipo/jurado si el criterio es formalmente no aplicable |
-| 7 | D3 — Despliegue/ambientes | 🔴 Sin URL pública verificada ni despliegue actual | Desplegar, configurar ambientes/secrets/CORS/TLS y registrar URLs/resultados; no dar local por productivo |
+| 7 | D3 — Despliegue/ambientes | 🟡 Render verificado con frontend, API, PostgreSQL, CORS, `/health`, login y Swagger | Formalizar separación de ambientes, revisar retención/caducidad de la BD y conservar evidencia; no confundirlo con Docker Compose |
 | 8 | D3 — Manuales | 🟡 DOCX/PDF actualizados con capturas locales | Probar instalación desde entorno limpio y confirmar la URL que recibirá el usuario final |
 | 9 | D3 — Backups/migración | 🟡 Política; reporte de ensayo anterior no reejecutado en este pase | Hacer backup, validar archivo y restaurar en BD aislada; repetir o demostrar la configuración de producción |
 | 10 | D4 — Plan/métricas | 🟡 Plan y lint configurados; lint ejecutado localmente | Ejecutar CI remoto, calcular cobertura actual y resolver/justificar 8 vulnerabilidades (4 moderadas, 4 altas) |
@@ -35,4 +35,4 @@ cd ../back && npm run lint           # Resultado documentado: 0 errores / 4 adve
 cd ../front && npm run build         # Resultado documentado: compilación exitosa
 ```
 
-La suite requiere PostgreSQL y usa/elimina/recrea la BD que indique `DB_NAME_TEST`; debe terminar en `_test` y ser distinta de cualquier base que se quiera conservar. El build/lint y las pruebas locales no demuestran despliegue, aceptación ni seguridad completa. En la revisión vigente se registraron seis migraciones locales; no se verificó despliegue público, pruebas E2E/de carga, CI remoto, cobertura actual, backup/restore actual ni aceptación.
+La suite requiere PostgreSQL y usa/elimina/recrea la BD que indique `DB_NAME_TEST`; debe terminar en `_test` y ser distinta de cualquier base que se quiera conservar. El build/lint y las pruebas locales no demuestran despliegue, aceptación ni seguridad completa. En la revisión vigente se registraron seis migraciones locales. El despliegue público de Render se verificó el 26/11/2026; siguen sin verificarse E2E/de carga, CI remoto, cobertura actual, backup/restore actual y aceptación.

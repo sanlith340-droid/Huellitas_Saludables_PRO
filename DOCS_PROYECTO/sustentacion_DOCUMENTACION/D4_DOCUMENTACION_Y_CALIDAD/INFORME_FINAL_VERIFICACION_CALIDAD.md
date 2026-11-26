@@ -14,7 +14,7 @@ Se ejecutó la versión de trabajo con frontend React/Vite, API Express y Postgr
 | Build frontend | Correcto (`npm run build`) | [Log de build](EVIDENCIAS_EJECUCION_ACTUAL/Frontend_build.log); `tsc -b` + Vite; compilación no equivale a prueba funcional |
 | Lint frontend | 0 errores, 0 advertencias | [Log lint frontend](EVIDENCIAS_EJECUCION_ACTUAL/Frontend_lint.log) |
 | Lint backend | 0 errores, 4 advertencias | [Log lint backend](EVIDENCIAS_EJECUCION_ACTUAL/Backend_lint.log) |
-| API `/health` | HTTP 200 | Comprobación local, sin evidencia de URL pública ni disponibilidad externa |
+| API `/health` | HTTP 200 | Comprobación local y verificación externa Render documentada en la auditoría del 26/11/2026 |
 | Capturas por rol | 11 imágenes actuales | Cuentas/datos demo sintéticos; inspección visual sin mutaciones, no prueba de flujo completo |
 | Dependencias backend | `npm ci` reportó 8 vulnerabilidades: 4 moderadas y 4 altas | Triage pendiente; no se ejecutó `npm audit fix` |
 
@@ -32,7 +32,7 @@ No se calculó cobertura; los porcentajes citados en reportes anteriores son his
 | Notificaciones | Avisos persistentes dentro de la aplicación para citas y disponibilidad; la suite incluye pruebas de integración | No hay correo/SMS/push configurados; esta inspección no disparó un evento desde la UI |
 | Dependencias | 8 avisos reportados por `npm ci` del backend (4 moderados, 4 altos) | Clasificar y actualizar con pruebas; no modificar a ciegas |
 | Contratos/requisitos | Hay diferencias documentales por conciliar (p. ej., RN39 y consulta de historia clínica) | Decisión del equipo, trazabilidad y actualización coherente |
-| Auditoría durable, E2E y despliegue | No demostrados como capacidades operativas en este pase | Definir alcance y generar evidencia antes de declarar cierre |
+| Auditoría durable y E2E | No demostrados como capacidades operativas en este pase; Render sí fue verificado | Definir alcance y generar evidencia antes de declarar cierre |
 
 No se asigna una cantidad global de defectos críticos “abiertos/cerrados” porque esta ejecución no incluyó una revisión exhaustiva de aceptación ni una clasificación completa del registro de defectos.
 

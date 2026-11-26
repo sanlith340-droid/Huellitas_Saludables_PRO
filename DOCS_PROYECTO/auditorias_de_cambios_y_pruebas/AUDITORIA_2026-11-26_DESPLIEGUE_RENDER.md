@@ -79,15 +79,10 @@ Render bloquea el tráfico saliente a los puertos **25, 465 y 587** en las insta
 
 Brevo ofrece el puerto **2525** como alternativa cuando el 587 está bloqueado. Se comprobó con una sonda externa (`portquiz.net`) que Render **sí permite** la salida por 2525, y con `SMTP_PORT=2525` la API conecta con `smtp-relay.brevo.com` y obtiene respuesta en unos 3 segundos.
 
-La clave SMTP que traía la imagen del proyecto resultó inválida: Brevo respondía `535 5.7.8 Authentication failed` en los puertos 587, 465 y 2525, también desde un equipo independiente. Se generó una clave nueva en la cuenta de Brevo del proyecto (usuario SMTP `c53625001@smtp-brevo.com`), se actualizaron `SMTP_USER`, `SMTP_PASS`, `SMTP_HOST` y `SMTP_PORT=2525` en Render y se redesplegó.
-
-**Segundo hallazgo:** con la clave nueva el envío llegaba a Brevo, pero se rechazaba con el motivo *«Sending has been rejected because the sender you used huellitassaludables3@gmail.com is not valid. Validate your sender or authenticate your domain»*, consultado en la API de Brevo (`GET /v3/smtp/statistics/events`). Es decir, la dirección del remitente debía estar verificada en la cuenta.
-
-Se registró `huellitassaludables3@gmail.com` como remitente en Brevo (queda pendiente abrir el enlace de confirmación que Brevo envía a ese buzón) y, como alternativa operativa inmediata, se configuró `SMTP_FROM` con la dirección verificada de la cuenta (`joretopa7@gmail.com`).
-
-**Resultado final:** `POST /api/auth/forgot-password` responde `200` en unos 3–4 segundos y Brevo registra el evento *requests* sin error de remitente; los envíos de prueba anteriores con el remitente sin verificar quedaron registrados como *error*. El flujo de recuperación de contraseña queda operativo en Render sin cambios de código.
-
-Nota para la sustentación: los usuarios demo tienen correos ficticios (`@proyectohs.com`), por lo que Brevo acepta el envío pero el destinatario rebota. Para una demostración real hay que usar un buzón existente. Cuando se verifique `huellitassaludables3@gmail.com`, basta cambiar `SMTP_FROM` para volver a la identidad del proyecto.
+La clave SMTP incluida originalmente en la imagen del proyecto era inválida: Brevo respondía `535 5.7.8 Authentication failed` en los puertos 587, 465 y 2525. Se generó una clave nueva en la cuenta de Brevo del proyecto (usuario SMTP `c53625001@smtp-brevo.com`) y se actualizaron `SMTP_USER`, `SMTP_PASS`, `SMTP_HOST` y `SMTP_PORT=2525` en Render.
+**Segundo hallazgo:** con la clave nueva el envío llegó a Brevo, pero el remitente `huellitassaludables3@gmail.com` fue rechazado porque aún no estaba verificado. Se registró esa dirección en Brevo, pero queda pendiente confirmar el enlace que Brevo envía al buzón. Mientras tanto, se configuró `SMTP_FROM` con la dirección verificada de la cuenta (`joretopa7@gmail.com`).
+**Resultado final verificable:** `POST /api/auth/forgot-password` responde `200` en unos 3–4 segundos y Brevo registra la solicitud sin error de autenticación ni de remitente con la configuración alternativa. Esto acredita conexión y aceptación por el proveedor, no la entrega ni el consumo del enlace por un usuario final.
+Nota para la sustentación: los usuarios demo tienen correos ficticios (`@proyectohs.com`), por lo que no sirven para demostrar recepción real. Para cerrar la evidencia de recuperación se debe usar un buzón existente, confirmar el remitente institucional o mantener el remitente verificado alternativo, y completar el enlace de un solo uso.
 
 ## 7. Limitaciones conocidas del plan gratuito
 
@@ -104,4 +99,4 @@ Nota para la sustentación: los usuarios demo tienen correos ficticios (`@proyec
 
 ## 9. Conclusión
 
-El despliegue quedó funcional de extremo a extremo: frontend, API, base de datos, autenticación, catálogos y panel de administración operan contra Render. El único punto pendiente es la credencial SMTP de Brevo, ajena al código y al despliegue.
+El despliegue quedó funcional de extremo a extremo: frontend, API, base de datos, autenticación, catálogos y panel de administración operan contra Render. La recuperación queda verificada hasta la aceptación de la solicitud por SMTP; siguen pendientes la recepción y el consumo del enlace en un buzón real y la confirmación del remitente institucional.

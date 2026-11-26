@@ -14,7 +14,7 @@
 - **Mascotas:** límite de cinco por usuario; la sexta responde HTTP 409 con `MASCOTAS_LIMITE_ALCANZADO` y se presenta el estado visual correspondiente.
 - **Historias clínicas:** el propietario consulta únicamente historias de sus mascotas y filtra por año/mes disponibles; el flujo es de solo lectura.
 - **Despliegue:** acreditado desde el 26/11/2026 en Render (frontend, API y PostgreSQL 16), con verificación de `/health`, login, catálogos y recorrido completo en navegador hasta el panel de administración. Véase la sección «Despliegue en Render» más abajo.
-- **No acreditado todavía:** ejecución remota de CI, pruebas E2E, una nueva ejecución de backup/restore y el envío real de correo (la credencial SMTP de Brevo es rechazada). El informe del 25/11 describe el ensayo local previo de backup/restore, pero no debe presentarse como repetido. Existe configuración de CI en el repositorio, lo cual no acredita un run remoto.
+- **No acreditado todavía:** ejecución remota de CI, pruebas E2E, una nueva ejecución de backup/restore, recepción/consumo del enlace en buzón real y aceptación formal. SMTP autentica y Brevo acepta la solicitud con remitente alternativo verificado; el remitente institucional requiere confirmación. El informe del 25/11 describe el ensayo local previo de backup/restore, pero no debe presentarse como repetido. Existe configuración de CI en el repositorio, lo cual no acredita un run remoto.
 
 Enlaces: [auditoría de cierre 25/11](../../DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md) · [pendientes manuales](../../DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md) · [README del proyecto](../../Readme.md) · [índice de documentación](../../DOCS_PROYECTO/README.md).
 
@@ -63,7 +63,7 @@ La auditoría de prueba viva documenta que el filtro año/mes muestra solo atenc
 - `docker-compose.yml` exige `DB_PASSWORD` y `JWT_SECRET`; el backend falla en producción sin credenciales y el origen CORS predeterminado es `http://localhost:8080`.
 - Suite backend **410/410 en 31 archivos**; ESLint configurado en back/front; build correcto; frontend lint 0/0 y backend lint 0 errores/4 advertencias.
 - La auditoría informa 8 vulnerabilidades de `npm ci` (4 moderadas/4 altas). Registra un ensayo local previo de backup/restore; el documento de pendientes aclara que no fue reejecutado en ese pase.
-- No hay despliegue productivo acreditado. No consta ejecución remota de CI ni E2E en el informe más reciente.
+- En el corte histórico del 25/11 no había despliegue acreditado; desde el 26/11 Render está acreditado por la auditoría de despliegue. No consta ejecución remota de CI ni E2E.
 - Fuentes: `DOCS_PROYECTO/auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md` y `DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md`.
 
 ## Reglas de continuidad
@@ -87,4 +87,4 @@ En sandbox aislado sin Docker se instaló PostgreSQL 16.15 y se usaron una base 
 
 ## Siguiente paso
 
-Atender los pendientes del documento `DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md` y sustituir la credencial SMTP de Brevo para habilitar la recuperación de contraseña en el despliegue. No afirmar ejecución remota de CI, E2E, restauración reciente, aceptación formal ni resultado de un estado de migraciones sin evidencia fechada; el despliegue del 26/11 sí está acreditado con la auditoría enlazada. La decisión sobre el seed señalada en el registro histórico del 24/11 no fue reevaluada por la auditoría del 25/11.
+Atender los pendientes de `DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md`: completar recepción/consumo con buzón real y confirmar remitente institucional si se requiere; mantener separados CI, E2E, cobertura, backup/restore y aceptación. No afirmar ejecución remota de CI, E2E, restauración reciente, aceptación formal ni resultado de un estado de migraciones sin evidencia fechada; el despliegue del 26/11 sí está acreditado con la auditoría enlazada. La decisión sobre el seed señalada en el registro histórico del 24/11 no fue reevaluada por la auditoría del 25/11.

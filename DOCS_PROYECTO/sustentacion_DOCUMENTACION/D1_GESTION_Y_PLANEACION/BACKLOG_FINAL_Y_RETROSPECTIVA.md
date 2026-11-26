@@ -15,12 +15,12 @@ Convención de trabajo provisional: ✅ = 1 punto; 🟡 = 0,5; 🔴 = 0. El crit
 | 4 | Historias clínicas desde vista especialista | ✅ | `historia.*`, `HistoriaClinicaCita.tsx` y pruebas |
 | 5 | Contraseñas con bcrypt | ✅ | `utils/password.js` y pruebas de seguridad |
 | 6 | Retirar valores inseguros por defecto de JWT/BD | ✅ | Configuración exige valores; verificar secretos reales al desplegar |
-| 7 | CORS por orígenes configurados | ✅ | Lista de orígenes; la configuración remota sigue pendiente |
+| 7 | CORS por orígenes configurados | ✅ | Lista de orígenes y CORS verificado en login contra Render |
 | 9 | Evitar SQL injection | ✅ | Consultas parametrizadas/utilidades y pruebas |
 | 10 | Manejo de errores, logs y contrato | 🟡 | `errorHandler.js`; falta alinear RN39 y documentar retención durable |
 | 11 | Limitar intentos de login | ✅ | `authRateLimit.js` y pruebas |
 | 12 | Cierre de sesión con revocación de token | ✅ | `cierre-sesion.test.js` |
-| 13 | Recuperar contraseña por correo | ✅ | Flujo de token de un solo uso; el envío requiere configuración externa |
+| 13 | Recuperar contraseña por correo | ✅ | Flujo de token de un solo uso; SMTP autentica y Brevo acepta la solicitud con remitente alternativo; falta demostrar recepción/consumo en buzón real |
 | 14 | Migrar a Vitest | ✅ | 410/410 aprobadas en 31 archivos en la ejecución local actual |
 | 15 | Migrar a Prisma | ✅ | `schema.prisma`; seis migraciones aplicadas a la base demo local |
 | 16 | Dockerfile backend multi-etapa y no-root | 🟡 | No se verificó con Docker, no disponible en este pase |
@@ -43,7 +43,7 @@ Además de las tarjetas, el código actual incluye límite de mascotas, filtros 
 | Auditoría persistente | Los eventos se registran en logs; no hay evidencia de bitácora durable | Definir almacenamiento, retención y acceso si se requiere |
 | Canales externos de notificación | La versión revisada persiste notificaciones dentro de la aplicación; no hay proveedor de email/SMS/push configurado | Definir proveedor/credenciales y probar si el requisito exige canal externo |
 | Pruebas frontend/E2E/carga | No se ejecutaron en este pase | Diseñar/ejecutar y adjuntar evidencia |
-| Despliegue externo/operación | No hay URL pública verificada ni ambiente productivo validado | Desplegar y obtener evidencias de salud, seguridad, backup/restore |
+| Despliegue externo/operación | Render verificado para frontend, API, BD, `/health`, CORS, login, catálogos y panel | Desplegar y obtener evidencias de salud, seguridad, backup/restore |
 | Dependencias | `npm ci` reportó 8 vulnerabilidades (4 moderadas, 4 altas) | Revisar `npm audit` y priorizar actualización segura; no aplicar `npm audit fix` a ciegas |
 
 ## 3. Retrospectiva de T1–T4 (síntesis documental, no reflexión personal)
@@ -55,6 +55,6 @@ El resumen parte de artefactos del repositorio y requiere confirmación de quien
 | T1 | Análisis, requisitos, historias y modelo de datos | Hubo versiones de requisitos; confirmar cómo se resolvió el alcance |
 | T2 | Base de datos y API | Evolución desde SQL manual hacia API por capas/ORM; precisar aprendizajes reales |
 | T3 | Frontend, roles y calidad | Se trabajó navegación por rol y cambios de infraestructura; validar reparto y dificultades |
-| T4 | Seguridad, implantación y calidad | Se añadieron controles y suite local de 410 pruebas; cobertura no medida en este pase y despliegue externo pendiente |
+| T4 | Seguridad, implantación y calidad | Se añadieron controles y suite local de 410 pruebas; cobertura no medida en este pase y despliegue Render verificado; cobertura, E2E, backup/restore y aceptación siguen pendientes |
 
 **Reflexión del equipo a completar en voz propia:** ¿qué repetirían, qué cambiarían, qué quedó sin alcanzar y cómo se preparan para la etapa productiva? Cada integrante debe escribir su reflexión en `D5_EQUIPO_Y_PROCESO/REFLEXION_FINAL_4_TRIMESTRES.md`.

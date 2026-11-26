@@ -4,7 +4,7 @@
 
 ## Síntesis documental del equipo (para validar)
 
-Los artefactos del proyecto reflejan una evolución desde scripts/modelos iniciales hacia una API por capas con Prisma y una aplicación React/TypeScript; el código actual contempla roles, JWT, bcrypt, revocación y recuperación de contraseña. La ejecución local de esta revisión aprobó **410/410 pruebas backend en 31 archivos**; el frontend compiló y lint finalizó con los resultados indicados en D4. No se midió cobertura, no se ejecutó E2E ni CI remoto, y el despliegue externo y backup/restore siguen pendientes.
+Los artefactos del proyecto reflejan una evolución desde scripts/modelos iniciales hacia una API por capas con Prisma y una aplicación React/TypeScript; el código actual contempla roles, JWT, bcrypt, revocación y recuperación de contraseña. La ejecución local de esta revisión aprobó **410/410 pruebas backend en 31 archivos**; el frontend compiló y lint finalizó con los resultados indicados en D4. No se midió cobertura, no se ejecutó E2E ni CI remoto; el despliegue externo en Render se verificó el 26/11/2026, mientras backup/restore y aceptación formal siguen pendientes. La recuperación quedó verificada hasta la aceptación SMTP, no hasta la recepción en buzón real.
 
 El backlog contiene un cálculo provisional de **15,5/17 = 91,2 % sobre las 17 tarjetas identificadas**, no una métrica del proyecto completo ni de la checklist. El equipo debe confirmar ese denominador y los estados. La retrospectiva siguiente es un esquema basado en documentos, no una declaración de consenso:
 

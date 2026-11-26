@@ -239,7 +239,7 @@ No se presenta ninguno de esos puntos como decisión ya adoptada ni se asigna no
 
 | Prioridad | Hallazgo y por qué importa | Fuente a contrastar |
 |---|---|---|
-| Alta | Compose exige `DB_PASSWORD` y `JWT_SECRET` según el estado del 25/11/2026; no hay despliegue productivo acreditado. | [`docker-compose.yml`](../../docker-compose.yml), [`back/app/config/databaseUrl.js`](../../back/app/config/databaseUrl.js), estado actual |
+| Alta | Compose exige `DB_PASSWORD` y `JWT_SECRET` según el estado del 25/11/2026; el despliegue Render del 26/11/2026 está acreditado; Docker Compose y la operación productiva permanente siguen pendientes. | [`docker-compose.yml`](../../docker-compose.yml), [`back/app/config/databaseUrl.js`](../../back/app/config/databaseUrl.js), estado actual |
 | Alta | El origen CORS predeterminado actual consignado es `http://localhost:8080`; definir allowlist exacta al desplegar. | [`back/app/app.js`](../../back/app/app.js), [`docker-compose.yml`](../../docker-compose.yml), estado actual |
 | Alta | Revocación JWT y rate limit están implementados; el limitador en memoria no es global entre instancias. | [`back/app/utils/jwt.js`](../../back/app/utils/jwt.js), [`back/app/middlewares/identifyUser.js`](../../back/app/middlewares/identifyUser.js), [`API.md`](./API.md) |
 | Alta | Contrastar Swagger con JWT Bearer y permisos reales antes de usarlo como contrato exacto. | [`back/app/config/swagger.js`](../../back/app/config/swagger.js), [`API.md`](./API.md), `identifyUser.js` |

@@ -1,6 +1,6 @@
 # Sustentación final — Huellitas Saludables
 
-Expediente ordenado según los cinco dominios y los 12 criterios de la Lista de Chequeo T4 (ADSO 228118, SENA CGMLTI). Este paquete **no declara cumplimiento del 100 %, aprobación, aceptación final ni despliegue productivo**.
+Expediente ordenado según los cinco dominios y los 12 criterios de la Lista de Chequeo T4 (ADSO 228118, SENA CGMLTI). Este paquete **no declara cumplimiento del 100 %, aprobación ni aceptación final**. El despliegue externo en Render sí está acreditado con auditoría y verificación fechadas.
 
 ## Estado sintético de criterios
 
@@ -12,7 +12,7 @@ Expediente ordenado según los cinco dominios y los 12 criterios de la Lista de 
 | 4 | D2 | Errores robustos e integridad referencial | 🟡 Hay validaciones, esquema y pruebas, pero no se demostraron exhaustivamente | Casos de integridad/errores por niveles y evidencia de resultados |
 | 5 | D2 | Roles, permisos y código organizado | 🟡 Controles por rol/propietario en código y pruebas; no hay validación de seguridad en staging | Demostración permitida/denegada por rol y revisión en entorno externo |
 | 6 | D2* | IoT/móvil, si aplica | ➖ No se encontró evidencia de integración IoT/móvil | Confirmar formalmente que no aplica al alcance con equipo/jurado |
-| 7 | D3 | Despliegue externo y ambientes separados | 🔴 No hay URL pública verificada ni despliegue comprobado | Desplegar, separar ambientes y registrar URL/health/flujo |
+| 7 | D3 | Despliegue externo y ambientes separados | 🟡 Render verificado: frontend, API, PostgreSQL, `/health`, login y Swagger | Completar separación formal de ambientes y documentar operación/retención |
 | 8 | D3 | Manual técnico y manual de usuario con capturas reales | 🟡 Manuales revisados y capturas actuales locales | Validar instalación desde ambiente limpio y confirmar acceso disponible |
 | 9 | D3 | Copias de seguridad y migración | 🟡 Política documentada; ensayo local citado en antecedente no reejecutado aquí | Repetir backup/restore, adjuntar logs y probar mecanismo del ambiente desplegado |
 | 10 | D4 | Plan de calidad, métricas y análisis estático | 🟡 Plan y ESLint configurados; lint local ejecutado | Ejecutar CI remoto, medir cobertura y tratar hallazgos de dependencias |
@@ -45,7 +45,7 @@ La raíz documental real se llama `DOCS_PROYECTO/`. Los documentos fuente de cad
 - Suite backend: 410/410 pruebas en 31 archivos. Build frontend correcto; lint frontend 0 errores/0 advertencias; lint backend 0 errores/4 advertencias.
 - `npm ci` reportó 8 vulnerabilidades en dependencias del backend: 4 moderadas y 4 altas. No se ejecutó `npm audit fix`.
 - No se midió cobertura, no se ejecutaron pruebas E2E/carga, no se reejecutó backup/restore, no se validó CI remoto y no se emitió aceptación.
-- Las 18 capturas son pantallas locales con datos demo; no prueban producción. Véase `D3_IMPLANTACION_Y_DESPLIEGUE/EVIDENCIA_CAPTURAS_ACTUAL/README.md` y sus hashes.
+- Las 18 capturas son pantallas locales con datos demo; no sustituyen la auditoría externa de Render. Véase `D3_IMPLANTACION_Y_DESPLIEGUE/EVIDENCIA_CAPTURAS_ACTUAL/README.md`, sus hashes y la auditoría Render.
 
 ## Conservación y uso
 

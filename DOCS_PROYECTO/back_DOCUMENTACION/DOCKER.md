@@ -55,4 +55,4 @@ docker compose logs -f
 
 ## Seguridad y operación
 
-No copies `.env` reales a imágenes ni al repositorio. Usa secretos únicos gestionados por entorno, restringe `CORS_ORIGIN` a los orígenes necesarios y sirve por HTTPS fuera de local. Hay scripts de backup/restauración en el repositorio, pero la existencia de scripts no equivale a un despliegue productivo validado: el estado actual indica que aún no hay despliegue real.
+No copies `.env` reales a imágenes ni al repositorio. Usa secretos únicos gestionados por entorno, restringe `CORS_ORIGIN` a los orígenes necesarios y sirve por HTTPS fuera de local. Hay scripts de backup/restauración en el repositorio, pero la existencia de scripts no equivale a un despliegue productivo validado: el estado actual acredita Render, pero Docker Compose aún no se ha validado.

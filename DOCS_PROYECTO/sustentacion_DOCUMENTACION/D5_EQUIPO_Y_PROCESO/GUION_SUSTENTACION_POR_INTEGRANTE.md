@@ -10,7 +10,7 @@ Cada integrante debe poder explicar el sistema completo. El reparto de profundid
 4. Seguridad y datos clínicos: JWT, bcrypt, roles y filtros por propietario; el dueño consulta en solo lectura historias de sus mascotas, mientras el especialista registra/actualiza atenciones autorizadas. La suite incluye pruebas de acceso propio/ajeno; falta una validación manual de seguridad en ambiente publicado.
 5. Notificaciones: avisos persistentes dentro de la aplicación para citas/disponibilidad. No hay correo/SMS/push configurados; la pantalla capturada usa datos sembrados y no prueba por sí sola que el evento se haya disparado durante la captura.
 6. Calidad actual: 410/410 backend en 31 archivos; frontend build correcto; lint front 0/0 y back 0 errores/4 advertencias. No se midió cobertura; tampoco se ejecutaron E2E/carga ni se validó CI remoto en esta revisión. `npm ci` reportó 8 vulnerabilidades (4 moderadas, 4 altas), aún sin triage.
-7. Implantación: no hay URL pública verificada. La guía, separación de ambientes y política de backups son documentación; no equivalen a despliegue, backup/restauración ni operación productiva probados.
+7. Implantación: Render tiene URL pública verificada y auditoría fechada. La separación de ambientes, backup/restauración y operación productiva permanente siguen pendientes; no deben inferirse desde la existencia de la URL.
 
 ## Profundidad sugerida (validar el reparto con el equipo)
 

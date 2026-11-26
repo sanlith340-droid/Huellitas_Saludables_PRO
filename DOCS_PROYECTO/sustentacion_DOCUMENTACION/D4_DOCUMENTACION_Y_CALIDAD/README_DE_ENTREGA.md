@@ -1,39 +1,21 @@
-# Entrega de calidad — Huellitas Saludables
+# Entrega documental D4 — Huellitas Saludables
 
-**Carpeta:** Proyecto Final Huellitas Saludables - ADSO  
-**Versión documental:** 1.2 · **Preparación:** 2026-11-20  
-**Aceptación:** pendiente; acta sin nombres ni firmas.
+**Preparación:** 25/11/2026 (UTC−05:00). **Estado de aceptación:** pendiente; el acta no tiene nombres ni firmas. Este dossier reúne el plan de calidad, los informes y las evidencias disponibles; no es certificación ni declaración de aprobación.
 
-## Estructura principal requerida
+## Evidencias principales
 
-- `Evidencias-Pruebas/`: reporte de ejecución, revisión estática, proveniencia y log del build frontend.
-- `Acta_Aceptacion_Final.docx` y `.pdf`: plantilla pendiente, deliberadamente sin firmas.
-- `Bitacora_Aseguramiento_de_Calidad.xlsx`: registro SQA actualizado con la revisión de navegación por rol y la compilación correspondiente.
-- `Control_Incidencias_y_Defectos.xlsx`: observaciones documentales/estáticas; no se inventan defectos reproducidos ni cierres.
-- `Criterios_Finalizacion.xlsx`: Definition of Done con build frontend verificado y pruebas/aceptación aún pendientes.
-- `Dossier_Calidad_Software.docx` y `.pdf`: dossier organizado conforme a los siete apartados del Taller 5.
-- `Matriz_Casos_de_Prueba.xlsx` y `Matriz_Trazabilidad_RTM.xlsx`: matriz de casos y RTM para el alcance documentado de esta entrega.
-- Anexos de apoyo: especificación y reglas adaptadas en DOCX/PDF; `Historias_de_Usuario_Adaptadas.xlsx`; `Informe_Adaptacion.md`; manifiestos de inventario/hashes.
+- [PLAN_ASEGURAMIENTO_CALIDAD.md](PLAN_ASEGURAMIENTO_CALIDAD.md): prácticas, herramientas y umbrales; distingue la medición local de métricas aún no medidas.
+- [INFORME_FINAL_VERIFICACION_CALIDAD.md](INFORME_FINAL_VERIFICACION_CALIDAD.md) y [Reporte_Ejecucion_y_Revision.md](Reporte_Ejecucion_y_Revision.md): resultados consignados en el pase actual y límites.
+- `EVIDENCIAS_EJECUCION_ACTUAL/`: log Vitest 410/410 en 31 archivos, build frontend y lint de ambos proyectos.
+- Matrices, bitácora, incidencias, criterios de finalización y dossier conservados como material de trazabilidad; revisar fecha y estado antes de presentarlos.
+- `QA_artefactos.json` e `Inventario_Evidencias.csv`: inventario actualizado de tamaño/hash; se excluyen mutuamente para evitar autorreferencia.
 
-## Navegación por rol incluida
+## Resultado actual resumido
 
-- **Usuario:** Mi panel, Mascotas, Solicitar cita y Perfil.
-- **Especialista:** Mis citas y Perfil.
-- **Recepción:** Agenda y Perfil.
-- **Administrador:** Panel de administración, Personal, Disponibilidad, Citas y Perfil; el panel mantiene únicamente el acceso rápido a gestión de personal.
+Backend 410/410; frontend build correcto; lint frontend 0 errores/0 advertencias y backend 0 errores/4 advertencias. PostgreSQL 16 fue local; `/health` respondió 200. `npm ci` reportó 8 vulnerabilidades en dependencias del backend (4 moderadas y 4 altas), sin triage ni `npm audit fix`.
 
-Las pantallas de mascotas y solicitud de cita usan guardas por rol de usuario. Las rutas de disponibilidad, citas del especialista, citas administrativas, panel admin y gestión de personal mantienen sus roles declarados. La revisión fue estática y el build frontend se ejecutó; no se validaron los flujos en navegador ni las autorizaciones funcionales.
+No se midió cobertura; no se ejecutaron E2E, carga, CI remoto, backup/restore actual ni aceptación. El recuento 336/336, 378/378 y los porcentajes de cobertura de versiones anteriores son históricos, no resultados del pase actual. La matriz de casos PMP y sus escenarios son prospectivos y no quedan aprobados por el resultado 410/410 de la suite backend.
 
-## Estados de evidencia
+## Elementos que no se deben presentar como evidencia del proyecto
 
-El build actualizado del frontend se ejecutó con `npm run build` en `front/`: TypeScript `tsc -b` y Vite 6.4.6 finalizaron con código 0 (161 módulos transformados). El log está en `Evidencias-Pruebas/Build_frontend_2026-11-20.log`. Esto confirma construcción/type-check del frontend, no la ejecución de pruebas funcionales, backend, smoke o navegador.
-
-Los 140 casos manuales fueron reportados, pero no se recibieron con IDs/detalle y no se ejecutaron. Los 56 candidatos GWT de la matriz tampoco se ejecutaron. El resultado 336/336 en 24 archivos y smoke se conserva únicamente como reporte histórico del usuario, sin log aportado ni reejecución. El acta permanece pendiente y sin firmas.
-
-## Aplicativo actualizado
-
-El archivo compañero `Huellitas_Saludables_mejorada.zip` se entrega por separado de esta carpeta. SHA-256: `01dfe6a7213c33abf728d915dcbd9b6cc5ea47f710001f5d45e7da66f82a88ba`. El panel administrativo conserva el acceso rápido a gestión de personal; los accesos rápidos a Citas y Disponibilidad se retiraron, aunque esas pantallas siguen disponibles en el menú por rol. Incluye navegación diferenciada, guardas de ruta para las pantallas del usuario y el estado vacío de disponibilidad cuando no hay especialistas. No incluye `.git`, `node_modules`, `dist` ni archivos `.env` reales. Los cambios se consideran incorporados en código, no aceptación funcional. El usuario informa que actualmente no hay especialistas registrados; por ello, los flujos de disponibilidad e historia clínica requieren datos de prueba para validarse.
-
-## Controles de integridad
-
-`Inventario_Evidencias.csv` y `QA_artefactos.json` contienen tamaños y SHA-256 de los archivos del expediente; ambos manifiestos se excluyen mutuamente para evitar autorreferencia. Recalcular los hashes si algún archivo cambia después de esta versión.
+`ejemplo-plan-de-pruebas.pdf` es un ejemplo ajeno y debe quedar fuera de la sustentación. El dossier DOCX/PDF y los anexos heredados de procedencia/estática corresponden a cortes previos (entre ellos 20/11/2026); si muestran métricas distintas, son históricas. Use el [informe actual](INFORME_FINAL_VERIFICACION_CALIDAD.md) para el estado de la última ejecución. `Acta_Aceptacion_Final` sigue en blanco y no prueba aceptación.

@@ -1,0 +1,225 @@
+{
+  "proyecto": "Huellitas Saludables",
+  "version_expediente": "1.0",
+  "fecha_preparacion": "2026-11-20",
+  "estado_aceptacion": "Pendiente; acta sin firmas",
+  "fuentes": {
+    "project4_url": "https://github.com/users/joretopa7-stack/projects/4",
+    "repositorio": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_",
+    "captura_project4": "2026-11-20 09:42 COT (hora local consignada en la captura heredada)",
+    "codigo": "ZIP recibido; inspección estática de solo lectura; no modificado ni ejecutado durante adaptación",
+    "documentacion": "Especificación, historias, PDF RN, acta y matrices recibidas dentro de Download.zip"
+  },
+  "metricas": {
+    "tarjetas_project4": 18,
+    "columnas_project4": {
+      "Backlog": 0,
+      "QUE HACER": 10,
+      "HACIENDO": 1,
+      "HECHO": 7
+    },
+    "RF": 20,
+    "RNF": 15,
+    "historias_US": 20,
+    "criterios_GWT_recibidos": 80,
+    "reglas_RN": 45,
+    "pruebas_manuales_reportadas_no_ejecutadas": 140,
+    "casos_manual_detalle_recibido": 0,
+    "candidatos_GWT_adicionales_no_ejecutados": 80,
+    "observaciones_estaticas_cobertura_reportadas_no_itemizadas": 36,
+    "vitest_previo_reportado_por_usuario": {
+      "aprobadas": 336,
+      "total": 336,
+      "archivos_reportados": 24,
+      "log_recibido": false,
+      "reejecutado_en_esta_adaptacion": false
+    },
+    "build_typecheck_smoke": "Reportados previamente por usuario; sin log recibidos ni reejecución en esta adaptación",
+    "lint": "Reportado previamente como no ejecutado por falta de eslint; no reejecutado",
+    "casos_candidatos_enlazados_en_RTM": 80,
+    "tarjetas_con_ficha_y_evidencia_estatica": 18
+  },
+  "distinciones": {
+    "tablero": "Columna literal separada del issue state y del estado técnico",
+    "tecnico": "Revisión estática; no prueba funcional ejecutada",
+    "aceptacion": "No ejecutada; no firmada; manual separado de automatización"
+  },
+  "decisiones_abiertas": [
+    {
+      "id": "DEC-01",
+      "tema": "Acceso de dueño a historia clínica",
+      "estado": "No resuelto"
+    },
+    {
+      "id": "DEC-02",
+      "tema": "Contrato de errores RN39/RN40",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-03",
+      "tema": "Alcance de guardería/cuidador",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-04",
+      "tema": "Perfil de mascota",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-05",
+      "tema": "Restablecimiento de contraseña",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-06",
+      "tema": "Notificaciones",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-07",
+      "tema": "RN no funcionales sin métrica",
+      "estado": "Pendiente"
+    },
+    {
+      "id": "DEC-08",
+      "tema": "36 observaciones",
+      "estado": "No confirmable individualmente"
+    },
+    {
+      "id": "DEC-09",
+      "tema": "140 casos manuales",
+      "estado": "Pendiente de suministro"
+    },
+    {
+      "id": "DEC-10",
+      "tema": "Estados GitHub / issues",
+      "estado": "Pendiente de conciliación"
+    },
+    {
+      "id": "DEC-11",
+      "tema": "Acta de aceptación",
+      "estado": "Pendiente"
+    }
+  ],
+  "archivos": [
+    {
+      "ruta": "Acta_Aceptacion_Final.docx",
+      "tamano_bytes": 40060,
+      "sha256": "378b0f9e09de41768cd0a740fc7b0cbf0282d200f2b7df83c810b7c8e30f2e99"
+    },
+    {
+      "ruta": "Acta_Aceptacion_Final.pdf",
+      "tamano_bytes": 64211,
+      "sha256": "05924eeaebdd0e66b24b1f1cd322836acbd21899c5abb16bc8c1b85ba58ebcc6"
+    },
+    {
+      "ruta": "Bitacora_Aseguramiento_de_Calidad.xlsx",
+      "tamano_bytes": 6651,
+      "sha256": "2d0347ecce1ba8c52a678b35110db44ab233ba23c782b5279b6734e1c6f4dfcd"
+    },
+    {
+      "ruta": "Control_Incidencias_y_Defectos.xlsx",
+      "tamano_bytes": 8428,
+      "sha256": "59fb3e806eb0e71a1ee69270b62d94089f21d2e066791c23afd8721e27e12e43"
+    },
+    {
+      "ruta": "Criterios_Finalizacion.xlsx",
+      "tamano_bytes": 6513,
+      "sha256": "6c084fa2e15274492fa6018b5a362916a3fee45a377420370d831ae10ab6f9f9"
+    },
+    {
+      "ruta": "Dossier_Calidad_Software.docx",
+      "tamano_bytes": 40580,
+      "sha256": "f930e8ee2424110b06ad7f8ae7be4b5f84419ffa4eb8d938aed49e449325197e"
+    },
+    {
+      "ruta": "Dossier_Calidad_Software.pdf",
+      "tamano_bytes": 57766,
+      "sha256": "c50fa5f51f5918aad2f0efba7dc40a1438a174509d2852f61e0f9ed68bfb72dc"
+    },
+    {
+      "ruta": "Especificacion_Requerimientos_Adaptada.docx",
+      "tamano_bytes": 44440,
+      "sha256": "9a29df337e989f7fdd1be19bcff9e4943035c2ed42705ebb78c3ff66e58c6cda"
+    },
+    {
+      "ruta": "Especificacion_Requerimientos_Adaptada.pdf",
+      "tamano_bytes": 119596,
+      "sha256": "6ac5a750e21d03f2e25668059d5d1bc95b0d159de6dae03444a4bc2a9aee45e6"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Project4_snapshot_observado.json",
+      "tamano_bytes": 17559,
+      "sha256": "6c0ee142623aa808d0f746e264d9f1b74ad4cba261c59d69157b3d8569ae334d"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Proveniencia.md",
+      "tamano_bytes": 986,
+      "sha256": "a28d099098115116a0b79fc3314ff576c716c7aaa4ac9345b7be9604703a04a7"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Reporte_Ejecucion_y_Revision.md",
+      "tamano_bytes": 2067,
+      "sha256": "d3e2f4675f084fdd26edc8393023bb9ee9b70d1b9db8efb7fc7a80e022f918c5"
+    },
+    {
+      "ruta": "Evidencias-Pruebas/Revision_Estatica_Codigo.md",
+      "tamano_bytes": 8127,
+      "sha256": "ee75548f75f9b08ff85e6e8e2b1d39571cd7de98e2653cd4129bc6c8fc7d5d31"
+    },
+    {
+      "ruta": "Historias_de_Usuario_Adaptadas.xlsx",
+      "tamano_bytes": 18260,
+      "sha256": "25ac162970f903892f1c868ffe5bb733eb215a1ce269dc82525f5b81203f8733"
+    },
+    {
+      "ruta": "Informe_Adaptacion.md",
+      "tamano_bytes": 6559,
+      "sha256": "f6cbaca7c037c9d919c7bccee0f49c6cefb206dce7e699988857687a742e6175"
+    },
+    {
+      "ruta": "Matriz_Casos_de_Prueba.xlsx",
+      "tamano_bytes": 22867,
+      "sha256": "caa60e34b1a838c82a550e96126e22d7e1bb33e7b14d4c73b549673350312646"
+    },
+    {
+      "ruta": "Matriz_Trazabilidad_RTM.xlsx",
+      "tamano_bytes": 44982,
+      "sha256": "11e6cb1441fb95e498df32a854d75b45d814234600aabce2d5fa1a44b10f2159"
+    },
+    {
+      "ruta": "README_DE_ENTREGA.md",
+      "tamano_bytes": 3235,
+      "sha256": "57fb487b5ec154750e376ec2e288f03e6c999dbd1353ec729c37a7931259e281"
+    },
+    {
+      "ruta": "Reglas_de_Negocio_Adaptadas.docx",
+      "tamano_bytes": 42257,
+      "sha256": "0b35d8c38ab37475e3b6e06bbc13fa2b6556544d6e88e5b8cb9fab2178106aa2"
+    },
+    {
+      "ruta": "Reglas_de_Negocio_Adaptadas.pdf",
+      "tamano_bytes": 104760,
+      "sha256": "4a479f8cb48e8afd9937221ac5713f54e943c481eb9e41c190290fbdd02f9883"
+    }
+  ],
+  "validacion_final": {
+    "libros_xlsx": {
+      "cantidad": 6,
+      "formulas_detectadas": 0,
+      "marcadores_error_excel_detectados": 0,
+      "observacion": "Hojas, rangos, filtros, inmovilización, anchos y alturas revisados; no hay fórmulas que recalcular."
+    },
+    "documentos": {
+      "docx": 4,
+      "pdf": 4,
+      "acta": "Pendiente; sin firmas ni aprobación."
+    },
+    "pruebas_y_codigo": "No se ejecutaron pruebas, build, lint, smoke ni código fuente en esta adaptación; sin cambios al código o .env.",
+    "hashes": "SHA-256 calculado sobre cada archivo de contenido listado; QA_artefactos.json e Inventario_Evidencias.csv se excluyen mutuamente para evitar autorreferencia."
+  },
+  "archivos_excluidos_por_autorreferencia": [
+    "QA_artefactos.json",
+    "Inventario_Evidencias.csv"
+  ]
+}

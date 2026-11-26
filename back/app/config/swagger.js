@@ -100,7 +100,9 @@ const options = {
             especializacion: { type: 'string', example: 'Medicina Veterinaria' },
             tipo: { type: 'string', enum: ['principal', 'acudiente'], example: 'principal' },
             rol: { type: 'string', enum: ['usuario', 'recepcionista', 'especialista', 'admin'] },
-            fecha_registro: { type: 'string', format: 'date-time' }
+            fecha_registro: { type: 'string', format: 'date-time' },
+            fecha_aceptacion_politicas: { type: 'string', format: 'date-time', nullable: true },
+            version_politicas_aceptadas: { type: 'string', nullable: true, example: '2026-11-24-v1' }
           }
         },
         Mascota: {
@@ -111,6 +113,7 @@ const options = {
             fecha_nacimiento: { type: 'string', format: 'date', example: '2023-05-15' },
             especie: { type: 'string', example: 'perro' },
             genero: { type: 'string', example: 'macho' },
+            foto_url: { type: 'string', format: 'uri', nullable: true, example: 'https://ejemplo.com/mascota.jpg' },
             raza: {
               type: 'object',
               properties: {
@@ -143,7 +146,7 @@ const options = {
         },
         RegistroRequest: {
           type: 'object',
-          required: ['nombre', 'apellidos', 'telefono', 'correo', 'direccion', 'contrasena'],
+          required: ['nombre', 'apellidos', 'telefono', 'correo', 'direccion', 'contrasena', 'aceptaPoliticas'],
           properties: {
             nombre: { type: 'string', example: 'Juan' },
             apellidos: { type: 'string', example: 'Perez' },
@@ -151,6 +154,7 @@ const options = {
             correo: { type: 'string', example: 'juan@email.com' },
             direccion: { type: 'string', example: 'Calle 123' },
             contrasena: { type: 'string', example: '123456' },
+            aceptaPoliticas: { type: 'boolean', enum: [true], description: 'Debe enviarse true para aceptar la política de tratamiento y los términos.' },
             tipo: { type: 'string', enum: ['principal', 'acudiente'], default: 'principal' },
           },
         },
@@ -1099,7 +1103,8 @@ const options = {
                     fecha_nacimiento: { type: 'string', format: 'date', example: '2023-05-15' },
                     especie: { type: 'string', enum: ['perro', 'gato'], example: 'perro' },
                     genero: { type: 'string', enum: ['macho', 'hembra'], example: 'macho' },
-                    id_raza: { type: 'integer', example: 1 }
+                    id_raza: { type: 'integer', example: 1 },
+                    foto_url: { type: 'string', format: 'uri', nullable: true, description: 'URL HTTPS pública opcional de la fotografía.' }
                   }
                 }
               }

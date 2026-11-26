@@ -4,7 +4,7 @@
 **Base de comparación:** presentación *Planeación Técnica: De la Visión a la Ejecución Escalar* (5 dimensiones, 5 fases, 4 entregables y matriz de trazabilidad).
 **Rama revisada:** `sistema-filtraciones` (último commit: `768dfb3`).
 
-> **Nota de vigencia:** esta revisión es histórica y sus hallazgos de contraseñas, CORS, registros y errores HTTP no describen la entrega actual. Para el estado vigente, consulta el README raíz y `back/Readme.md`.
+> **Nota de vigencia:** esta revisión es histórica y sus hallazgos, recuentos de pruebas y referencias a CI no describen la entrega actual. Conserva los hechos de su fecha. Para el estado vigente, consulta [`../back_DOCUMENTACION/README.md`](./README.md), [`API.md`](./API.md), [`ARQUITECTURA.md`](./ARQUITECTURA.md) y [`DESARROLLO.md`](./DESARROLLO.md); las rutas de documentación actuales están bajo `DOCS_PROYECTO/`, no en `docs/`.
 
 ---
 

@@ -1,0 +1,308 @@
+{
+  "snapshot_time_local": "2026-11-20 09:42 America/Bogota (observed during this task)",
+  "project_url": "https://github.com/users/joretopa7-stack/projects/4",
+  "repo_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_",
+  "source_method": "Project 4 public board observed in browser; issue descriptions and metadata retrieved from unauthenticated public GitHub REST API.",
+  "board_column_counts": {
+    "Backlog": 0,
+    "QUE HACER": 10,
+    "HACIENDO": 1,
+    "HECHO": 7
+  },
+  "note": "El estado de columna del Project, el estado open/closed del issue y la implementación en código son ejes distintos. El board inventory contains 18 cards; cards #2 and #3 were collapsed in the viewport but visible in the board with title/repository reference; issue descriptions were retrieved from API.",
+  "cards": [
+    {
+      "number": 16,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "BACKEND: Refactorizar Dockerfiles",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/16",
+      "description": "En el backend: build multi-etapa, npm ci --omit=dev (hoy instala dependencias de desarrollo en la imagen), usuario no root y prisma generate. El entrypoint pasa a prisma migrate deploy. El del front ya es multi-etapa, solo se revisa.\n\n**Listo cuando:** _docker compose up -d --build levanta todo desde cero y la imagen del backend pesa menos._",
+      "assignees": [
+        "joretopa7-stack"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:14Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 6,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "BACKEND:  Quitar valores por defecto de JWT_SECRET y credenciales de BD",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/6",
+      "description": "El código usa valores de desarrollo si no encuentra las variables de entorno. Hay que eliminar esos fallbacks, sacar los secretos a un .env (que esté en .gitignore), crear un .env.example sin datos reales, y hacer que la app falle al arrancar si falta alguna variable. El JWT_SECRET debe ser largo y aleatorio.\n\n\n**Listo cuando:** _la app no inicia sin las variables y no hay secretos en el repositorio._",
+      "assignees": [
+        "joretopa7-stack"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:04Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 7,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "BACKEND:  Configurar CORS correctamente",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/7",
+      "description": "Hoy acepta cualquier origen junto con credentials: true, lo cual es riesgoso. Hay que usar la variable CORS_ORIGIN (que ahora no se usa) para definir una lista de orígenes permitidos y configurar el middleware cors con esa lista.\n\n\n**Listo cuando:** _una petición desde un origen no autorizado es bloqueada._",
+      "assignees": [
+        "jassjy"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:42:49Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 13,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "AMBOS:  Recuperar contraseña por correo",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/13",
+      "description": "token de un solo uso con vencimiento y envío de correo. Front: pantallas “Olvidé mi contraseña” y “Nueva contraseña”. Requiere un proveedor de correo (SMTP).\n\n**Listo cuando:** _El usuario restablece la contraseña desde el correo y el enlace deja de servir después de usarlo._",
+      "assignees": [
+        "jassjy",
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:38Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 18,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "FRONTEND: Maquetado completo: header, contenido y footer",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/18",
+      "description": "Layout común con footer (contacto, enlaces, redes, política de datos) y diseño en cuadrícula de tarjetas (card grid) para listas como mascotas.\n\n**Listo cuando:** _Todas las páginas comparten header y footer y no tienen scroll horizontal._",
+      "assignees": [
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:24Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 17,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "FRONTEND: Rediseño de navegación y gestión visual de errores",
+      "issue_state": "closed",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/17",
+      "description": "Rediseñar la navegación por secciones mediante una barra de navegación con íconos representativos para cada módulo: Inicio, Mascotas, Citas y Perfil. La sección activa debe permanecer visualmente resaltada para facilitar la orientación del usuario.\n\nImplementar un menú hamburguesa en dispositivos móviles como alternativa de navegación, garantizando accesibilidad, adaptación a diferentes resoluciones y consistencia visual.\n\n**Gestión visual de errores:**\n\nImplementar un sistema de ilustraciones contextuales para los estados de error (*Error State Illustrations*), utilizando imágenes de mascotas con expresiones que representen visualmente el problema presentado.\n\nEjemplos:\n- Error de usuario: perrito con expresión de confusión.\n- Página no encontrada (404): mascota buscando algo perdido.\n- Error interno del servidor (500): perrito veterinario con expresión de preocupación.\n- Cita no disponible: mascota frente a un calendario.\n- Búsqueda sin resultados: perrito buscando con una lupa.\n- Acceso denegado: mascota acompañada de un símbolo de protección.\n\nCada estado debe incluir una ilustración, un título, una descripción clara y, cuando corresponda, una acción para solucionar o recuperar la operación.\n\nLas ilustraciones deben conservar una misma línea gráfica, respetando la identidad visual, paleta de colores y estilo veterinario de Huellitas Saludables.\n\n**Criterios de UX/UI:**\n- Mantener consistencia en tipografías, tamaños, espaciados, iconografía y componentes.\n- Aplicar diseño responsive y priorizar la experiencia móvil.\n- Garantizar jerarquía visual, legibilidad y accesibilidad.\n- Evitar deformaciones, desbordamientos y elementos superpuestos.\n- Mantener patrones de navegación uniformes en todas las secciones.\n\n**Listo cuando:**\n- Se puede acceder a cualquier sección con un solo clic.\n- La navegación funciona correctamente en dispositivos móviles y escritorio.\n- La interfaz se visualiza correctamente desde 360 px de ancho.\n- Los componentes mantienen dimensiones y estilos consistentes.\n- Cada error presenta una ilustración relacionada con su contexto, un mensaje comprensible y una acción cuando sea necesaria.\n- Todas las ilustraciones mantienen la identidad visual veterinaria del proyecto.",
+      "assignees": [
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-19T04:56:22Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 19,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "FRONTEND:  Pantallas de carga",
+      "issue_state": "closed",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/19",
+      "description": "Spinner o skeleton mientras llegan los datos, texto “Guardando...” con el botón deshabilitado al enviar formularios, y mensajes para estado vacío y de error. LA IDEA ES QUE SEAN PANTALLAS SUPER CREATIVAS ASOCIADAS A LA VETERINARIA UN PERRO CORRIENDO O ALGO CREATIVO TU LO DECIDES.\n\n**Listo cuando:** _Ninguna pantalla queda en blanco mientras carga o cuando falla la API._",
+      "assignees": [
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-19T19:16:59Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 4,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "AMBOS:  Historias clínicas desde la vista del especialista",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/4",
+      "description": "Hoy el backend tiene los endpoints pero el front no tiene ninguna pantalla. Front: formulario en la cita atendida. Back: ajustar validaciones si hace falta.\n\n**Listo cuando:** _El especialista crea y edita una historia desde su panel y el dueño la ve en su mascota._",
+      "assignees": [
+        "joretopa7-stack",
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:47Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 3,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "AMBOS: Personalizar el perfil de usuario y de mascota",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/3",
+      "description": "Editar datos del usuario, cambiar contraseña, ver el detalle de cada mascota, editar y archivar. Back: endpoints de edición COMO UN PERFIL SI SE NECESITAN EDITAR SOLO LOS DATOS PERMITIDOS EL USUARIO LO PUEDE HACER ESO INCLUYE LOS DE SU MASCOTA PERO CON RESTRICCIONES.\n\n**Listo cuando:** _El usuario edita sus datos y los de su mascota sin ayuda del admin._",
+      "assignees": [
+        "jassjy",
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:34Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 2,
+      "project_column": "QUE HACER",
+      "board_state": "Por hacer en tablero",
+      "title": "AMBOS:  Cuidador con seguimiento de la mascota",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/2",
+      "description": "POR DEFINIR PRIMER IDENTIFICAR QUE HARA Y COMO",
+      "assignees": [
+        "joretopa7-stack",
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:45Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 12,
+      "project_column": "HACIENDO",
+      "board_state": "En curso en tablero",
+      "title": "AMBOS:  Cierre de sesión que invalida tokens",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/12",
+      "description": null,
+      "assignees": [
+        "jassjy",
+        "sanlith340-droid"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:36Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 11,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND: Limitar intentos de login",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/11",
+      "description": "express-rate-limit en login y registro (por ejemplo 5 intentos cada 15 min por IP).\n\n**Listo cuando:** _al sexto intento salte el mensaje de error correspondiente y limita el acceso por un tiempo._",
+      "assignees": [
+        "joretopa7-stack"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:09Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 10,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND:  Manejo de errores sin duplicidad y logs seguros y tipado de datos y normalizacion de espacios en blanco",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/10",
+      "description": "Un solo errorHandler y un solo formato de error. Reemplazar los ~43 console.log por un logger con niveles (por ejemplo pino). En production solo errores y nunca datos sensibles; en development se permite más detalle. Los 500 devuelven un mensaje genérico ,tipado de datos y normalizacion de espacios en blanco con sus respectivos mensajes.\n\nRESTRICCION DE LOGS-INFO POR TIPO DE entorno development o production\n\nListo cuando:  Ningún log muestra tokens ni datos de usuarios en producción y el cliente nunca recibe error.message de un 500 o algo similar, si no mensajes claros hasta en lo mas basico o impensable.",
+      "assignees": [
+        "joretopa7-stack"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:43:07Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 1,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND: Usar ESM",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/1",
+      "description": "Poner \"type\": \"module\", cambiar require/module.exports por import/export, agregar .js en los imports relativos y cambiar __dirname por import.meta.url.\n\n**Listo cuando:** _npm start y npm run dev funcionan y no queda ningún require en back/app._",
+      "assignees": [
+        "jassjy"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:42:45Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 9,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND:  Evitar SQL injection",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/9",
+      "description": "Con Sequelize o Prisma las consultas normales ya van parametrizadas. Hay que revisar las consultas SQL crudas (por ejemplo en disponibilidad.model.js) y confirmar que ninguna concatena datos del usuario.\n\n**Listo cuando:**_Todas las consultas usan parámetros y una prueba con ' OR 1=1 -- no altera el resultado._\n",
+      "assignees": [
+        "jassjy"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:42:51Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 15,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND: Migrar a Prisma",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/15",
+      "description": "Instalar Prisma 7 ESM, crear el schema.prisma, reescribir los 7 modelos y los servicios con Prisma Client, y mover migraciones y seeds. Se recomienda rehacer el modelo de datos en este paso.\n\n**Listo cuando:** _No queda Sequelize en el proyecto y todos los endpoints responden igual que antes (o con el contrato nuevo documentado)._",
+      "assignees": [
+        "joretopa7-stack"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-10T17:51:10Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 14,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND: Migrar a Vitest",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/14",
+      "description": "Reemplazar Jest por Vitest, ajustar el setup global y los mocks. Las pruebas con supertest casi no cambian.\n\nListo cuando: npm test corre con Vitest y los 112 casos actuales pasan.\n",
+      "assignees": [
+        "jassjy"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:42:52Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    },
+    {
+      "number": 5,
+      "project_column": "HECHO",
+      "board_state": "Hecho en tablero",
+      "title": "BACKEND:  Encriptar contraseñas con bcrypt",
+      "issue_state": "open",
+      "issue_url": "https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_/issues/5",
+      "description": "Ahora las contraseñas se guardan y se comparan en texto plano. Hay que instalar bcrypt, hashear la contraseña con salt (mínimo 10 rondas) al registrar al usuario, y en el login usar bcrypt.compare() en vez de comparar strings. También hay que migrar o resetear las contraseñas que ya están guardadas en texto plano en la BD.\n\n\n**Listo cuando:** _en la BD ninguna contraseña se ve legible y el login funciona con el hash._",
+      "assignees": [
+        "jassjy"
+      ],
+      "labels": [],
+      "updated_at": "2026-11-07T02:42:47Z",
+      "pull_request_field": null,
+      "possible_closing_pull_requests": []
+    }
+  ]
+}

@@ -48,13 +48,26 @@ function lanzarErrorDeCita(error, id_cita) {
   }
 }
 
-async function listar(filtros) {
-  return citaModel.findAll(filtros);
+async function listar(filtros, solicitante = null) {
+  // Alcance por rol: el dueño solo ve citas de SUS mascotas y el especialista
+  // solo las suyas; recepción y admin ven toda la agenda.
+  const alcance = { ...filtros };
+  if (solicitante?.rol === 'usuario') alcance.id_propietario = solicitante.id;
+  if (solicitante?.rol === 'especialista') alcance.id_especialista = solicitante.id;
+  return citaModel.findAll(alcance);
 }
 
-async function obtenerPorId(id_cita) {
+async function obtenerPorId(id_cita, solicitante = null) {
   const cita = await citaModel.findById(id_cita);
   if (!cita) {
+    throw AppError.notFound(`No existe cita con id ${id_cita}`);
+  }
+  // 404 genérico para no revelar la existencia de citas ajenas.
+  if (solicitante?.rol === 'usuario') {
+    const esPropia = await citaModel.perteneceAUsuario(id_cita, solicitante.id);
+    if (!esPropia) throw AppError.notFound(`No existe cita con id ${id_cita}`);
+  }
+  if (solicitante?.rol === 'especialista' && cita.id_especialista !== solicitante.id) {
     throw AppError.notFound(`No existe cita con id ${id_cita}`);
   }
   return cita;

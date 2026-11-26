@@ -1,5 +1,7 @@
 # Bitácora — fusión de RF09 (avisos in-app) y recuperación de contraseña
 
+> **Vigencia histórica:** se conservan las pruebas, pendientes y cantidades de migraciones registrados en la fecha de esta bitácora. Algunos pendientes (como filtros por propietario) han cambiado desde entonces. Para el comportamiento actual, consulta [`API.md`](./API.md), [`ARQUITECTURA.md`](./ARQUITECTURA.md) y [`DESARROLLO.md`](./DESARROLLO.md); la cifra de pruebas vigente consignada es 410/410 en 31 archivos, no el resultado histórico de abajo.
+
 **Fecha:** 23 de noviembre de 2026
 **Rama de trabajo:** `PRO_HUELLITAS_SALUDABLES`
 **Motivo:** existían dos entregas parciales del mismo proyecto y ninguna reunía todas las funcionalidades.

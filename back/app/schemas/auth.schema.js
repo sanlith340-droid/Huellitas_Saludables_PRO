@@ -45,6 +45,10 @@ const registroSchema = Joi.object({
   correo: CORREO_SIN_ESPACIOS.required(),
   direccion: Joi.string().max(150).required(),
   contrasena: CONTRASENA_NUEVA,
+  aceptaPoliticas: Joi.boolean().valid(true).required().messages({
+    'any.only': 'Debes aceptar la Política de Tratamiento de Datos Personales y los Términos y Condiciones.',
+    'any.required': 'Debes aceptar la Política de Tratamiento de Datos Personales y los Términos y Condiciones.'
+  }),
   tipo: Joi.string().valid(...TIPOS_USUARIO).default('principal')
 });
 

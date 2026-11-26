@@ -2,6 +2,8 @@
 
 **Versión:** 1.2 · **Fecha:** 2026-11-20 · **Aceptación:** pendiente, sin firmas.
 
+> **Nota temporal (25/11/2026):** las referencias a 336/336 pruebas en 24 archivos y al build del 20/11 pertenecen a este corte histórico. El pase local más reciente se consigna en el [informe de verificación actual](INFORME_FINAL_VERIFICACION_CALIDAD.md): 410/410 en 31 archivos, build correcto, lint frontend 0 errores/0 advertencias y backend 0 errores/4 advertencias. En ese pase no se calculó cobertura ni se ejecutaron E2E, carga, CI remoto, backup/restore o aceptación. Esta nota no reescribe el resultado anterior.
+
 ## Alcance y fuentes
 
 - Especificación, historias de usuario, reglas de negocio, matrices, bitácora, criterios y acta recibidos previamente.

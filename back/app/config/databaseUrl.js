@@ -3,6 +3,11 @@ function buildDatabaseUrl(env = process.env) {
   const configuredUrl = env.NODE_ENV === 'test' ? '' : env.DATABASE_URL?.trim();
   if (configuredUrl) return configuredUrl;
 
+  // En producción no se aceptan credenciales de BD por defecto.
+  if (env.NODE_ENV === 'production' && !env.DB_PASSWORD) {
+    throw new Error('Falta DATABASE_URL o DB_PASSWORD: en producción no hay credenciales de base de datos por defecto.');
+  }
+
   const database = env.NODE_ENV === 'test'
     ? (env.DB_NAME_TEST || `${env.DB_NAME || 'proyectohs'}_test`)
     : (env.DB_NAME || 'proyectohs');

@@ -1,74 +1,52 @@
 # Sustentación final — Huellitas Saludables
 
-Esta carpeta organiza todos los archivos recibidos según la Lista de Chequeo T4.
+Expediente ordenado según los cinco dominios y los 12 criterios de la Lista de Chequeo T4 (ADSO 228118, SENA CGMLTI). Este paquete **no declara cumplimiento del 100 %, aprobación, aceptación final ni despliegue productivo**.
 
-## Carpetas
+## Estado sintético de criterios
 
-| Carpeta | Dimensión de la checklist | Evidencias principales |
+| # | Dimensión | Criterio | Estado de la evidencia disponible | Falta principal |
+|--:|---|---|---|---|
+| 1 | D1 | Backlog, porcentaje y retrospectiva de T1–T4 | 🟡 Borrador; 15,5/17 = 91,2 % solo sobre 17 tarjetas identificadas | Confirmar universo/estados y agregar validación personal de cada integrante |
+| 2 | D1 | Plan de implantación con secuencia, responsables y éxito | 🟡 Plan documentado, prospectivo | Confirmar responsables/fechas/criterios y registrar implantación realmente ejecutada |
+| 3 | D2 | Sistema integrado sin errores críticos | 🟡 Ejecución local; `/health` HTTP 200, 6 migraciones y 410/410 pruebas backend | Demostrar flujo completo y aceptación en el ambiente objetivo |
+| 4 | D2 | Errores robustos e integridad referencial | 🟡 Hay validaciones, esquema y pruebas, pero no se demostraron exhaustivamente | Casos de integridad/errores por niveles y evidencia de resultados |
+| 5 | D2 | Roles, permisos y código organizado | 🟡 Controles por rol/propietario en código y pruebas; no hay validación de seguridad en staging | Demostración permitida/denegada por rol y revisión en entorno externo |
+| 6 | D2* | IoT/móvil, si aplica | ➖ No se encontró evidencia de integración IoT/móvil | Confirmar formalmente que no aplica al alcance con equipo/jurado |
+| 7 | D3 | Despliegue externo y ambientes separados | 🔴 No hay URL pública verificada ni despliegue comprobado | Desplegar, separar ambientes y registrar URL/health/flujo |
+| 8 | D3 | Manual técnico y manual de usuario con capturas reales | 🟡 Manuales revisados y capturas actuales locales | Validar instalación desde ambiente limpio y confirmar acceso disponible |
+| 9 | D3 | Copias de seguridad y migración | 🟡 Política documentada; ensayo local citado en antecedente no reejecutado aquí | Repetir backup/restore, adjuntar logs y probar mecanismo del ambiente desplegado |
+| 10 | D4 | Plan de calidad, métricas y análisis estático | 🟡 Plan y ESLint configurados; lint local ejecutado | Ejecutar CI remoto, medir cobertura y tratar hallazgos de dependencias |
+| 11 | D4 | Informe final de calidad | 🟡 410/410 backend, build y lint documentados | Ejecutar E2E/manual/aceptación; no se midió cobertura ni se hizo backup/restore actual |
+| 12 | D5 | Explicación individual y reflexión de 4 trimestres | 🟡 Guion y plantilla; reflexiones personales vacías, ensayo no acreditado | Aportes reales y ensayo de cada integrante |
+
+## Carpetas por dimensión
+
+| Carpeta | Qué reúne | Estado y guía de pendientes |
 |---|---|---|
-| `D1_GESTION_Y_PLANEACION` | D1 — Gestión | Planeación, historias de usuario y plan de implantación documentado |
-| `D2_ARTEFACTOS_TECNICOS` | D2 — Artefactos técnicos | Requerimientos, reglas de negocio, diagramas, actas y paquete técnico |
-| `D3_IMPLANTACION_Y_DESPLIEGUE` | D3 — Implantación y despliegue | Manual técnico y manual de usuario |
-| `D4_DOCUMENTACION_Y_CALIDAD` | D4 — Documentación y calidad | Pruebas, defectos, trazabilidad, QA, dossier y evidencias |
-| `D5_EQUIPO_Y_PROCESO` | D5 — Equipo y proceso | Material de proceso pendiente de revisión |
+| `D1_GESTION_Y_PLANEACION/` | Gestión, backlog, planeación y retrospectiva | [README D1](D1_GESTION_Y_PLANEACION/README.md) |
+| `D2_ARTEFACTOS_TECNICOS/` | Requisitos, reglas, diagramas y acta | [README D2](D2_ARTEFACTOS_TECNICOS/README.md) |
+| `D3_IMPLANTACION_Y_DESPLIEGUE/` | Manuales, ambientes, backups y capturas | [README D3](D3_IMPLANTACION_Y_DESPLIEGUE/README.md) |
+| `D4_DOCUMENTACION_Y_CALIDAD/` | Plan, pruebas, defectos, calidad y logs | [README D4](D4_DOCUMENTACION_Y_CALIDAD/README.md) |
+| `D5_EQUIPO_Y_PROCESO/` | Guion y reflexión individual | [README D5](D5_EQUIPO_Y_PROCESO/README.md) |
 
-## Criterios de la checklist cubiertos por carpeta
+## Fuentes documentales del proyecto
 
-- **D1:** respaldar el backlog o planeación final, el porcentaje completado, la justificación de pendientes, la retrospectiva y el plan de implantación con responsables y criterios de éxito.
-- **D2:** demostrar funcionamiento integrado, manejo de errores, integridad referencial, roles, permisos, código organizado y, si aplica, IoT o móvil.
-- **D3:** demostrar despliegue en un entorno accesible, separación de ambientes, manual técnico de instalación, manual de usuario, copias de seguridad y migración de datos.
-- **D4:** demostrar plan de calidad, métricas, análisis estático, pruebas, defectos resueltos y defectos pendientes justificados.
-- **D5:** preparar la evidencia oral del equipo: explicación individual del sistema completo y reflexión de los cuatro trimestres.
+La raíz documental real se llama `DOCS_PROYECTO/`. Los documentos fuente de cada área están en las carpetas hermanas de `sustentacion_DOCUMENTACION/`:
 
-## Evidencias que deben confirmarse o completarse
-
-La organización no inventa documentos que no estaban en el ZIP. Antes de la sustentación se debe confirmar si existen evidencias específicas para:
-
-1. D1: porcentaje final del backlog, justificación honesta de lo no alcanzado y retrospectiva de los cuatro trimestres.
-2. D2: demostración integrada en vivo y evidencia específica de integridad referencial y permisos en frontend y backend.
-3. D3: URL desplegada accesible, configuración separada por ambiente, estrategia de copias de seguridad y migración de datos.
-4. D4: métricas monitoreadas y herramienta de análisis estático configurada; el archivo `Revision_Estatica_Codigo.md` debe revisarse para confirmar el alcance real.
-5. D5: guion de participación de cada integrante y reflexión final de los cuatro trimestres.
-
-## Regla de conservación
-
-Los archivos fueron copiados, no modificados. Los documentos originales permanecen en el ZIP de origen. Los pares DOCX/PDF se conservaron juntos cuando estaban disponibles.
-
-## Mapa completo de archivos
-
-| Archivo original | Carpeta asignada |
+| Área | Fuente documental |
 |---|---|
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Historias Usuario/Historias_de_Usuario_Adaptadas.xlsx` | `D1_GESTION_Y_PLANEACION/Historias_de_Usuario_Adaptadas.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Huellitas_Saludables_Taller5_Actividas1.xlsx` | `D1_GESTION_Y_PLANEACION/Huellitas_Saludables_Taller5_Actividas1.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/PLAN_DE_IMPLANTACION_HS_actualizado.docx` | `D1_GESTION_Y_PLANEACION/PLAN_DE_IMPLANTACION_HS_actualizado.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/PLAN_DE_IMPLANTACION_HS_actualizado.pdf` | `D1_GESTION_Y_PLANEACION/PLAN_DE_IMPLANTACION_HS_actualizado.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/planeacion_tecnica_proyecto.xlsx` | `D1_GESTION_Y_PLANEACION/planeacion_tecnica_proyecto.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Acta_Aceptacion_Final.docx` | `D2_ARTEFACTOS_TECNICOS/Acta_Aceptacion_Final.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Acta_Aceptacion_Final.pdf` | `D2_ARTEFACTOS_TECNICOS/Acta_Aceptacion_Final.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Diagramas-huellitas-saludables_HS_v1.2_2026-11-20.drawio` | `D2_ARTEFACTOS_TECNICOS/Diagramas-huellitas-saludables_HS_v1.2_2026-11-20.drawio` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Especificacion de requerimientos/Especificacion_Requerimientos_Adaptada.docx` | `D2_ARTEFACTOS_TECNICOS/Especificacion_Requerimientos_Adaptada.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Especificacion de requerimientos/Especificacion_Requerimientos_Adaptada.pdf` | `D2_ARTEFACTOS_TECNICOS/Especificacion_Requerimientos_Adaptada.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final [Nombre proyecto aqui] - ADSO.zip` | `D2_ARTEFACTOS_TECNICOS/Proyecto Final [Nombre proyecto aqui] - ADSO.zip` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Reglas_de_negocio/Reglas_de_Negocio_Adaptadas.docx` | `D2_ARTEFACTOS_TECNICOS/Reglas_de_Negocio_Adaptadas.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Reglas_de_negocio/Reglas_de_Negocio_Adaptadas.pdf` | `D2_ARTEFACTOS_TECNICOS/Reglas_de_Negocio_Adaptadas.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/MANUAL_TECNICO_HS_actualizado.docx` | `D3_IMPLANTACION_Y_DESPLIEGUE/MANUAL_TECNICO_HS_actualizado.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/MANUAL_TECNICO_HS_actualizado.pdf` | `D3_IMPLANTACION_Y_DESPLIEGUE/MANUAL_TECNICO_HS_actualizado.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/MANUAL_USUARIO_HS_actualizado.docx` | `D3_IMPLANTACION_Y_DESPLIEGUE/MANUAL_USUARIO_HS_actualizado.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/MANUAL_USUARIO_HS_actualizado.pdf` | `D3_IMPLANTACION_Y_DESPLIEGUE/MANUAL_USUARIO_HS_actualizado.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Bitacora_Aseguramiento_de_Calidad.xlsx` | `D4_DOCUMENTACION_Y_CALIDAD/Bitacora_Aseguramiento_de_Calidad.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Build_frontend_2026-11-20.log` | `D4_DOCUMENTACION_Y_CALIDAD/Build_frontend_2026-11-20.log` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Control_Incidencias_y_Defectos.xlsx` | `D4_DOCUMENTACION_Y_CALIDAD/Control_Incidencias_y_Defectos.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Criterios_Finalizacion.xlsx` | `D4_DOCUMENTACION_Y_CALIDAD/Criterios_Finalizacion.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Dossier_Calidad_Software.docx` | `D4_DOCUMENTACION_Y_CALIDAD/Dossier_Calidad_Software.docx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Dossier_Calidad_Software.pdf` | `D4_DOCUMENTACION_Y_CALIDAD/Dossier_Calidad_Software.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/ejemplo-plan-de-pruebas.pdf` | `D4_DOCUMENTACION_Y_CALIDAD/ejemplo-plan-de-pruebas.pdf` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Informe_Adaptacion.md` | `D4_DOCUMENTACION_Y_CALIDAD/Informe_Adaptacion.md` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Inventario_Evidencias.csv` | `D4_DOCUMENTACION_Y_CALIDAD/Inventario_Evidencias.csv` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Matriz_Casos_de_Prueba.xlsx` | `D4_DOCUMENTACION_Y_CALIDAD/Matriz_Casos_de_Prueba.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Matriz_Trazabilidad_RTM.xlsx` | `D4_DOCUMENTACION_Y_CALIDAD/Matriz_Trazabilidad_RTM.xlsx` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Proveniencia.md` | `D4_DOCUMENTACION_Y_CALIDAD/Proveniencia.md` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/QA_artefactos.json` | `D4_DOCUMENTACION_Y_CALIDAD/QA_artefactos.json` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/README_DE_ENTREGA.md` | `D4_DOCUMENTACION_Y_CALIDAD/README_DE_ENTREGA.md` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Reporte_Ejecucion_y_Revision.md` | `D4_DOCUMENTACION_Y_CALIDAD/Reporte_Ejecucion_y_Revision.md` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/Proyecto Final Huellitas Saludables - ADSO/Evidencias-Pruebas/Revision_Estatica_Codigo.md` | `D4_DOCUMENTACION_Y_CALIDAD/Revision_Estatica_Codigo.md` |
-| `SUSTENTACION DOCUMENTOS IMPORTANTES/ACTIVIDAD 1 VESIONADO/REVISION PENDIENTE.zip` | `D5_EQUIPO_Y_PROCESO/REVISION PENDIENTE.zip` |
+| Backend | [README de back_DOCUMENTACION](../back_DOCUMENTACION/README.md) |
+| Frontend | [README de front_DOCUMENTACION](../front_DOCUMENTACION/README.md) |
+| Pruebas | [README de test_DOCUMENTACION](../test_DOCUMENTACION/README.md) |
+
+## Hechos verificados en la revisión local
+
+- Proyecto ejecutado en sandbox local aislado con Node.js 22, PostgreSQL 16, seis migraciones Prisma y datos sintéticos de `back/prisma/seed.js`; frontend y API accesibles localmente. La API devolvió HTTP 200 en `/health`.
+- Suite backend: 410/410 pruebas en 31 archivos. Build frontend correcto; lint frontend 0 errores/0 advertencias; lint backend 0 errores/4 advertencias.
+- `npm ci` reportó 8 vulnerabilidades en dependencias del backend: 4 moderadas y 4 altas. No se ejecutó `npm audit fix`.
+- No se midió cobertura, no se ejecutaron pruebas E2E/carga, no se reejecutó backup/restore, no se validó CI remoto y no se emitió aceptación.
+- Las 18 capturas son pantallas locales con datos demo; no prueban producción. Véase `D3_IMPLANTACION_Y_DESPLIEGUE/EVIDENCIA_CAPTURAS_ACTUAL/README.md` y sus hashes.
+
+## Conservación y uso
+
+El código ejecutable de la aplicación está en `back/` y `front/` en la raíz de esta copia; su documentación fuente está organizada bajo `DOCS_PROYECTO/back_DOCUMENTACION/`, `DOCS_PROYECTO/front_DOCUMENTACION/` y `DOCS_PROYECTO/test_DOCUMENTACION/`. `CRITERIOS_D1/DOCX/` y `CRITERIOS_D1/PDF/` son copias espejo de los manuales finales de D3 por compatibilidad; la versión fuente documental está en `D3_IMPLANTACION_Y_DESPLIEGUE/`. Los ZIP y artefactos que parecen plantilla o expediente previo se conservan, pero no sustituyen evidencia vigente ni deben presentarse como prueba de estado actual sin validación. La ponderación/calificación y la decisión final corresponden al jurado.

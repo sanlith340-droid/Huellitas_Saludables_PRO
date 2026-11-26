@@ -51,7 +51,7 @@ describe('Seguridad bcrypt - contraseñas', () => {
     const correo = `bcrypt_${Date.now()}@test.com`;
     const res = await request(app).post('/api/auth/registro').send({
       nombre: 'Bcrypt', apellidos: 'Prueba', telefono: '3001234567',
-      correo, direccion: 'Calle 10', contrasena: 'MiClaveSegura9',
+      correo, direccion: 'Calle 10', contrasena: 'MiClaveSegura9', aceptaPoliticas: true,
     });
 
     expect(res.status).toBe(201);
@@ -75,7 +75,7 @@ describe('Seguridad bcrypt - contraseñas', () => {
   it('registro rechaza contraseñas de más de 72 bytes (límite de bcrypt)', async () => {
     const res = await request(app).post('/api/auth/registro').send({
       nombre: 'Larga', apellidos: 'Prueba', telefono: '3001234567',
-      correo: `larga_${Date.now()}@test.com`, direccion: 'Calle 10', contrasena: 'a'.repeat(73),
+      correo: `larga_${Date.now()}@test.com`, direccion: 'Calle 10', contrasena: 'a'.repeat(73), aceptaPoliticas: true,
     });
     expect(res.status).toBe(400);
   });

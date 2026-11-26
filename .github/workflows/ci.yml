@@ -1,0 +1,53 @@
+name: CI
+on:
+  push: { branches: [main, develop] }
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_PASSWORD: test-only-password }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults: { run: { working-directory: back } }
+    env:
+      NODE_ENV: test
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: test-only-password
+      DB_NAME: proyectohs
+      DB_NAME_TEST: proyectohs_test
+      JWT_SECRET: test-only-jwt-secret-not-for-production
+      JWT_EXPIRES_IN: 1h
+      CORS_ORIGIN: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: back/package-lock.json }
+      - run: npm ci
+      - name: Análisis estático (ESLint)
+        run: npm run lint
+      - name: Pruebas con cobertura
+        run: npm run test:coverage
+      - name: Auditoría de dependencias (informativa)
+        run: npm audit --omit=dev || true
+      - uses: actions/upload-artifact@v4
+        with: { name: cobertura-backend, path: back/coverage }
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: front } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: front/package-lock.json }
+      - run: npm ci
+      - name: Análisis estático (ESLint)
+        run: npm run lint
+      - name: Type-check y build
+        run: npm run build

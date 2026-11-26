@@ -4,8 +4,9 @@ function CitasAdmin() {
   return (
     <PanelCitas
       titulo="Citas de la clínica"
-      descripcion="Todas las citas de todos los especialistas. Filtra por especialista, fecha o estado y decide si cada una fue atendida o cancelada."
+      descripcion="Todas las citas de la clínica. Filtra por fecha, estado, mascota, propietario o motivo y actualiza su estado."
       urlCitas="/citas"
+      rolVista="admin"
     />
   );
 }

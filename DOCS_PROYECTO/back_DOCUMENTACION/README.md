@@ -1,30 +1,36 @@
-# Documentación del backend y documentos técnicos
+# Documentación del backend y referencias técnicas
 
-Esta carpeta agrupa la documentación de backend y los documentos técnicos que antes estaban repartidos en distintas ubicaciones. La organización documental canónica es `docs/`, con áreas hermanas `back/`, `front/` y `test/`; la guía de arranque está en [`../arranque.md`](../arranque.md).
+La carpeta documental vigente es `DOCS_PROYECTO/`; este subdirectorio contiene arquitectura, API, guías operativas y bitácoras backend. No existe una carpeta raíz `docs/` en esta copia.
 
-## Documentos principales
+## Guías de referencia vigentes
 
 | Documento | Contenido |
 |---|---|
-| [API](API.md) | Rutas HTTP, permisos y contrato de la API. |
-| [Arquitectura](ARQUITECTURA.md) | Arquitectura y relaciones principales del backend. |
-| [Desarrollo](DESARROLLO.md) | Instalación, migraciones, ejecución y pruebas de backend. |
-| [Docker](DOCKER.md) | Entorno local con Docker Compose. |
-| [Reglas, arquitectura y decisiones técnicas](ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md) | Documento maestro de arquitectura, RN01–RN50, decisiones y evolución. |
-| [Tecnologías, responsabilidades y motivos](TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md) | Función, versión, responsabilidades, motivos y riesgos del stack. |
-| [Mensajes de error por rol](MENSAJES_DE_ERROR_POR_ROL.md) | Mensajes de permisos del backend y frontend. |
+| [API](./API.md) | Rutas, roles, permisos por propietario/especialista, errores y límites actuales. |
+| [Arquitectura](./ARQUITECTURA.md) | Capas, 11 modelos Prisma, relaciones, migraciones y controles de acceso. |
+| [Desarrollo](./DESARROLLO.md) | Instalación, entorno, scripts, migraciones y pruebas. |
+| [Docker](./DOCKER.md) | Compose local, arranque y cuidado de datos. |
+| [Límite de mascotas](./LIMITE_MASCOTAS.md) | Máximo de cinco mascotas por usuario y respuesta de la API. |
+| [Arquitectura, reglas y decisiones técnicas](./ARQUITECTURA_REGLAS_Y_DECISIONES_TECNICAS.md) | Reglas de negocio y contraste técnico actualizado. |
+| [Tecnologías, responsabilidades y motivos](./TECNOLOGIAS_RESPONSABILIDADES_Y_MOTIVOS.md) | Stack, versiones, scripts, límites y riesgos. |
+| [Mensajes de error por rol](./MENSAJES_DE_ERROR_POR_ROL.md) | Catálogo de mensajes de permisos. |
 
-## Bitácoras y referencias
+Para credenciales de backend y comandos breves, consulta [`back/Readme.md`](../../back/Readme.md). La ejecución backend más reciente documentada está enlazada desde [`DOCS_PROYECTO/test_DOCUMENTACION/EJECUCION.md`](../test_DOCUMENTACION/EJECUCION.md); las pruebas no se volvieron a ejecutar al actualizar esta documentación.
 
-- `BITACORA_BCRYPT.md`: evolución y verificación del hash de contraseñas.
-- `BITACORA_CIERRE_SESION_INVALIDACION_TOKENS.md`: tarea #12, cierre de sesión con revocación de JWT (`jti`, tabla `token_revocado`, `POST /api/auth/logout`).
-- `BITACORA_ESM.md`: migración a módulos ESM.
-- `BITACORA_MIGRACION_VITEST.md`: incorporación de Vitest.
-- `BITACORA_MODERNIZACION_PRISMA_Y_CITAS.md`: Prisma, citas y cancelación/auditoría.
-- `BITACORA_SQL_INJECTION.md`: consultas y prevención de inyección SQL.
-- `BITACORA_VALIDACION_FORMULARIOS.md`: teléfono, correo, contraseñas y presentación de errores.
-- `CANCELACION_AUTOMATICA_CITAS.md`: expiración/cancelación automática de citas.
-- `DECISIONES_TECNICAS_BACKEND.md`: decisiones técnicas anteriores, conservar como referencia histórica.
-- `REVISION_PROYECTO.md`: auditoría y hallazgos anteriores del proyecto.
+## Bitácoras y material histórico
 
-La guía de arranque vigente está en [`../arranque.md`](../arranque.md) y el plan/ejecución de pruebas está en [`../test/README.md`](../test/README.md).
+Las bitácoras fechadas conservan sus hechos, fechas y resultados originales; sus cifras no representan automáticamente el estado actual. Para el estado vigente, prevalecen `API.md`, `ARQUITECTURA.md`, `DESARROLLO.md` y el estado de continuidad en `.agents/workflows/ESTADO_ACTUAL.md`.
+
+- [Bcrypt y compatibilidad scrypt](./BITACORA_BCRYPT.md)
+- [Cierre de sesión e invalidación de tokens](./BITACORA_CIERRE_SESION_INVALIDACION_TOKENS.md)
+- [Migración ESM](./BITACORA_ESM.md)
+- [Fusión RF09 y recuperación](./BITACORA_FUSION_RF09_Y_RECUPERACION.md)
+- [Historias clínicas del propietario](./BITACORA_HISTORIA_CLINICA_PROPIETARIO.md)
+- [Límite de intentos de login/registro](./BITACORA_LIMITE_INTENTOS_LOGIN_REGISTRO.md)
+- [Migración a Vitest](./BITACORA_MIGRACION_VITEST.md)
+- [Modernización Prisma y citas](./BITACORA_MODERNIZACION_PRISMA_Y_CITAS.md)
+- [Prevención de SQL injection](./BITACORA_SQL_INJECTION.md)
+- [Validación de formularios](./BITACORA_VALIDACION_FORMULARIOS.md)
+- [Auditoría de esta actualización documental](./BITACORA_ACTUALIZACION_DOCUMENTACION_BACKEND_2026-11-25.md)
+
+`DECISIONES_TECNICAS_BACKEND.md`, `REVISION_PROYECTO.md` y `GUIA_BACKEND_ANTERIOR.md` son material histórico/auxiliar; no prevalecen sobre las guías vigentes enlazadas arriba.

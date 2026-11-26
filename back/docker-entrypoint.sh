@@ -28,7 +28,7 @@ const config = process.env.DATABASE_URL
       port: Number(process.env.DB_PORT || 5432),
       database: process.env.DB_NAME || 'proyectohs',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
+      password: process.env.DB_PASSWORD,
     };
 
 const client = new Client({
@@ -83,7 +83,7 @@ const config = process.env.DATABASE_URL
       port: Number(process.env.DB_PORT || 5432),
       database: process.env.DB_NAME || 'proyectohs',
       user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
+      password: process.env.DB_PASSWORD,
     };
 
 const client = new Client(config);

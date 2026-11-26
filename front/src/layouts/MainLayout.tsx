@@ -1,10 +1,12 @@
 import { Suspense } from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import SiteFooter from "../components/SiteFooter";
 import PageBackButton from "../components/PageBackButton";
 import BarraCargaGlobal from "../components/feedback/BarraCargaGlobal";
 import AvisoSinConexion from "../components/feedback/AvisoSinConexion";
 import LoadingState from "../components/feedback/LoadingState";
+import "../styles/site-layout.css";
 
 function MainLayout() {
   return (
@@ -32,6 +34,7 @@ function MainLayout() {
           <Outlet />
         </Suspense>
       </main>
+      <SiteFooter />
       <AvisoSinConexion />
     </div>
   );

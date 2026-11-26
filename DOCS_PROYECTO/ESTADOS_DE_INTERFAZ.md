@@ -1,85 +1,55 @@
 # Estados de interfaz: carga, vacío, error y guardado
 
-Documento de referencia del sistema de retroalimentación visual del frontend.
-La regla que se cumple en toda la aplicación es simple:
+Referencia de los componentes de retroalimentación visual presentes en `front/src/`. Las pantallas combinan estos componentes según sus propias operaciones; la existencia de un componente no implica que cada vista utilice todas las variantes.
 
-> **Ninguna pantalla se queda en blanco.** Mientras carga hay una escena o un esqueleto;
-> si no hay datos hay una ilustración con una acción; si la API falla hay un mensaje
-> explicado, con un botón para reintentar.
+## 1. Componentes y ubicaciones
 
----
-
-## 1. Piezas del sistema
-
-| Pieza | Archivo | Para qué sirve |
+| Componente/recurso | Archivo | Función |
 |---|---|---|
-| `PerritoCorriendo` | `front/src/components/feedback/PerritoCorriendo.tsx` | Sprite pixel-art del perrito corriendo sobre una pista de huellas. Se usa en las escenas de carga. |
-| `LoadingState` | `front/src/components/feedback/LoadingState.tsx` | Escena de carga con el perrito, título, mensajes rotativos y barra de progreso. Variantes: `pagina`, `panel`, `en-linea`, `esqueleto`. |
-| `Esqueletos` | `front/src/components/feedback/Esqueletos.tsx` | Primitivas de esqueleto (`EsqueletoTexto`, `EsqueletoFilas`, `EsqueletoCitas`, `EsqueletoSemana`, `EsqueletoDoctores`, `EsqueletoEstadisticas`, `EsqueletoPerfil`). |
-| `EmptyState` | `front/src/components/feedback/EmptyState.tsx` | Estado vacío ilustrado, con título, descripción, sugerencias y acción. Variantes: `tarjeta`, `panel`, `en-linea`. |
-| `ErrorState` | `front/src/components/ErrorState.tsx` | Estado de error ilustrado con reintento. Variantes: `server`, `network`, `timeout`, `denied`, `appointment`, `search`, `user`, `notfound`. |
-| `BotonEnvio` | `front/src/components/feedback/BotonEnvio.tsx` | Botón de envío: muestra "Guardando...", una huella girando y queda deshabilitado para evitar dobles envíos. Exporta también `SpinnerHuella`. |
-| `BarraCargaGlobal` | `front/src/components/feedback/BarraCargaGlobal.tsx` | Barra superior con huellas y el perrito, visible mientras exista alguna petición en curso. |
-| `AvisoSinConexion` | `front/src/components/feedback/AvisoSinConexion.tsx` | Aviso flotante cuando el navegador pierde la conexión y confirmación al recuperarla. |
-| `ErrorBoundary` | `front/src/components/feedback/ErrorBoundary.tsx` | Red de seguridad ante un error inesperado de React: muestra una pantalla completa con opciones de recarga. |
-| `loadingStore` | `front/src/services/loadingStore.ts` | Contador global de peticiones; alimenta la barra superior y la pista "en línea". |
-| `erroresApi` | `front/src/utils/erroresApi.ts` | Traduce cualquier error a un mensaje entendible y decide la variante visual. |
-| Estilos | `front/src/styles/estados.css` | Todo el CSS de estos estados (animaciones, esqueletos, escenas). |
+| `PerritoCorriendo` | `front/src/components/feedback/PerritoCorriendo.tsx` | Ilustración animada reutilizable de carga |
+| `LoadingState` | `front/src/components/feedback/LoadingState.tsx` | Estado de carga con variantes `pagina`, `panel`, `en-linea`, `esqueleto` |
+| `Esqueletos` | `front/src/components/feedback/Esqueletos.tsx` | Esqueletos de filas, citas, semana, doctores, estadísticas y perfil |
+| `EmptyState` | `front/src/components/feedback/EmptyState.tsx` | Estado vacío ilustrado con descripción y acción opcional |
+| `ErrorState` | `front/src/components/ErrorState.tsx` | Error ilustrado, mensaje y acción contextual |
+| `BotonEnvio` / `SpinnerHuella` | `front/src/components/feedback/BotonEnvio.tsx` | Indicador visual de envío/guardado |
+| `BarraCargaGlobal` | `front/src/components/feedback/BarraCargaGlobal.tsx` | Indicador global de peticiones |
+| `AvisoSinConexion` | `front/src/components/feedback/AvisoSinConexion.tsx` | Aviso de conexión perdida o recuperada |
+| `ErrorBoundary` | `front/src/components/feedback/ErrorBoundary.tsx` | Respaldo ante error de renderizado React |
+| Estado de carga | `front/src/services/loadingStore.ts` | Almacén que alimenta indicadores globales |
+| Normalización de errores | `front/src/utils/erroresApi.ts` | Conversión de errores API a mensajes/variantes |
+| Estilos | `front/src/styles/estados.css` | Presentación de estados y animaciones |
 
-Las ilustraciones viven en `front/src/assets/feedback/` y `front/src/assets/errors/`:
-`vacio-mascotas`, `vacio-citas`, `vacio-busqueda`, `vacio-horarios`, `vacio-personal`,
-más las de error (`server-vet`, `network`, `timeout`, `access-protected`, `appointment-calendar`, `search-empty`, `user-confused`, `not-found-search`).
+Ilustraciones actuales: `front/src/assets/feedback/` y `front/src/assets/errors/`. Entre los recursos observados están `vacio-mascotas.webp`, `vacio-citas.webp`, `vacio-busqueda.webp`, `vacio-horarios.webp`, `vacio-personal.webp`, `server-vet.png`, `network.png`, `timeout.png`, `access-protected.png`, `appointment-calendar.png`, `search-empty.png`, `user-confused.png` y `not-found-search.png`.
 
----
+## 2. Pantallas y estados documentados
 
-## 2. Cómo se comporta cada pantalla
+La lista de rutas completa y roles está en [la guía del frontend](front_DOCUMENTACION/README.md). Esta tabla resume vistas que tienen patrón de retroalimentación descrito; no garantiza que cada error de red haya sido ejercitado de nuevo.
 
-| Pantalla | Cargando | Sin datos | Si falla la API |
-|---|---|---|---|
-| Inicio (`/`) | Contenido estático: no hay espera | — | — |
-| Iniciar sesión / Registro | Botón "Entrando…" / "Guardando…" con huella girando y campos deshabilitados | — | Tarjeta de error con la ilustración del veterinario y el motivo |
-| Panel del tutor (`/dashboard`) | Esqueletos en cada tarjeta + barra global | "Aún no hay mascotas" / "No tienes citas agendadas" con acción | Tarjeta de error con reintento |
-| Mis mascotas (`/mascotas`) | Escena del perrito + esqueletos de fichas | Ilustración + "Registrar mi primera mascota" | Tarjeta de error con reintento |
-| Registrar mascota | Selector de razas deshabilitado + aviso "Cargando razas…" | — | Error de razas con reintento; el botón queda deshabilitado |
-| Agendar cita (`/citas/nueva`) | Escena de página + esqueletos de especialistas | Sin mascotas: invitación a registrarla. Sin citas: vacío en línea | Error con reintento |
-| Mis citas (especialista / admin) | Escena de panel + grupos de esqueletos | "La agenda está libre" / filtros sin coincidencias | Error con reintento |
-| Disponibilidad | Esqueleto de semana + esqueleto de especialistas | "Este día no tiene franjas" con acción | Error con reintento |
-| Gestión de personal | Esqueleto de filas (el formulario sigue usable) | "Todavía no hay cuentas de personal" | Error con reintento |
-| Perfil | Escena + esqueleto del carné | — | Error según el código (403 / 404 / red) |
-| Ruta inexistente | — | Página 404 ilustrada | — |
+| Pantalla/ruta | Estados descritos |
+|---|---|
+| `/login`, `/registro` | Envío/guardado, validación y error contextual |
+| `/dashboard` | Carga de tarjetas, vacío de mascotas/citas y error recuperable |
+| `/mascotas` | Carga, listado vacío, error y selección de mascota para consultar historia |
+| `/mascotas/nueva` | Carga/error de razas; al alcanzar el límite, mensaje `Ya tienes 5 mascotas registradas` y enlace de regreso |
+| `/citas/nueva` | Carga, caso sin mascotas, error y resultado de solicitud |
+| `/citas/especialista`, `/citas/recepcion`, `/citas/admin` | Carga/estado vacío/error según consultas y filtros de agenda |
+| `/disponibilidad` | Carga de horarios, día sin franjas y error |
+| `/admin`, `/usuarios/admin` | Panel/gestión de personal y estados de carga, vacío o error según operación |
+| `/perfil` | Carga y error de consulta |
+| Ruta `*` | Página 404 de SPA |
 
-Todas las acciones que escriben en la base (crear mascota, crear cita, crear franja,
-crear usuario, cancelar o marcar una cita, eliminar una cuenta) usan `BotonEnvio`
-o `SpinnerHuella`: el botón se deshabilita, cambia el texto a "Guardando..." y gira
-una huella.
+Los formularios y operaciones muestran los indicadores presentes en cada pantalla; no se afirma que todos los formularios compartan exactamente el mismo componente.
 
----
+## 3. Vitrina de estados: `/estados`
 
-## 3. Cómo probarlo sin backend
+`front/src/routes/AppRoutes.tsx` registra esta ruta solo cuando `import.meta.env.DEV` es verdadero; no está disponible en un build de producción. La vista está implementada en `front/src/pages/EstadosDemo.tsx` y sirve como vitrina de las variantes visuales. Para abrirla en desarrollo, inicia `front` con `npm run dev` y navega a `/estados`.
 
-1. Levanta el frontend: `cd front && npm run dev`.
-2. Entra a **`/estados`** (solo existe en modo desarrollo). Es una vitrina con cuatro
-   pestañas: *Cargando*, *Sin datos*, *Errores* y *Guardando...*.
-3. Para ver los estados reales, apaga el backend y navega: verás la tarjeta de error
-   con el botón **Reintentar**; vuelve a encenderlo y el reintento recupera la pantalla.
-4. Para ver la carga real, añade latencia artificial en el backend o usa las
-   herramientas de red del navegador (Slow 3G).
+## 4. Funciones visuales con límites funcionales
 
----
+- **Máximo de mascotas:** el límite de cinco lo aplica el backend. La vista de `/mascotas/nueva` representa el `409`/`MASCOTAS_LIMITE_ALCANZADO` con un estado vacío e ilustración; véase [Límite de mascotas](front_DOCUMENTACION/LIMITE_MASCOTAS.md).
+- **Historia clínica del propietario:** carga y vacío/error se muestran en contexto de mascota. El propietario solo lee sus registros y puede filtrar por año/mes disponibles; autorización y propiedad se validan en backend. Véase [Historia clínica del propietario](front_DOCUMENTACION/HISTORIA_CLINICA_PROPIETARIO.md).
+- **Accesibilidad/movimiento:** no se documentan aquí garantías de cobertura universal; revisa el componente concreto antes de atribuirle atributos ARIA o comportamiento de movimiento reducido.
 
-## 4. Decisiones de diseño
+## 5. Comandos relacionados
 
-- **Un mismo lenguaje visual.** El perrito pixel-art es el hilo conductor: corre en la
-  barra superior, en las escenas de carga y en los botones (como huella girando).
-- **Mensajes que acompañan.** La escena de carga rota mensajes cada 2,6 s con el
-  contexto de la pantalla ("Revisando la agenda de la clínica..."), para que la espera
-  se sienta parte de la experiencia.
-- **Esqueleto antes que vacío.** Los esqueletos respetan la forma del contenido final,
-  así la pantalla no "salta" cuando llegan los datos.
-- **Errores accionables.** Todo error dice qué pasó y ofrece una salida: reintentar,
-  volver al inicio, iniciar sesión o limpiar filtros.
-- **Accesibilidad.** `role="status"` y `aria-live` en cargas y avisos, `aria-busy` en
-  los botones que guardan, `aria-invalid` en los campos con error y respeto por
-  `prefers-reduced-motion` (las animaciones se detienen).
-- **Sin dependencias nuevas.** Todo se resolvió con React, CSS y los recursos ya
-  presentes en el proyecto.
+Desde `front/` existen `npm run dev`, `npm run build`, `npm run preview`, `npm run type-check` y `npm run lint`. No existe un script frontend de pruebas E2E/componentes en `front/package.json`. El estado más reciente de build/lint está en la [auditoría del 25/11/2026](auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-25_CIERRE_LISTA_CHEQUEO_T4.md); esta guía no registra una ejecución nueva.

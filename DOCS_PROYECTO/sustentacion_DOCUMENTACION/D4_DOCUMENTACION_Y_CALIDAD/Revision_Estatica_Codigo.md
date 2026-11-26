@@ -2,6 +2,8 @@
 
 **Corte del tablero utilizado:** 2026-11-20 09:42 COT (hora local consignada en la captura heredada). **Repositorio:** https://github.com/joretopa7-stack/Huellitas_Saludables_PRO_. **Alcance:** revisión estática del aplicativo actualizado; build frontend ejecutado; no se ejecutaron pruebas funcionales o backend.
 
+> **Nota temporal (25/11/2026):** la mención a 336/336 en 24 archivos bajo la tarjeta de Vitest es un reporte previo no reproducido en este corte. El pase local más reciente está documentado en [INFORME_FINAL_VERIFICACION_CALIDAD.md](INFORME_FINAL_VERIFICACION_CALIDAD.md): 410/410 pruebas backend en 31 archivos, build correcto y lint frontend/backend según los resultados allí consignados. No se midió cobertura ni se ejecutaron E2E, carga, CI remoto, backup/restore o aceptación en ese pase. Esta nota no convierte la revisión estática en ejecución de pruebas.
+
 > Los estados técnicos no son estados de aceptación. La presencia de una prueba escrita no acredita su ejecución ni aprobación.
 
 ## Tabla de revisión

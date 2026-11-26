@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { FaCat, FaDog, FaPaw } from "react-icons/fa";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import ListaErrores from "../components/ListaErrores";
@@ -8,7 +9,6 @@ import BotonEnvio from "../components/feedback/BotonEnvio";
 import { erroresDeRespuesta } from "../utils/errores";
 import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import { bloquearTeclaEspacio, sinEspacios } from "../utils/inputs";
-import huLogo from "../assets/hu.png";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -121,12 +121,16 @@ function Login() {
   return (
     <div className="auth">
       <div className="auth__side">
-        <div>
-          <span className="brand__mark">
-            <img src={huLogo} alt="Huellitas Saludables" />
-          </span>
-          <h2>Bienvenido de nuevo a Huellitas Saludables</h2>
-          <p>Inicia sesión para ver las citas y el historial clínico de tus mascotas.</p>
+        <div className="auth__message">
+          <span className="auth__message-eyebrow">Cada huella cuenta</span>
+          <h2>Cuidamos lo que más quieres.</h2>
+          <p>Un espacio sencillo para acompañar el bienestar de tus mascotas.</p>
+        </div>
+        <div className="auth__pet-silhouettes" aria-hidden="true">
+          <FaPaw className="auth__pet-paw auth__pet-paw--left" />
+          <FaCat className="auth__pet-cat" />
+          <FaDog className="auth__pet-dog" />
+          <FaPaw className="auth__pet-paw auth__pet-paw--right" />
         </div>
       </div>
 

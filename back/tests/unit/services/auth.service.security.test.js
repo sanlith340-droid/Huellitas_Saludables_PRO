@@ -154,6 +154,7 @@ describe('services/auth.service - seguridad de contraseñas', () => {
         direccion: 'Direccion',
         contrasena: 'claveDePrueba123',
         tipo: 'principal',
+        aceptaPoliticas: true,
       });
 
       expect(hashContrasena).toHaveBeenCalledWith('claveDePrueba123');

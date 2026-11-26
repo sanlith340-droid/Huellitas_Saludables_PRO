@@ -58,6 +58,7 @@ describe('Cierre de sesión - POST /api/auth/logout', () => {
       const res = await request(app).post('/api/auth/registro').send({
         nombre: 'Sesion', apellidos: 'Prueba', telefono: '3001234567',
         correo: `sesion_${Date.now()}@test.com`, direccion: 'Calle 1', contrasena: 'segura123',
+        aceptaPoliticas: true,
       });
       expect(res.status).toBe(201);
       expect(jwt.decode(res.body.data.token).jti).toMatch(UUID_V4);

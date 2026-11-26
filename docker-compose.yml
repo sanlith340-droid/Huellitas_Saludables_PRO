@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME:-proyectohs}
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en el archivo .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -29,10 +29,10 @@ services:
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-proyectohs}
       DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en el archivo .env}
       DB_NAME_TEST: ${DB_NAME_TEST:-proyectohs_test}
-      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
-      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el archivo .env (cadena aleatoria larga)}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       DB_SEED: ${DB_SEED:-false}
       # Recuperación de contraseña: sin SMTP la ruta responde 503 (no rompe el arranque).
       PASSWORD_RESET_TOKEN_TTL_MINUTES: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:-30}

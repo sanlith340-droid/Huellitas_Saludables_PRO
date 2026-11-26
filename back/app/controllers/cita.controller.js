@@ -10,12 +10,12 @@ import { ok, created } from '../utils/response.js';
 import AppError from '../utils/AppError.js';
 
 const listar = asyncHandler(async (req, res) => {
-  const citas = await citaService.listar(req.query);
+  const citas = await citaService.listar(req.query, req.user);
   return ok(res, citas, 'Citas listadas correctamente');
 });
 
 const obtener = asyncHandler(async (req, res) => {
-  const cita = await citaService.obtenerPorId(req.params.id);
+  const cita = await citaService.obtenerPorId(req.params.id, req.user);
   return ok(res, cita, 'Cita encontrada correctamente');
 });
 

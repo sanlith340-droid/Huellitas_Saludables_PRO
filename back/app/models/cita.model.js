@@ -110,8 +110,13 @@ async function findAll({
   fecha_desde,
   fecha_hasta,
   id_especialista,
+  id_propietario,
 } = {}) {
   const where = {};
+  // Si se indica, solo devuelve citas de mascotas de ese propietario.
+  if (id_propietario) {
+    where.mascota = { is: { propietarios: { some: { id_usuario: id_propietario } } } };
+  }
   if (id_mascota) where.id_mascota = Number(id_mascota);
   if (estado) where.estado = estado;
 

@@ -1,77 +1,68 @@
 # Rutas de la API
 
-En desarrollo, la API suele estar en `http://localhost:3000`. Si levantaste el proyecto con Docker, entra por `http://localhost:8080/api`. Swagger tiene los campos y ejemplos completos en `/api-docs`; el archivo donde está configurado es `back/app/config/swagger.js`.
+En desarrollo, la API suele estar en `http://localhost:3000`; con Docker Compose se publica a través de `http://localhost:8080`. Swagger se monta en `/api-docs` y el healthcheck en `/health`. Esta guía resume las rutas reales de `back/app/routes/`; los esquemas de entrada están en `back/app/schemas/`.
 
-## Cómo mandar el token
+## Autenticación y roles
 
-Casi todas las rutas necesitan iniciar sesión. Primero pide un token en `POST /api/auth/login` y después inclúyelo en el encabezado:
+Las rutas protegidas usan `Authorization: Bearer <token>`. El backend vuelve a cargar el usuario y su rol vigente desde PostgreSQL; los encabezados `x-user-id` y `x-user-role` no sustituyen al JWT. Los roles son `usuario`, `recepcionista`, `especialista` y `admin`.
 
-```http
-Authorization: Bearer <token>
-```
+Públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro`, `POST /api/auth/forgot-password`, `POST /api/auth/verify-reset-token` y `POST /api/auth/reset-password`. `GET /api/auth/test` exige JWT. Crear personal mediante `POST /api/auth/registro-admin` requiere `admin`.
 
-El healthcheck `GET /health` y las rutas `POST /api/auth/login`, `POST /api/auth/registro`, `POST /api/auth/forgot-password`, `POST /api/auth/verify-reset-token` y `POST /api/auth/reset-password` son públicas. `GET /api/auth/test` **no** es pública aunque su nombre pueda confundir: necesita JWT. Crear cuentas de personal (`/api/auth/registro-admin`) es solo para `admin`.
+## Endpoints
 
-Los roles del sistema son `usuario`, `recepcionista`, `especialista` y `admin`. Si una ruta solo dice JWT, significa que pide una sesión válida, pero el código de esa ruta no exige un rol particular.
-
-## Lista de rutas
-
-| Método | Ruta | Quién puede usarla | Qué hace |
+| Método | Ruta | Acceso | Comportamiento y alcance |
 |---|---|---|---|
-| `GET` | `/health` | Pública | Revisa la conexión con PostgreSQL. |
-| `POST` | `/api/auth/login` | Pública | Inicia sesión y devuelve un token. |
-| `POST` | `/api/auth/registro` | Pública | Registra una cuenta de usuario. |
+| `GET` | `/health` | Público | Comprueba conexión a PostgreSQL. |
+| `POST` | `/api/auth/login` | Público | Inicia sesión y devuelve JWT. |
+| `POST` | `/api/auth/registro` | Público | Registra un usuario propietario. |
 | `POST` | `/api/auth/registro-admin` | `admin` | Crea cuentas de personal. |
-| `GET` | `/api/auth/perfil` | JWT | Devuelve el perfil de la sesión. |
-| `POST` | `/api/auth/logout` | JWT | Cierra la sesión: revoca en el servidor el token usado en la petición. |
-| `POST` | `/api/auth/forgot-password` | Pública | Envía por correo un enlace de un solo uso. Responde siempre con el mismo mensaje para no revelar si el correo existe; devuelve 503 si el SMTP no está configurado. |
-| `POST` | `/api/auth/verify-reset-token` | Pública | Comprueba que el token del enlace siga vigente y sin usar; 400 si no lo está. |
-| `POST` | `/api/auth/reset-password` | Pública | Cambia la contraseña y consume el token; el enlace deja de servir y el anterior de esa cuenta queda invalidado. |
-| `GET` | `/api/auth/test` | JWT | Prueba la ruta del módulo de autenticación. |
-| `GET` | `/api/mascotas` | JWT | Muestra mascotas. Para el rol `usuario`, el backend devuelve únicamente mascotas vinculadas al usuario autenticado y no expone los copropietarios de esas mascotas. |
-| `GET` | `/api/mascotas/{id}` | JWT | Busca una mascota por ID. |
-| `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota. |
-| `GET` | `/api/usuarios/especialistas` | JWT | Muestra especialistas. |
-| `GET` | `/api/usuarios/personal` | `admin` | Lista al personal (admin, especialistas, recepcionistas) sin contraseña, con `citas_asociadas` y `puede_eliminar`. |
-| `GET` | `/api/usuarios/{documento}` | JWT | Busca un usuario por documento/identificador. |
-| `DELETE` | `/api/usuarios/{id}` | `admin` | Elimina la cuenta de un **especialista o recepcionista**. 403 si es admin o usuario cliente; 404 si no existe; 409 si tiene citas asociadas (se conserva el historial). Al eliminar un especialista se borran sus horarios. Su token deja de ser válido. |
-| `GET` | `/api/razas` | JWT | Muestra las razas. |
-| `GET` | `/api/disponibilidad` | JWT | Lista horarios disponibles; acepta filtros y paginación. |
-| `GET` | `/api/disponibilidad/especialista/{id_usuario}` | JWT | Busca horarios de un especialista. |
-| `GET` | `/api/disponibilidad/{id}` | JWT | Busca una franja horaria. |
+| `GET` | `/api/auth/perfil` | JWT | Devuelve el perfil de la identidad autenticada. |
+| `POST` | `/api/auth/logout` | JWT | Revoca en servidor el JWT de la petición mediante su `jti`. |
+| `POST` | `/api/auth/forgot-password` | Público | Solicita enlace de un solo uso; la respuesta no revela si existe el correo. Sin SMTP o `FRONTEND_URL` responde `503`. |
+| `POST` | `/api/auth/verify-reset-token` | Público | Verifica vigencia y uso del token; inválido/expirado devuelve `400`. |
+| `POST` | `/api/auth/reset-password` | Público | Cambia contraseña y consume el token; invalida tokens de recuperación anteriores de la cuenta. |
+| `GET` | `/api/auth/test` | JWT | Endpoint de diagnóstico del módulo auth. |
+| `GET` | `/api/mascotas` | JWT | Lista mascotas. El rol `usuario` solo recibe mascotas asociadas a su cuenta; en ese resultado no se devuelven otros propietarios. |
+| `GET` | `/api/mascotas/{id}` | JWT | Busca por ID. Para `usuario`, solo su mascota; una ajena o inexistente responde `404` genérico. Otros roles autenticados no tienen un filtro adicional en esta ruta. |
+| `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota asociada al usuario autenticado; aplica máximo de cinco mascotas por usuario y devuelve `409` con `MASCOTAS_LIMITE_ALCANZADO` al excederlo. |
+| `GET` | `/api/usuarios/especialistas` | JWT | Lista especialistas. |
+| `GET` | `/api/usuarios/personal` | `admin` | Lista personal sin contraseñas, con `citas_asociadas` y `puede_eliminar`. |
+| `GET` | `/api/usuarios/{documento}` | JWT | Busca usuario por identificador. La ruta no tiene un filtro de acceso por propietario; aplicar minimización de datos al definir su uso. |
+| `DELETE` | `/api/usuarios/{id}` | `admin` | Elimina solo cuentas de especialista o recepcionista; `403` para otros roles de cuenta, `404` si no existe y `409` si tiene citas asociadas. Al eliminar un especialista se eliminan sus horarios; los JWT de la cuenta eliminada dejan de autenticar. |
+| `GET` | `/api/razas` | JWT | Lista razas. |
+| `GET` | `/api/disponibilidad` | JWT | Lista horarios con filtros y paginación según el esquema de consulta. |
+| `GET` | `/api/disponibilidad/especialista/{id_usuario}` | JWT | Lista horarios del especialista; admite filtros. |
+| `GET` | `/api/disponibilidad/{id}` | JWT | Busca una franja. |
 | `POST` | `/api/disponibilidad` | `recepcionista`, `admin` | Crea una franja. |
-| `PUT` | `/api/disponibilidad/{id}` | `recepcionista`, `admin` | Cambia una franja. |
-| `DELETE` | `/api/disponibilidad/{id}` | `recepcionista`, `admin` | Elimina una franja. |
-| `GET` | `/api/citas` | JWT | Lista citas y acepta filtros configurados. |
-| `GET` | `/api/citas/{id}` | JWT | Busca una cita. |
-| `GET` | `/api/citas/especialista/{id_especialista}` | `especialista` (solo las suyas), `recepcionista`, `admin` | Muestra citas de un especialista con dueño, fecha y hora. Filtros opcionales: `estado`, `fecha`, `fecha_desde`, `fecha_hasta` (`YYYY-MM-DD`). |
-| `POST` | `/api/citas` | `usuario`, `recepcionista`, `admin` | Crea una cita. |
-| `PUT` | `/api/citas/{id}` | `usuario`, `recepcionista`, `admin` | Edita una cita. |
-| `PATCH` | `/api/citas/{id}/cancelar` | `usuario`, `recepcionista`, `admin` | Cancela una cita. |
-| `PATCH` | `/api/citas/{id}/estado` | `especialista` (solo sus citas), `admin` | El especialista marca la cita como `atendido` o `cancelado`. Body: `{ "estado": "atendido" \| "cancelado", "liberar_horario": true }`. Al cancelar, `liberar_horario` (por defecto `true`) deja el horario `disponible`; con `false` queda `ocupado`. Una cita ya atendida o cancelada devuelve 409. |
-| `GET` | `/api/notificaciones` | `especialista` | Lista hasta 50 avisos persistentes del especialista autenticado e incluye el total de no leídas. |
+| `PUT` | `/api/disponibilidad/{id}` | `recepcionista`, `admin` | Actualiza una franja. |
+| `DELETE` | `/api/disponibilidad/{id}` | `recepcionista`, `admin` | Elimina una franja si las reglas de integridad lo permiten. |
+| `GET` | `/api/citas` | JWT | Lista citas. `usuario` solo ve citas de mascotas propias; `especialista` solo las asignadas a sí mismo; `recepcionista` y `admin` consultan la agenda completa. |
+| `GET` | `/api/citas/{id}` | JWT | `usuario` solo ve cita de su mascota y `especialista` solo la suya; los recursos ajenos responden `404` genérico. `recepcionista` y `admin` no tienen ese filtro. |
+| `GET` | `/api/citas/especialista/{id_especialista}` | `especialista` (solo sus citas), `recepcionista`, `admin` | Lista citas del especialista. Filtros opcionales: `estado`, `fecha`, `fecha_desde`, `fecha_hasta` (`YYYY-MM-DD`). |
+| `POST` | `/api/citas` | `usuario`, `recepcionista`, `admin` | Crea cita. El propietario solo agenda para mascota propia; recepción queda como responsable si crea, y para otros roles permitidos se selecciona un recepcionista existente. |
+| `PUT` | `/api/citas/{id}` | `usuario`, `recepcionista`, `admin` | Actualiza cita; para el propietario se comprueba pertenencia antes de permitir la modificación. |
+| `PATCH` | `/api/citas/{id}/cancelar` | `usuario`, `recepcionista`, `admin` | Cancela cita; el propietario solo puede actuar sobre cita propia. |
+| `PATCH` | `/api/citas/{id}/estado` | `especialista` (solo sus citas), `admin` | Cambia estado a `atendido` o `cancelado`. Body: `{ "estado": "atendido" | "cancelado", "liberar_horario": true }`; al cancelar, liberar horario es `true` por defecto. Citas terminales no se vuelven a modificar (`409`). |
+| `GET` | `/api/notificaciones` | `especialista` | Lista hasta 50 notificaciones in-app persistentes del especialista autenticado e incluye no leídas. No envía correo, SMS ni push. |
 | `PATCH` | `/api/notificaciones/leer-todas` | `especialista` | Marca como leídas todas las notificaciones propias pendientes. |
-| `PATCH` | `/api/notificaciones/{id}/leida` | `especialista` | Marca como leída una notificación propia; responde 404 si no existe o pertenece a otra persona. |
-| `GET` | `/api/historia` | `especialista` | Lista historias clínicas. |
-| `GET` | `/api/historia/{id}` | `especialista` | Busca una historia clínica. |
-| `GET` | `/api/historia/mascota/{id_mascota}` | `especialista`, `usuario` propietario | Busca historias de una mascota. El propietario solo puede consultar una mascota vinculada a su cuenta; una mascota ajena responde `404` genérico para no revelar su existencia. |
-| `GET` | `/api/historia/cita/{id_cita}` | `especialista` | Busca la historia de una cita. |
-| `POST` | `/api/historia` | `especialista` | Crea una historia clínica. |
-| `PUT` | `/api/historia/{id}` | `especialista` | Actualiza una historia clínica. |
+| `PATCH` | `/api/notificaciones/{id}/leida` | `especialista` | Marca una notificación propia como leída; inexistente o ajena responde `404`. |
+| `GET` | `/api/historia` | `especialista` | Lista historias limitadas al especialista autenticado. |
+| `GET` | `/api/historia/{id}` | `especialista` | Obtiene historia propia del especialista; otra asignación no se autoriza. |
+| `GET` | `/api/historia/mascota/{id_mascota}` | `especialista`, propietario (`usuario`) | El especialista consulta historias vinculadas a sus citas; el propietario solo las de mascota asociada a su cuenta. Mascota ajena devuelve `404` genérico. |
+| `GET` | `/api/historia/cita/{id_cita}` | `especialista` | Consulta la historia de una cita únicamente si está asignada a ese especialista. |
+| `POST` | `/api/historia` | `especialista` | Crea historia para cita a la que está asignado; no admite más de una por cita ni cita cancelada. |
+| `PUT` | `/api/historia/{id}` | `especialista` | Actualiza historia solo si pertenece al especialista autenticado. |
 
-Lo que aparece entre `{llaves}` se reemplaza con el dato real; por ejemplo, `/api/mascotas/12`. Los campos exactos que pide cada ruta están en Swagger y en los validadores de `back/app/schemas/`.
+Los valores entre llaves se reemplazan por el dato real, por ejemplo `/api/mascotas/12`. En particular, la autenticación JWT no equivale a permiso sobre todos los recursos: las reglas por propietario y especialista se vuelven a verificar en el backend.
 
-## Errores típicos
+## Errores y límites
 
-- `400`: algún dato no pasó la validación.
-- `401`: falta el token, no sirve, venció, la cuenta ya no existe o el token fue revocado con `POST /api/auth/logout` (mensaje «La sesión ha sido cerrada. Inicia sesión nuevamente.»).
-- `403`: el usuario inició sesión, pero su rol no puede hacer esa acción.
-- `404`: no se encontró la ruta o el dato solicitado.
-- `429`: se superó el límite de cinco solicitudes a `POST /api/auth/login`, `POST /api/auth/registro` o a las tres rutas de recuperación de contraseña, por IP durante 15 minutos. El cuerpo conserva el formato común (`success: false`, `message`, `code: RATE_LIMIT_EXCEEDED`, `details.retryAfterSeconds`) y la respuesta incluye `Retry-After`.
-- `503`: el healthcheck no pudo conectar con PostgreSQL, el middleware no pudo consultar la lista de revocación de tokens (en ese caso la petición no se autoriza) o la recuperación de contraseña no tiene SMTP configurado.
+- `400`: entrada inválida, token de recuperación inválido/expirado u otra precondición de solicitud.
+- `401`: falta el JWT, es inválido/expiró, el usuario ya no existe o el token fue revocado con logout.
+- `403`: la identidad autenticada no tiene rol o permiso de operación requerido.
+- `404`: recurso no encontrado; se usa también para ocultar existencia de mascotas, citas o notificaciones ajenas en los alcances indicados.
+- `409`: conflicto de estado/regla de negocio, incluida la sexta mascota (`MASCOTAS_LIMITE_ALCANZADO`).
+- `429`: se superó el límite por IP de cinco solicitudes durante 15 minutos en login, registro o rutas de recuperación protegidas por rate limit; se incluye `Retry-After`.
+- `503`: no hay PostgreSQL, falla la verificación de revocación o falta configuración SMTP/URL de frontend para enviar recuperación.
 
-El límite de login y el de registro son independientes. El contador en memoria aplica a cada instancia del backend; si se ejecutan varias instancias, se debe configurar un almacén compartido compatible con `express-rate-limit` para tener un contador global.
-
-Detrás de un proxy inverso, configura `TRUST_PROXY` con el número exacto de saltos confiables. El `docker-compose.yml` incluido usa `1` porque el backend recibe solicitudes de un único Nginx frontend; no configures confianza indiscriminada en todos los proxies.
-
-Fuera de tu computador, usa HTTPS y nunca pongas contraseñas o tokens en la URL.
+Los limitadores en memoria cuentan por instancia. Si se despliega más de una instancia, hace falta un almacén compartido compatible para un límite global. Tras proxy inverso, configura `TRUST_PROXY` con los saltos confiables exactos. Fuera del equipo local, usa HTTPS y nunca pongas contraseñas ni tokens en una URL.

@@ -1,6 +1,8 @@
 # BITÁCORA DE ACTIVIDADES
 ## Migración del framework de pruebas Jest a Vitest
 
+> **Vigencia histórica:** los resultados y conteos de suites citados abajo pertenecen a la ejecución fechada de esta bitácora, no son la evidencia actual. El estado más reciente consignado registra 410/410 pruebas backend en 31 archivos y ocho vulnerabilidades de `npm ci` (cuatro moderadas y cuatro altas); no se reejecutó nada al actualizar la documentación. Para configurar la suite, consulta [`DESARROLLO.md`](./DESARROLLO.md). La ruta `docs/back/...` del historial no corresponde a la carpeta actual.
+
 **Proyecto:** HUELLITAS SALUDABLES  
 **Responsable:** Sara Jasmin Cruz Calderon  
 **Fecha de inicio:** 6 de noviembre de 2026  

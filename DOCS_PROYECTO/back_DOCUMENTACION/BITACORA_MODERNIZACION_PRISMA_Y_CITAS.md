@@ -1,5 +1,7 @@
 # Bitácora de modernización: Prisma, disponibilidad y citas
 
+> **Vigencia histórica:** la enumeración de siete modelos y referencias a la migración ORM describen el corte de esta bitácora; no representan el esquema actual. El schema vigente define 11 modelos y seis migraciones. Consulta [`ARQUITECTURA.md`](./ARQUITECTURA.md), [`IMPLEMENTAR_ORM.md`](./IMPLEMENTAR_ORM.md) y [`DESARROLLO.md`](./DESARROLLO.md). Se preservan hechos y resultados originales.
+
 **Proyecto:** Huellitas Saludables PRO  
 **Periodo documentado:** migración ORM y mejoras posteriores hasta el 10 de noviembre de 2026  
 **Estado:** implementado y probado en el entorno local de desarrollo sin Docker.

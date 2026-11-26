@@ -1,5 +1,7 @@
 # Decisiones Técnicas — Huellitas Saludables (Backend)
 
+> **Vigencia:** documento de referencia histórica; varios estados descritos abajo (hashing scrypt, ausencia de revocación/rate limit, fallbacks, conteo de modelos y recuperación) preceden al código actual. No usarlo como guía operativa. Para el estado vigente, consulta [`API.md`](./API.md), [`ARQUITECTURA.md`](./ARQUITECTURA.md), [`DESARROLLO.md`](./DESARROLLO.md) y `back/Readme.md`. Los hechos de esta decisión histórica no se reescriben.
+
 > **Versión**: 1.1
 > **Alcance**: API, persistencia, autenticación, pruebas y ejecución del backend
 ---
@@ -428,4 +430,3 @@ Secretos gestionados por la plataforma de despliegue, migraciones ejecutadas com
 El backend de Huellitas Saludables está construido como una API Node.js/Express que usa PostgreSQL y Prisma ORM, con validación Joi, autenticación JWT, autorización por roles, pruebas Vitest/Supertest, documentación OpenAPI y ejecución en Docker.
 
 Este registro describe exclusivamente componentes del backend y distingue lo que confirma el repositorio de las razones inferidas. Entre los riesgos que requieren atención antes de producción están los secretos por defecto y la protección de la base configurada para tests; el hash scrypt, CORS configurable y el manejo seguro de errores ya están implementados.
-

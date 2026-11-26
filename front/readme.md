@@ -1,5 +1,5 @@
 # Documentación del frontend
 
-La guía del frontend se organizó en [`docs/front/README.md`](../docs/front/README.md). Allí se documentan responsabilidades, tecnologías, estructura, comandos de desarrollo, integración con la API y estado de pruebas.
+La guía activa del frontend está en [`../DOCS_PROYECTO/front_DOCUMENTACION/README.md`](../DOCS_PROYECTO/front_DOCUMENTACION/README.md). Incluye el stack React 18/TypeScript/Vite, las rutas reales, scripts, seguridad por rol y propietario, y enlaces a las guías funcionales.
 
-Para iniciar toda la aplicación, consulta [`docs/arranque.md`](../docs/arranque.md). Para las pruebas, consulta [`docs/test/README.md`](../docs/test/README.md).
+Para iniciar el sistema, consulta [`../DOCS_PROYECTO/arranque.md`](../DOCS_PROYECTO/arranque.md). Para estados visuales, consulta [`../DOCS_PROYECTO/ESTADOS_DE_INTERFAZ.md`](../DOCS_PROYECTO/ESTADOS_DE_INTERFAZ.md); para pruebas backend y su base aislada, consulta [`../DOCS_PROYECTO/test_DOCUMENTACION/README.md`](../DOCS_PROYECTO/test_DOCUMENTACION/README.md).

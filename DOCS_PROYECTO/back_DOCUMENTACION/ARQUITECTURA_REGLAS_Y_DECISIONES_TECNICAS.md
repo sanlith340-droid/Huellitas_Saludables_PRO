@@ -1,7 +1,7 @@
 # Huellitas Saludables PRO — reglas de negocio, arquitectura y decisiones técnicas
 
 **Versión:** 1.0  
-**Fecha de revisión:** 13 de noviembre de 2026  
+**Fecha de revisión:** 25 de noviembre de 2026  
 **Alcance:** frontend, API/backend, persistencia PostgreSQL, seguridad, calidad y plan de evolución.  
 **Estado:** documento maestro basado en el código y las migraciones presentes en esta copia del repositorio.
 
@@ -11,7 +11,7 @@
 
 Huellitas Saludables es una aplicación web de gestión veterinaria para usuarios propietarios de mascotas, recepcionistas, especialistas y administradores. La solución está organizada como un **monolito modular de tres capas**: una interfaz web React, una API Node.js/Express y una base de datos relacional PostgreSQL. Frontend y backend se ejecutan como servicios distintos en Docker Compose, pero el backend es una única aplicación con módulos y responsabilidades separadas; no es una arquitectura de microservicios.
 
-El backend usa JavaScript con módulos ESM, Prisma ORM 7 y PostgreSQL 16. El frontend usa React 18, TypeScript, Vite, React Router y Axios. La base cuenta hoy con ocho modelos Prisma y SQL de migración que agrega restricciones, un índice parcial y triggers que deben conservarse al evolucionar el esquema.
+El backend usa JavaScript con módulos ESM, Prisma ORM 7.10.1 y PostgreSQL 16. El frontend usa React 18, TypeScript, Vite, React Router y Axios. El schema vigente contiene **11 modelos Prisma** y el historial **seis migraciones**; el SQL también agrega restricciones, un índice parcial y triggers que deben conservarse al evolucionar el esquema.
 
 El documento adjunto contiene 45 reglas; se agregan cinco reglas complementarias (RN46–RN50) para cubrir la validación temporal, la cancelación automática, su auditoría y la conservación del historial implementadas después. La intención de varias reglas coincide con el código, pero hay diferencias importantes: la autenticación vigente usa JWT Bearer, no los headers `x-user-id`/`x-user-role`; el registro de auditoría persistente cubre actualmente cancelaciones, no todas las acciones administrativas; y el JSON de error contiene `code` y `details`, no siempre una propiedad `data`. Las tareas del plan también tienen distintos estados de avance, reflejados más adelante.
 
@@ -128,9 +128,11 @@ Prisma proporciona el esquema declarativo, el cliente JavaScript/ESM y las opera
 - **Autenticación:** JWT real firmado HS256, enviado como `Authorization: Bearer <token>`. El middleware busca al usuario vigente en PostgreSQL y obtiene de allí su rol; no confía en un rol escrito libremente por el cliente.
 - **Autorización:** middlewares `requireRole` y comprobaciones por recurso en servicios. La protección de rutas de React mejora la experiencia, pero la frontera de seguridad es el backend.
 - **Contraseñas:** bcrypt para nuevos hashes; valor predeterminado de 12 rondas. Se acepta verificar un hash scrypt heredado para migrarlo a bcrypt tras autenticación válida; contraseñas en texto plano no se aceptan en login.
-- **Tokens:** el cierre de sesión revoca el `jti` en la tabla `TokenRevocado`; el middleware comprueba esa lista y rechaza el token revocado. Existen pruebas de integración para revocación, tokens inválidos/expirados y fallo seguro; consultar `test_DOCUMENTACION/EJECUCION.md` para registrar resultados de cada corrida.
+- **Tokens:** el cierre de sesión revoca el `jti` en la tabla `TokenRevocado`; el middleware comprueba esa lista y rechaza el token revocado. El límite de login/registro y recuperación usa cinco solicitudes por IP cada 15 minutos. La evidencia más reciente consignada es 410/410 pruebas backend aprobadas en 31 archivos; no se reejecutaron para esta actualización documental. Los reportes fechados están en `DOCS_PROYECTO/test_DOCUMENTACION/EJECUCION.md`.
 - **Validación:** Joi en backend y controles de formulario en frontend. El servidor vuelve a validar siempre; las reglas de entrada actuales incluyen, entre otras, teléfono numérico y correo/contraseña sin espacios.
 - **Errores y logs:** un único middleware transforma errores HTTP; fallos internos muestran texto genérico al cliente. Pino define niveles por entorno y redacta tokens, credenciales y datos personales.
+- **Recuperación:** recuperación de contraseña implementada con token de un solo uso; requiere SMTP y `FRONTEND_URL`, sin los que responde `503`. Se validó mediante SMTP local de pruebas, lo que no define todavía proveedor productivo.
+- **Notificaciones:** notificaciones persistentes in-app para especialistas, aisladas al usuario autenticado; no son avisos por correo, SMS ni push.
 
 ### DT-07 — Integridad y concurrencia de citas en la base de datos
 
@@ -144,17 +146,18 @@ El backend usa Vitest y Supertest para pruebas unitarias e integración. La conf
 
 Docker Compose coordina PostgreSQL, backend y frontend. Nginx sirve los activos de la SPA y funciona como proxy hacia la API. La solución admite desarrollo y demostración local; el README del proyecto advierte que el despliegue de producción aún no está definido.
 
-Hay un riesgo de configuración que debe corregirse antes de producción: el código exige `JWT_SECRET`, pero `docker-compose.yml` puede inyectar un secreto placeholder; `DB_PASSWORD` también tiene defaults. Además, Compose establece `CORS_ORIGIN=*`, mientras Express trata el valor como una lista literal de orígenes separados por coma; no es una configuración de lista explícita y puede rechazar orígenes del navegador. Usar secretos fuertes y una lista exacta por entorno.
+La configuración se endureció según el estado de continuidad del 25 de noviembre de 2026: Compose exige `DB_PASSWORD` y `JWT_SECRET`, `databaseUrl.js` falla en producción sin credenciales y el origen CORS predeterminado es `http://localhost:8080`. Mantén secretos propios y allowlists exactas por entorno; no hay despliegue real todavía y este resumen no sustituye una validación de producción.
 
 ## 5. Base de datos: estado actual y evolución prevista
 
 ### 5.1 Modelos actuales
 
-El schema vigente contiene **ocho modelos**. Siete son las entidades funcionales base y el octavo incorpora auditoría persistente de cancelaciones.
+El schema vigente contiene **11 modelos**. Los ocho anteriores comprendían las entidades iniciales y la auditoría de cancelaciones; los cambios posteriores añadieron tokens de revocación y recuperación, notificaciones in-app, además de los campos de consentimiento/foto reflejados en la migración más reciente.
 
 | Modelo/tabla | Propósito y relación principal |
 |---|---|
 | `Usuario` / `usuario` | Cuenta, rol, contacto y especialización opcional. Correo único. |
+| `PasswordResetToken` / `password_reset_token` | Hash de token de recuperación, expiración y consumo de un solo uso. |
 | `Raza` / `raza` | Catálogo de razas; una raza puede asociarse a varias mascotas. |
 | `Mascota` / `mascota` | Datos de la mascota y referencia a una raza; tiene propietarios y citas. |
 | `UsuarioMascota` / `usuario_mascota` | Tabla puente de muchos-a-muchos entre usuario y mascota; permite modelar propietario principal y acudientes. |
@@ -162,6 +165,8 @@ El schema vigente contiene **ocho modelos**. Siete son las entidades funcionales
 | `Cita` / `cita` | Relaciona mascota, disponibilidad y recepcionista; guarda motivo y estado. |
 | `CitaCancelacion` / `cita_cancelacion` | Una auditoría por cita cancelada: actor, rol, origen, motivo y fecha; no borra la cita. |
 | `HistoriaClinica` / `historia_clinica` | Registro clínico asociado a una cita; máximo una historia por cita. |
+| `TokenRevocado` / `token_revocado` | `jti` revocado y su expiración para invalidar sesión en servidor. |
+| `Notificacion` / `notificacion` | Notificación persistente de usuario, opcionalmente relacionada con cita/disponibilidad; lectura en app para especialistas. |
 
 Relaciones principales: Usuario–Mascota es muchos-a-muchos por `UsuarioMascota`; Raza–Mascota uno-a-muchos; Usuario especialista–Disponibilidad uno-a-muchos; Mascota–Cita uno-a-muchos; Disponibilidad–Cita uno-a-muchos en historial, con máximo una cita activa por franja; Cita–HistoriaClinica uno-a-cero/uno; Cita–CitaCancelacion uno-a-cero/uno.
 
@@ -179,7 +184,7 @@ Las migraciones contienen claves foráneas y `CHECK` para rol, tipo de propietar
 
 ### 5.3 Base de datos prevista: qué está definido y qué no
 
-El plan adjunto plantea recuperación de contraseña por correo, edición de perfiles de usuario/mascota, historias clínicas desde la vista especialista y seguimiento de mascotas por cuidadores. **No define un esquema futuro cerrado** para esas funciones. A la fecha de esta versión ya están implementadas la recuperación de contraseña (sección 5.4) y las notificaciones in-app del especialista (`notificacion`); el resto sigue siendo diseño pendiente.
+El plan adjunto plantea recuperación de contraseña por correo, edición de perfiles de usuario/mascota, historias clínicas desde la vista especialista y seguimiento de mascotas por cuidadores. **No define un esquema futuro cerrado** para esas funciones. La recuperación y las notificaciones in-app del especialista (`notificacion`) están implementadas; no se debe confundir el SMTP local de pruebas con un proveedor de correo productivo.
 
 Las extensiones que todavía deben diseñarse —y que por ahora no son modelos nuevos— son:
 
@@ -204,7 +209,7 @@ La funcionalidad dejó de ser una extensión prevista y hoy existe en código, c
 | Fallo de envío | Si el correo no sale, el token recién creado se anula para no dejar enlaces vivos | `solicitarRecuperacion` |
 | Interfaz | `/recuperar-contrasena` y `/nueva-contrasena?token=…`, con validación previa del enlace | `front/src/pages/RecuperarContrasena.tsx` · `NuevaContrasena.tsx` |
 
-Pendiente de decisión: el correo saliente usa SMTP real y no hay proveedor definido para producción; además, la entrega de correo no está cubierta por pruebas automatizadas (sí el flujo con el envío simulado).
+Pendiente de decisión: no hay proveedor SMTP de producción definido. La configuración SMTP local de pruebas fue validada según el estado del proyecto; no se afirma que el proveedor productivo o la entrega externa estén verificados. El flujo de pruebas puede simular el envío.
 
 ## 6. Reglas de negocio RN01–RN50
 
@@ -261,7 +266,7 @@ Las reglas RN01–RN45 y sus prioridades se reproducen conceptualmente desde `Re
 
 | ID | Prioridad | Regla de negocio | Estado observado / evidencia |
 |---|---|---|---|
-| RN28 | Alta | Solo especialistas acceden a historias clínicas. | **Implementada.** Rutas clínicas requieren rol `especialista`. |
+| RN28 | Alta | Especialistas acceden a sus historias y el propietario puede leer las historias de sus mascotas. | **Implementada.** Las consultas por mascota permiten `especialista` y `usuario`; el backend comprueba pertenencia para el propietario y oculta mascotas ajenas con `404`. El resto de operaciones clínicas requiere especialista. |
 | RN29 | Alta | La cita debe existir para crear historia. | **Implementada.** Servicio valida la cita y la FK protege la referencia. |
 | RN30 | Alta | Solo el especialista asignado a la cita puede crear historia. | **Implementada.** La operación transaccional verifica la asignación. |
 | RN31 | Alta | Una cita cancelada no puede tener historia nueva. | **Implementada.** Servicio rechaza la cita cancelada. |
@@ -275,7 +280,7 @@ Las reglas RN01–RN45 y sus prioridades se reproducen conceptualmente desde `Re
 | ID | Prioridad | Regla de negocio | Estado observado / evidencia |
 |---|---|---|---|
 | RN36 | Alta | Rutas API autenticadas, salvo login, registro y healthcheck. | **Implementada con contrato actualizado.** Middleware global protege `/api`; se exceptúan login/registro y `/health`. |
-| RN37 | Alta | Solo login, registro público y healthcheck son accesibles sin autenticación. | **Implementada, con revisar Swagger.** El código aplica JWT; la especificación Swagger aún muestra headers/mock heredados. |
+| RN37 | Alta | Rutas privadas requieren JWT; login, registro, recuperación/verificación/cambio de contraseña y healthcheck son públicos. | **Implementada en rutas.** El código hace públicas las rutas descritas; `GET /api/auth/test` requiere JWT. Revisar por separado la correspondencia de Swagger si se usa como contrato. |
 | RN38 | Alta | Auditar acciones de creación, edición y eliminación de recepción/admin. | **Parcial.** Las cancelaciones se auditan en `cita_cancelacion`. `auditLog.js` registra ciertos eventos estructurados solo fuera de producción; no existe auditoría general persistente de todas las acciones. |
 | RN39 | Media | Errores JSON uniformes con `{ success, message, data }`. | **Formato central implementado, forma actualizada.** Los errores incluyen `{ success:false, message, code, details }`; validaciones pueden detallar campos. Corregir la regla original para reflejar el contrato real. |
 | RN40 | Media | Respuestas API con estructura unificada. | **Implementada.** Utilidad común de respuesta, con `success`, `message`, `data` y metadatos cuando aplica; los errores siguen la forma descrita en RN39. |
@@ -317,10 +322,10 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 | 7 | P0 | Limitar intentos de login | **Implementada en backend.** Login y registro usan limitadores por IP; umbral predeterminado de cinco intentos por 15 minutos. Hay pruebas de integración definidas; registrar el resultado de la corrida vigente. |
 | 8 | P0 | Cierre de sesión que invalida tokens | **Implementada en backend y frontend.** Logout revoca el `jti`; el middleware rechaza tokens revocados y el cliente limpia la sesión local. Hay pruebas de integración definidas; registrar el resultado de la corrida vigente. |
 | 9 | P0 | Refactorizar Dockerfiles | **Por confirmar.** Dockerfiles y Compose funcionales existen; no se encontró evidencia de cierre que demuestre que la tarea específica de refactor se completó. |
-| 10 | P0 | Quitar valores por defecto de JWT_SECRET y credenciales de BD | **Parcial.** El módulo JWT falla si no recibe secreto, pero Compose inyecta placeholder; `DB_PASSWORD` también tiene fallback. |
-| 11 | P0 | Configurar CORS correctamente | **Parcial.** Express lee `CORS_ORIGIN`, pero Compose usa `*` como default y el código espera una lista literal de orígenes. Configurar dominios exactos. |
+| 10 | P0 | Quitar valores por defecto de JWT_SECRET y credenciales de BD | **Actualizada en el estado del 25/11/2026.** Compose exige `DB_PASSWORD`/`JWT_SECRET`; `databaseUrl.js` falla en producción sin credenciales. No se ejecutó despliegue real en esta actualización. |
+| 11 | P0 | Configurar CORS correctamente | **Actualizada según estado vigente.** El origen predeterminado consignado es `http://localhost:8080`; define allowlist exacta al desplegar. |
 | 12 | P1 | Maquetado completo: header, contenido y footer | **Parcial.** Hay Navbar y layout principal con `<main>`; no se encontró footer general. |
-| 13 | P1 | Recuperar contraseña por correo | **Pendiente.** No se encontraron endpoints/UI de reset ni envío de correo. |
+| 13 | P1 | Recuperar contraseña por correo | **Implementada.** Endpoints y flujo existen; el envío requiere SMTP/`FRONTEND_URL`, y proveedor de producción sigue pendiente. |
 | 14 | P1 | Rediseñar navegación por secciones con íconos | **Parcial.** Hay navegación por rol e iconos en partes de la interfaz; la Navbar no implementa todavía la reorganización completa descrita. |
 | 15 | P1 | Pantallas/estados de carga | **Parcial.** Algunas vistas comunican “Cargando…” y deshabilitan acciones; no hay un patrón global y uniforme. |
 | 16 | P1 | Historias clínicas desde la vista especialista | **Implementada parcialmente en la interfaz.** La agenda permite abrir, crear y actualizar historias de citas atendidas usando la API existente. El modelo no contempla vacunas y no hay automatización frontend; mantener RF011 como parcial hasta resolver esos puntos. |
@@ -329,25 +334,24 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 
 ## 8. Contradicciones y riesgos que deben mantenerse visibles
 
-1. **Headers frente a JWT:** RN05/RN06 y parte de Swagger aún hablan de `x-user-id`/`x-user-role`; el código protege con JWT Bearer y obtiene rol de la BD. Actualizar el documento RN y la especificación Swagger. No habilitar identidad confiando en headers libres.
-2. **Modelos:** documentos heredados dicen siete modelos; el schema actual contiene ocho por `CitaCancelacion`.
-3. **Hash de contraseñas:** algunas secciones antiguas del README dicen scrypt; el código actual genera bcrypt y solo mantiene compatibilidad/migración de hashes scrypt heredados.
+1. **Headers frente a JWT:** RN05/RN06 de origen y cualquier especificación heredada pueden hablar de `x-user-id`/`x-user-role`; el código protege con JWT Bearer y obtiene rol de la BD. No habilitar identidad confiando en headers libres.
+2. **Modelos:** los inventarios de siete u ocho modelos corresponden a estados anteriores; el schema vigente define 11 modelos y seis migraciones.
+3. **Hash de contraseñas:** bcrypt se usa para hashes nuevos; scrypt solo se verifica como legado y se rehashea tras autenticación válida. Texto plano no se acepta en login.
 4. **Auditoría:** hay auditoría persistente para cancelaciones, no un ledger general de CRUD. El middleware general no persiste en producción.
-5. **Credenciales/CORS:** defaults inseguros en Compose deben retirarse o exigir configuración no vacía. Configurar `CORS_ORIGIN` con orígenes explícitos y comprobar preflight.
-6. **Límite de login y revocación:** están implementados en backend y cuentan con pruebas fuente; verificar su ejecución vigente y mantener actualizados los resultados del plan de pruebas.
+5. **Credenciales/CORS:** el estado del 25/11/2026 registra variables de credenciales exigidas y `http://localhost:8080` como CORS predeterminado. Configurar allowlist exacta para cada despliegue.
+6. **Límite de intentos y revocación:** los controles están implementados; la evidencia backend más reciente registrada es 410/410 en 31 archivos. Esta edición documental no volvió a ejecutar la suite.
 7. **Datos personales:** usuarios autenticados pueden consultar rutas por ID que pueden exponer correo, teléfono o dirección. Revisar minimización de datos y permisos conforme a la política de privacidad del producto.
-8. **Swagger y README:** algunos contenidos están desactualizados respecto de JWT, cantidad de modelos, hashing y configuración CORS. Las pruebas de frontend/E2E y un pipeline CI siguen siendo brechas de calidad identificadas en los documentos del proyecto.
+8. **Swagger y README:** se actualizaron las guías Markdown en este cambio; la especificación Swagger debe tratarse conforme al estado real de `back/app/config/swagger.js`. El estado actual consigna ESLint 9 y CI, pero no hay despliegue real todavía.
 9. **Producción:** el README caracteriza el proyecto como desarrollo/demo y no listo para producción. Antes de desplegar públicamente se necesitan secretos gestionados, CORS restringido, rate limiting, política de sesión, privacidad, backups/restauración y pruebas de seguridad operativa.
 
 ## 9. Próximos pasos documentales y técnicos sugeridos
 
-1. Actualizar RN05/RN06 para describir JWT Bearer y rol consultado desde PostgreSQL.
-2. Alinear Swagger con JWT Bearer y respuestas reales; retirar headers de identidad y `mock-token`.
-3. Completar los pendientes de configuración P0: eliminar defaults de secretos/credenciales y validar CORS con orígenes reales; conservar evidencia vigente de rate limiting y revocación de sesión.
-4. Decidir si la auditoría de acciones administrativas debe persistirse en una tabla general y qué retención tendrá.
-5. Definir las reglas de exposición de datos personales en consultas por ID.
-6. Antes de añadir tablas futuras, acordar historias de usuario, permisos, campos, expiración/retención y criterios de borrado; crear migraciones aditivas y pruebas.
-7. Añadir pruebas de frontend y E2E a medida que se completen las tareas P1; documentar build y ejecución en CI.
+1. Revisar Swagger frente a JWT Bearer, rutas y respuestas antes de considerarlo contrato confiable; esta tarea no modificó `back/app/config/swagger.js`.
+2. Definir si la auditoría de acciones administrativas debe persistirse además de la auditoría de cancelaciones y qué retención tendrá.
+3. Definir minimización de datos para `GET /api/usuarios/{documento}` y los permisos exactos de exposición.
+4. Elegir proveedor SMTP de producción y probar la entrega en un entorno autorizado; SMTP local de pruebas no demuestra producción.
+5. Antes de añadir modelos futuros, acordar permisos, retención y borrado; crear migraciones aditivas y pruebas.
+6. Mantener cobertura de frontend/E2E y validar el despliegue antes de afirmar producción lista.
 
 ## 10. Referencias dentro del repositorio
 
@@ -360,9 +364,9 @@ El PDF conserva el estado inicial “Por hacer” para sus tareas. La columna de
 - JWT y contraseñas: `back/app/utils/jwt.js`, `back/app/utils/password.js`.
 - Citas y cancelación automática: `back/app/models/cita.model.js`, `back/app/services/citaCancellationScheduler.js`.
 - Frontend: `front/src/routes/AppRoutes.tsx`, `front/src/layouts/MainLayout.tsx`, `front/src/context/AuthContext.tsx`, `front/src/services/api.ts`.
-- Arquitectura complementaria: `docs/back/ARQUITECTURA.md`.
-- Bitácora Prisma y citas: `docs/back/BITACORA_MODERNIZACION_PRISMA_Y_CITAS.md`.
-- Bitácora de validación de formularios: `docs/back/BITACORA_VALIDACION_FORMULARIOS.md`.
+- Arquitectura complementaria: `DOCS_PROYECTO/back_DOCUMENTACION/ARQUITECTURA.md`.
+- Bitácora Prisma y citas: `DOCS_PROYECTO/back_DOCUMENTACION/BITACORA_MODERNIZACION_PRISMA_Y_CITAS.md`.
+- Bitácora de validación de formularios: `DOCS_PROYECTO/back_DOCUMENTACION/BITACORA_VALIDACION_FORMULARIOS.md`.
 - Fuentes originales adjuntas a la conversación (no copiadas al repositorio): `Reglas_de_Negocio_RN.docx` y `Plan_18_Tareas_Huellitas_Saludables_Detallado.pdf`.
 
 ---

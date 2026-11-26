@@ -1,38 +1,31 @@
-# Reporte de ejecución y revisión — v1.2
+# Reporte de ejecución y revisión — verificación local actual
 
-**Fecha de ejecución del build:** 2026-11-20  
-**Código:** `Huellitas_Saludables_mejorada.zip` (SHA-256 `d4588b5d25bc50b668b353d9c800f45b920e452da0d6c5f95b6f8a827a477456`).
+**Fecha local:** 25/11/2026 (UTC−05:00). **Código:** copia de trabajo del proyecto, sin metadatos Git disponibles; no se atribuye el resultado a un commit o ZIP identificable. **Entorno:** Node.js 22.23.4, npm 10.9.9, PostgreSQL 16 local, seis migraciones Prisma aplicadas a base demo aislada.
 
-## Verificación actual ejecutada
+## Ejecución reproducida
 
 | Verificación | Resultado | Evidencia / límite |
 |---|---|---|
-| Frontend `npm run build` | Finalizó con código 0. | `tsc -b` y Vite 6.4.6; 161 módulos transformados. Log adjunto. |
-| Type-check frontend | Incluido en el comando `tsc -b` anterior. | Verificación de compilación, no test funcional. |
-| Revisión estática de navegación | Enlaces del menú coinciden con rutas existentes y guardas por rol; se reforzaron tres rutas de usuario. | Revisión de código, sin abrir la aplicación ni probar accesos en navegador. |
-| Vitest / backend | No ejecutado en esta actualización. | No atribuir resultado del reporte histórico. |
-| Pruebas manuales / UI / navegador | No ejecutadas. | 140 casos fuente reportados no recibidos; 56 candidatos GWT siguen sin ejecutar. |
-| Lint / smoke / base de datos | No ejecutados en esta actualización. | La información anterior del usuario se mantiene como reporte histórico sin log adjunto. |
-| Aceptación | No emitida. | Acta sin nombres ni firmas. |
+| Vitest backend | 410/410 aprobadas en 31 archivos | [Log Vitest](EVIDENCIAS_EJECUCION_ACTUAL/Vitest_410_31_archivos.log); la base temporal de prueba fue eliminada al concluir |
+| Build frontend | `npm run build` finalizó correctamente | [Log de build](EVIDENCIAS_EJECUCION_ACTUAL/Frontend_build.log); compila/type-check, no es E2E |
+| Lint frontend | 0 errores, 0 advertencias | [Log lint frontend](EVIDENCIAS_EJECUCION_ACTUAL/Frontend_lint.log) |
+| Lint backend | 0 errores, 4 advertencias | [Log lint backend](EVIDENCIAS_EJECUCION_ACTUAL/Backend_lint.log) |
+| Smoke mínimo | frontend HTTP 200 y API `/health` HTTP 200 | Solo disponibilidad local; no valida el recorrido completo |
+| Capturas UI | 11 pantallas actuales, datos sintéticos | No se enviaron formularios, no se reservaron/cancelaron citas ni se modificaron estados |
+| Vulnerabilidades reportadas | `npm ci` backend: 8, 4 moderadas y 4 altas | No se ejecutó `npm audit fix`; falta triage |
 
-## Resultados previos reportados por el usuario
+La suite contiene pruebas de acceso por propietario para mascotas/citas y pruebas de integración de notificaciones. La captura de notificaciones enseña datos de semilla, no demuestra el disparo manual de un evento. Las notificaciones son in-app; no hay correo/SMS/push configurados.
 
-Se conserva como dato histórico no reproducido aquí: Vitest 336/336 en 24 archivos; build/type-check y smoke previos reportados; lint no ejecutable en esa ejecución por ausencia de ESLint. No se afirma que esos resultados se repitieran en esta entrega ni se presentan logs que no fueron recibidos.
+## Límites y no ejecutado
 
-## Revisión estática de cambios
+No se midió cobertura, no se corrieron pruebas E2E/frontend/carga, no se ejecutó CI remoto, no se desplegó con Docker (no disponible), no se ejecutó backup/restore en este pase y no se emitió aceptación. Las capturas locales no sustituyen estas verificaciones. Un reporte anterior de restauración se conserva en el expediente, pero no se reproduce como resultado actual.
 
-- `Navbar.tsx` presenta accesos diferenciados: usuario (Mi panel, Mascotas, Solicitar cita, Perfil); especialista (Mis citas, Perfil); recepción (Agenda, Perfil); administrador (Panel de administración, Personal, Disponibilidad, Citas, Perfil). El logo también lleva al panel principal del rol autenticado.
-- `DashboardAdmin.tsx` conserva el acceso rápido a Personal (`/usuarios/admin`); se retiraron del panel los accesos rápidos a Disponibilidad y Citas. Ambas pantallas siguen en el menú del administrador, y sus rutas continúan protegidas para `admin` en `AppRoutes.tsx`.
-- La revisión estática detectó que pantallas privadas genéricas de mascotas y solicitud de cita no limitaban el rol al abrir la URL directamente. Se añadieron guardas `RoleRoute roles={['usuario']}` en `/mascotas`, `/mascotas/nueva` y `/citas/nueva`; no se cambió el alcance de los roles para agenda, citas de especialista ni administración.
-- `Disponibilidad.tsx` deshabilita “Nueva franja” si no hay especialistas y ofrece al administrador un acceso a registrar el primero. Para recepción muestra que debe solicitar el alta al administrador. El usuario informa que actualmente no hay especialistas registrados; la base de datos no se consultó independientemente.
-- Las rutas del menú se contrastaron estáticamente con `AppRoutes.tsx`. No se verificó el comportamiento visual, responsive, navegación con teclado ni autorización en ejecución. Las guardas de interfaz no sustituyen la autorización del backend.
-- El componente `HistoriaClinicaCita.tsx` está importado por `PanelCitas.tsx` y permite cargar/crear/actualizar historia para una cita. Su autorización y recorrido UI/API no se probaron y faltan datos para validar el flujo real.
-- Logout y revocación JWT se localizaron en las rutas/servicios/middleware de backend y en `AuthContext.tsx`. No se ejecutó prueba de cierre y reutilización de token.
+## Riesgos y trabajo pendiente
 
-## Casos manuales y observaciones
+- Revisar las ocho vulnerabilidades reportadas y documentar decisión/mitigación.
+- Validar manualmente permisos por rol y acceso a recursos ajenos en un ambiente externo.
+- Alinear requisitos/contratos documentales pendientes y registrar los defectos con evidencias reproducibles.
+- Ejecutar un flujo funcional completo, E2E priorizadas, cobertura actual, CI remoto y backup/restore.
+- Completar despliegue/URL pública y acta de aceptación solo cuando correspondan.
 
-Se reportan 140 casos manuales no ejecutados, sin IDs/procedimientos/resultados fuente recibidos. La matriz registra esa limitación y no fabrica sus detalles. Los 56 candidatos GWT derivados de las historias incluidas tampoco se ejecutaron. Se reportan 36 observaciones estáticas/de cobertura sin detalle individual; no se clasifican como defectos reproducidos, corregidos o cerrados. La observación de navegación se registra separadamente como hallazgo estático corregido en código, pendiente de validación manual.
-
-## Precondición reportada por el usuario
-
-El usuario indica que actualmente no hay especialistas registrados. Se consigna como limitación reportada, no como consulta independiente de la base de datos. Antes de validar agenda, citas o historia clínica se requieren cuentas de especialista y citas/datos de prueba apropiados.
+Este reporte reemplaza las afirmaciones de “no ejecutado” en los informes anteriores únicamente para las comprobaciones listadas como reproducidas. Los resultados antiguos (336/336, 378/378, cifras de cobertura u otros) quedan como antecedentes históricos y no se reutilizan como resultados actuales. Consulte el [PMP](../../test_DOCUMENTACION/PLAN_MAESTRO_DE_PRUEBAS.md) y la [guía de ejecución](../../test_DOCUMENTACION/EJECUCION.md) para procedimientos prospectivos; ninguno cambia la acreditación de este pase.

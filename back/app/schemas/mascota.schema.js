@@ -8,7 +8,8 @@ const crearMascotaSchema = Joi.object({
   fecha_nacimiento: Joi.date().iso().required(),
   especie: Joi.string().valid(...ESPECIES_PERMITIDAS).required(),
   genero: Joi.string().valid(...GENEROS_PERMITIDOS).required(),
-  id_raza: Joi.number().integer().positive().required()
+  id_raza: Joi.number().integer().positive().required(),
+  foto_url: Joi.string().max(2048).uri({ scheme: ['https'] }).allow('', null).optional()
 });
 
 const idParamSchema = Joi.object({

@@ -11,7 +11,7 @@ const listar = asyncHandler(async (req, res) => {
 });
 
 const obtener = asyncHandler(async (req, res) => {
-  const mascota = await mascotaService.obtenerPorId(req.params.id);
+  const mascota = await mascotaService.obtenerPorId(req.params.id, req.user);
   return ok(res, mascota, 'Mascota encontrada correctamente');
 });
 

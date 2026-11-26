@@ -20,6 +20,8 @@ model Usuario {
   tipo                   String?          @db.VarChar(20)
   rol                    String           @default("usuario") @db.VarChar(20)
   fecha_registro         DateTime         @default(now()) @db.Timestamptz(6)
+  fecha_aceptacion_politicas DateTime?    @db.Timestamptz(6)
+  version_politicas_aceptadas String?     @db.VarChar(40)
   mascotas               UsuarioMascota[]
   disponibilidades       Disponibilidad[]
   citasComoRecepcionista Cita[]           @relation("CitaRecepcionista")
@@ -59,6 +61,7 @@ model Mascota {
   especie          String           @db.VarChar(50)
   genero           String           @db.VarChar(20)
   id_raza          Int
+  foto_url         String?          @db.VarChar(2048)
   fecha_registro   DateTime         @default(now()) @db.Timestamptz(6)
   raza             Raza             @relation(fields: [id_raza], references: [id_raza], onUpdate: Cascade, onDelete: Restrict)
   propietarios     UsuarioMascota[]

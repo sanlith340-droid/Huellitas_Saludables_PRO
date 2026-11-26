@@ -1,5 +1,7 @@
 # Bitácora — Seguridad BCRYPT
 
+> **Vigencia histórica:** los hechos y resultados siguientes corresponden al cambio fechado y no se reescriben. Para contraseñas y scripts vigentes, consulta [`../back_DOCUMENTACION/DESARROLLO.md`](./DESARROLLO.md) y [`../../back/Readme.md`](../../back/Readme.md); los enlaces antiguos `docs/...` citados en tablas describen rutas de aquella versión, no las rutas actuales.
+
 **Proyecto:** Huellitas Saludables — backend Node.js (ESM), Express, Prisma ORM 7 y PostgreSQL.
 
 **Fecha:** 10/11/2026

@@ -7,6 +7,7 @@ import LoadingState from "./feedback/LoadingState";
 import EmptyState from "./feedback/EmptyState";
 import HistoriaClinicaMascota from "./HistoriaClinicaMascota";
 import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
+import mascotaReferencia from "../assets/huellitas-mascota-web.jpg";
 import "../styles/mascotas.css";
 
 type Mascota = {
@@ -15,6 +16,7 @@ type Mascota = {
   especie: string;
   genero: string;
   raza?: string | null;
+  foto_url?: string | null;
 };
 
 function ListaMascotas() {
@@ -80,27 +82,37 @@ function ListaMascotas() {
           <EmptyState ilustracion="mascotas" titulo="Aún no hay huellas registradas" descripcion="Cuando registres a tu primera mascota, aquí verás su ficha y su historia clínica." sugerencias={["Solo necesitas su nombre, especie y fecha de nacimiento.", "Con la mascota registrada ya puedes agendar su primera cita."]} accion={{ etiqueta: "Registrar mi primera mascota", to: "/mascotas/nueva" }} />
         ) : (
           <div className="mascotas-grid">
-            {mascotas.map((mascota) => (
-              <button
-                className={`mascota-card ${mascotaSeleccionada?.id_mascota === mascota.id_mascota ? "mascota-card--activo" : ""}`}
-                key={mascota.id_mascota}
-                type="button"
-                onClick={() => setMascotaSeleccionada(mascota)}
-                aria-pressed={mascotaSeleccionada?.id_mascota === mascota.id_mascota}
-              >
-                <span className="mascota-card__top">
-                  <span className="mascota-card__avatar"><FaPaw /></span>
-                  <span className="mascota-card__arrow" aria-hidden="true">↗</span>
-                </span>
-                <span className="mascota-card__name">{mascota.mascota}</span>
-                <span className="mascota-card__meta">{mascota.especie} <i /> {mascota.genero}</span>
-                {mascota.raza && <span className="mascota-card__breed">{mascota.raza}</span>}
-                <span className="mascota-card__footer">
-                  <span>Historia clínica</span>
-                  <span className="mascota-card__action">Ver ficha</span>
-                </span>
-              </button>
-            ))}
+            {mascotas.map((mascota) => {
+              const seleccionada = mascotaSeleccionada?.id_mascota === mascota.id_mascota;
+              return (
+                <article className={`mascota-card${seleccionada ? " mascota-card--activo" : ""}`} key={mascota.id_mascota}>
+                  <div className="mascota-card__photo-wrap">
+                    <img
+                      className="mascota-card__photo"
+                      src={mascota.foto_url || mascotaReferencia}
+                      alt={mascota.foto_url ? `Fotografía de ${mascota.mascota}` : `Imagen de referencia para ${mascota.mascota}`}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = mascotaReferencia;
+                      }}
+                    />
+                    {!mascota.foto_url && <span className="mascota-card__photo-note"><FaPaw aria-hidden="true" /> Imagen de referencia</span>}
+                  </div>
+                  <div className="mascota-card__body">
+                    <h3 className="mascota-card__name">{mascota.mascota}</h3>
+                    <p className="mascota-card__meta">{mascota.especie} <span aria-hidden="true">·</span> {mascota.genero}</p>
+                    <p className="mascota-card__breed"><span>Raza</span>{mascota.raza || "Sin especificar"}</p>
+                  </div>
+                  <div className="mascota-card__actions">
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setMascotaSeleccionada(mascota)} aria-pressed={seleccionada}>
+                      {seleccionada ? "Historia abierta" : "Historia clínica"}
+                    </button>
+                    <Link to="/citas/nueva" className="mascota-card__appointment">Agendar cita</Link>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

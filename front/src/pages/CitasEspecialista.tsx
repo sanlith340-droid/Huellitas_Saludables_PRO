@@ -9,6 +9,7 @@ function CitasEspecialista() {
       titulo="Mis citas"
       descripcion={`Consultas asignadas para ${usuario?.nombre}. Decide si cada una fue atendida o cancelada.`}
       urlCitas={usuario?.id_usuario ? `/citas/especialista/${usuario.id_usuario}` : ""}
+      rolVista="especialista"
     />
   );
 }

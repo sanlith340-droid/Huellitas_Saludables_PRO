@@ -18,6 +18,8 @@ const ATTRS_PUBLICOS = {
   tipo: true,
   rol: true,
   fecha_registro: true,
+  fecha_aceptacion_politicas: true,
+  version_politicas_aceptadas: true,
 };
 
 /** Busca un usuario por correo (incluye contraseña, solo para login). */
@@ -46,6 +48,8 @@ async function create(usuarioData) {
     especializacion,
     tipo,
     rol,
+    fecha_aceptacion_politicas,
+    version_politicas_aceptadas,
   } = usuarioData;
 
   if (!esHashBcrypt(contrasena)) {
@@ -64,6 +68,8 @@ async function create(usuarioData) {
       especializacion: especializacion || null,
       tipo: tipo || null,
       rol: rol || 'usuario',
+      fecha_aceptacion_politicas: fecha_aceptacion_politicas || null,
+      version_politicas_aceptadas: version_politicas_aceptadas || null,
     },
     select: ATTRS_PUBLICOS,
   });

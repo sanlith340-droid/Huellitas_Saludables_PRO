@@ -168,7 +168,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="features" aria-label="Beneficios de Huellitas Saludables">
+      <section className="features" id="servicios" aria-label="Servicios de Huellitas Saludables">
         <div className="feature-card">
           <div className="feature-card__icon"><FaCalendarCheck /></div>
           <h3>Reserva flexible</h3>
@@ -184,6 +184,13 @@ function Home() {
           <h3>Todo en un panel</h3>
           <p>Mascotas, citas próximas e historial clínico, organizados en un solo panel.</p>
         </div>
+      </section>
+
+      <section className="home-about" id="acerca-de" aria-labelledby="home-about-title">
+        <p className="home-about__eyebrow">Acerca de nosotros</p>
+        <h2 id="home-about-title">Cuidado veterinario mejor organizado</h2>
+        <p>Huellitas Saludables reúne en un mismo espacio la gestión de mascotas, la disponibilidad de especialistas y la organización de citas para acompañar el cuidado de cada compañero.</p>
+        <Link to={autenticado ? "/dashboard" : "/registro"} className="btn btn-outline">{autenticado ? "Ir a mi panel" : "Conoce la plataforma"}</Link>
       </section>
     </div>
   );

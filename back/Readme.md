@@ -1,78 +1,79 @@
 # Backend — Huellitas Saludables
 
-API Node.js 22 + Express 4 en ESM, PostgreSQL y Prisma ORM 7. Prisma Client se genera como ESM en `app/generated/prisma` y se usa desde el singleton `app/config/prisma.js`. El modelo Prisma contiene los siete modelos: `Usuario`, `Raza`, `Mascota`, `UsuarioMascota`, `Disponibilidad`, `Cita` e `HistoriaClinica`.
+API Node.js 22 + Express 4 en JavaScript ESM, PostgreSQL y Prisma ORM 7.10.1. Prisma genera un cliente ESM en `app/generated/prisma` con el provider `prisma-client`; el backend lo usa mediante `@prisma/adapter-pg` y el singleton `app/config/prisma.js`. El schema vigente contiene **11 modelos**: `Usuario`, `PasswordResetToken`, `Raza`, `Mascota`, `UsuarioMascota`, `Disponibilidad`, `Cita`, `CitaCancelacion`, `HistoriaClinica`, `TokenRevocado` y `Notificacion`.
 
 ## Requisitos y configuración
 
-Instala Node.js 22 o posterior y PostgreSQL 12 o posterior. Desde `back/`, instala las dependencias y copia el archivo de ejemplo:
+Usa Node.js 22 o posterior y PostgreSQL compatible con el proyecto (Docker Compose declara PostgreSQL 16). Desde `back/`:
 
 ```bash
 npm ci
-cp .env.example .env
 ```
 
-Configura `.env` con el puerto, JWT y la conexión a PostgreSQL. Puedes definir `DATABASE_URL`, o los campos `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD`. No subas `.env` al repositorio. Las pruebas deben tener un `DB_NAME_TEST` separado que termine en `_test` y no sea igual a `DB_NAME`.
+En esta copia no existe `back/.env.example`; crea `.env` localmente con `DATABASE_URL` o `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET`. No subas `.env`, secretos ni contraseñas. Para probar, crea `.env.test` manualmente con `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME_TEST` y `JWT_SECRET`; la base indicada debe terminar en `_test` y diferir de `DB_NAME` porque el setup la recrea. No se encontró `.env.test.example` en este checkout.
 
-`npm ci` ejecuta `prisma generate` automáticamente. También puedes regenerar el cliente con `npm run prisma:generate`; validar el schema con `npx prisma validate`.
+El `postinstall` ejecuta `prisma generate`; también puedes llamar `npm run prisma:generate` o `npx prisma validate`.
 
-## Migraciones y preservación de datos
+## Prisma y migraciones
 
-Las migraciones versionadas están en `prisma/migrations/`. La migración `0_init` contiene las siete tablas, claves, restricciones, el índice parcial de citas activas y los triggers PostgreSQL que actualizan la disponibilidad y el estado de la cita al crear una historia clínica.
+El historial contiene **seis migraciones**:
+
+1. `0_init` — baseline original de las entidades iniciales.
+2. `20261110190000_cita_cancelacion_audit`.
+3. `20261119200000_token_revocado`.
+4. `20261123150000_password_reset_token`.
+5. `20261123190000_notificacion_in_app`.
+6. `20261124220000_consentimiento_y_foto_mascota`.
+
+El baseline inicial no es el total del esquema vigente: consulta `prisma/schema.prisma` y todas las migraciones. Las migraciones contienen reglas SQL adicionales a lo expresado por Prisma, incluidos `CHECK`, índice parcial y triggers; no las elimines ni edites migraciones aplicadas.
 
 ```bash
-npm run migrate
-npm run migrate:status
+npm run migrate          # baseline existente cuando procede + migrate deploy
+npm run migrate:status    # estado del historial
+npm run migrate:dev       # crear/aplicar migración en desarrollo
+npm run migrate:baseline  # marca 0_init sin ejecutar su SQL; requiere verificar esquema
 ```
 
-`npm run migrate` no resetea ni borra datos. En una base vacía crea el schema. Si detecta una base ya existente, verifica tablas, columnas, constraints, índice parcial y triggers; únicamente cuando coinciden con el modelo esperado registra `0_init` como aplicado y continúa. Si detecta un schema parcial o diferente, aborta sin modificar filas. Haz un respaldo antes de cualquier actualización.
+`npm run migrate` no resetea ni borra datos. En una base existente, el script verifica que el esquema corresponda antes de registrar `0_init`; si es parcial o distinto, aborta. Conserva un respaldo antes de actualizar. `npm run db:reset` es destructivo y no debe ejecutarse sobre datos a conservar.
 
-Existe también `npm run migrate:baseline`, que registra manualmente `0_init` como aplicado sin aplicar su SQL. Úsalo únicamente cuando hayas verificado por separado que la base existente corresponde exactamente al baseline y tengas un respaldo. No se utiliza para bases vacías.
-
-Para crear y aplicar una migración de desarrollo después de editar `schema.prisma`, utiliza `npm run migrate:dev` en una base local de desarrollo. No ejecutes `db:reset` sobre datos que deban conservarse; ese comando es destructivo.
-
-## Semillas de desarrollo
+## Semillas y contraseñas demo
 
 ```bash
 npm run seed
 ```
 
-La semilla `prisma/seed.js` es idempotente para los registros demo: crea usuarios, razas, mascotas, asociaciones, disponibilidades, una cita y su historia clínica si faltan. Las contraseñas de demo son `123456`; usa esos datos exclusivamente en desarrollo/pruebas, nunca en producción. Docker solo ejecuta la semilla si `DB_SEED=true` y `NODE_ENV` no es `production`.
+La semilla está en `prisma/seed.js`; los datos y credenciales demo solo deben usarse en desarrollo/pruebas. Docker solo carga seed con `DB_SEED=true`, fuera de producción y cuando corresponde.
 
-## Ejecutar la API
+## Autenticación, permisos y contraseñas
 
-```bash
-npm run dev
-```
+Las rutas privadas requieren `Authorization: Bearer <token>`. El middleware vuelve a consultar al usuario y rol vigentes desde PostgreSQL. El backend limita a cinco mascotas por propietario; la sexta alta devuelve `409` y `MASCOTAS_LIMITE_ALCANZADO`. Los propietarios solo listan/obtienen mascotas asociadas, historias clínicas de sus mascotas y citas propias en los endpoints de propietario; recursos ajenos reciben `404` genérico en las consultas donde se aplica ocultamiento. Recepción, especialistas y administración tienen el alcance de cada ruta definido en [la guía de API](../DOCS_PROYECTO/back_DOCUMENTACION/API.md).
 
-Para iniciar en modo normal:
+Las contraseñas nuevas se guardan con bcrypt (`bcrypt` 6, 12 rondas por defecto). Los hashes `scrypt` solo se conservan como compatibilidad legada: se verifican con parámetros restringidos y, tras un login correcto, se rehashan a bcrypt. Contraseñas almacenadas en texto plano no se aceptan en login. `npm run passwords:migrate` sirve para analizar/migrar valores heredados; respalda y verifica datos antes de aplicar la opción de escritura.
 
-```bash
-npm start
-```
+## Recuperación y notificaciones
 
-La API conserva las rutas y el formato público existentes. PostgreSQL sigue usando nombres de tabla y columna en snake_case; los modelos aplanan los resultados Prisma para mantener las formas consumidas por el frontend.
+La recuperación de contraseña utiliza endpoints públicos de solicitud, verificación y cambio, con tokens aleatorios de un solo uso; la base conserva el hash del token. El envío necesita `SMTP_HOST`, `SMTP_PORT` (587 por defecto), `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` y `FRONTEND_URL`. Si falta configuración SMTP o la URL, el backend responde `503`; el mensaje no revela si el correo solicitado pertenece a una cuenta. Una configuración de SMTP local de pruebas no equivale a tener proveedor SMTP de producción decidido.
 
-## Regla de contraseñas
+Las notificaciones actuales son persistentes e in-app para especialistas autenticados, con consultas/lectura limitadas a las del usuario. No se envían por email, SMS ni push.
 
-Las contraseñas se guardan únicamente como hash **bcrypt** (12 rondas, salt generado por bcrypt) y se validan con `bcrypt.compare()`. Las nuevas contraseñas admiten como máximo 72 bytes (límite de bcrypt). Los hashes scrypt de la versión anterior se migran solos a bcrypt en el siguiente login correcto; las contraseñas que aún estén en texto plano se migran con:
+## Scripts npm disponibles
 
-```bash
-npm run passwords:migrate                                   # solo analiza, no modifica nada
-npm run passwords:migrate -- --aplicar --confirmo-respaldo  # migra (hacer respaldo antes)
-```
+| Script | Uso |
+|---|---|
+| `start` | Inicia `tsx server.js`. |
+| `dev` | Ejecuta nodemon + tsx con recarga. |
+| `postinstall`, `prisma:generate` | Genera Prisma Client. |
+| `migrate`, `migrate:dev`, `migrate:status`, `migrate:baseline` | Aplicar, crear, consultar y marcar baseline. |
+| `seed` | Ejecuta la semilla Prisma. |
+| `passwords:migrate` | Analiza o migra hashes legados bajo el procedimiento del script. |
+| `db:reset` | Reinicio destructivo de Prisma Migrate. |
+| `test`, `test:watch`, `test:coverage` | Vitest ejecución única, interactiva y con cobertura. |
+| `lint`, `lint:fix` | ESLint 9. |
 
-Detalle completo en `docs/back/BITACORA_BCRYPT.md`. Las consultas SQL crudas y su protección contra SQL Injection se documentan en `docs/back/BITACORA_SQL_INJECTION.md`.
+## Pruebas y vulnerabilidades consignadas
 
-El login, el registro público y el registro administrativo rechazan cualquier carácter de espacio en la contraseña, incluidos espacios al inicio, al final o en medio, tabulaciones, saltos de línea y espacios Unicode. La API responde con `400 BAD_REQUEST` y `La contraseña no puede contener espacios.`; el frontend muestra el mismo mensaje antes de enviar el formulario. Los espacios siguen permitidos en nombres, apellidos y direcciones.
+La evidencia técnica más reciente consignada en el paquete/estado del proyecto es **410/410 pruebas aprobadas en 31 archivos**. No se ejecutó `npm test` ni se generó una nueva evidencia durante esta tarea documental.
 
-## Pruebas
+El último `npm ci` consignado reportó **8 vulnerabilidades (4 moderadas y 4 altas)**. No se ejecutó `npm ci` de nuevo, no se corrió `npm audit fix` y no se modificaron dependencias; revisa avisos y versiones en el flujo autorizado de mantenimiento antes de resolverlos.
 
-```bash
-cp .env.test.example .env.test
-# Revisa DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME_TEST y JWT_SECRET.
-npm test
-```
-
-Vitest prepara la base aislada, aplica las migraciones Prisma y la semilla, y luego los tests pueden reiniciarla. El helper exige que la base termine en `_test` y sea distinta de `DB_NAME`; solo esa base se elimina/recrea. El usuario PostgreSQL necesita permisos para crear y eliminar esa base de prueba. No apuntes la configuración de pruebas a producción.
-
-Docker ejecuta `npm run migrate` antes de iniciar `npm start`. Para activar datos demo en un entorno no productivo, define `DB_SEED=true`.
+La guía detallada vigente está en [`DOCS_PROYECTO/back_DOCUMENTACION/README.md`](../DOCS_PROYECTO/back_DOCUMENTACION/README.md); contratos de rutas y errores en [`API.md`](../DOCS_PROYECTO/back_DOCUMENTACION/API.md), desarrollo en [`DESARROLLO.md`](../DOCS_PROYECTO/back_DOCUMENTACION/DESARROLLO.md) y creación de una base vacía en [`database_original/0.CREAR_DATABASE.MD`](../database_original/0.CREAR_DATABASE.MD).

@@ -1,6 +1,8 @@
 # BITÁCORA DE ACTIVIDADES
 ## Migración del backend de CommonJS a ES Modules (ESM)
 
+> **Vigencia histórica:** el registro de fechas y actividades se conserva. Las rutas de documentación como `docs/back/` citadas en el historial corresponden a la estructura de entonces; la carpeta actual es `DOCS_PROYECTO/back_DOCUMENTACION/`. Para la arquitectura vigente, consulta [`ARQUITECTURA.md`](./ARQUITECTURA.md) y [`DESARROLLO.md`](./DESARROLLO.md).
+
 **Proyecto:** HUELLITAS SALUDABLES  
 **Responsable:** Sara Jasmin Cruz Calderon  
 **Fecha de inicio:** 6 de noviembre de 2026  

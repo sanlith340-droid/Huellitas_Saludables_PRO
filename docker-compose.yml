@@ -34,6 +34,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en el archivo .env (cadena aleatoria larga)}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
       DB_SEED: ${DB_SEED:-false}
+      API_NINJAS_KEY: ${API_NINJAS_KEY:-}
       # Recuperación de contraseña: sin SMTP la ruta responde 503 (no rompe el arranque).
       PASSWORD_RESET_TOKEN_TTL_MINUTES: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:-30}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}

@@ -70,7 +70,7 @@ Para la documentación específica de seguridad y mensajes por rol, consulta [Ar
 - `.agents/`: reglas, skills y workflows de continuidad del repositorio.
 - `docker-compose.yml`: `db` (PostgreSQL), `backend` y `frontend` (Nginx con proxy hacia la API). El Compose exige configurar `DB_PASSWORD` y `JWT_SECRET`; los valores locales de puerto y CORS están declarados en el propio archivo.
 
-En desarrollo local sin Docker, Vite suele servir el frontend en `http://localhost:5173` y la API en `http://localhost:3000`; para levantarlo con Docker Compose, el frontend se publica en el puerto `APP_PORT` (por defecto `8080`). Sigue [Arranque](DOCS_PROYECTO/arranque.md) y verifica las variables requeridas antes de iniciar. Este checkout no contiene plantillas `.env.example` ni `.env.docker.example`: crea los archivos locales necesarios manualmente, no los subas a Git y usa secretos propios.
+En desarrollo local sin Docker, Vite suele servir el frontend en `http://localhost:5173` y la API en `http://localhost:3000`; con Docker Compose, el frontend se publica en el puerto `APP_PORT` (por defecto `8080`). Sigue [Arranque](DOCS_PROYECTO/arranque.md) y verifica las variables requeridas antes de iniciar. El checkout incluye `back/.env.example`; `API_NINJAS_KEY` es opcional y se configura solo en el entorno del backend (o en el `.env` raíz usado por Compose), nunca en el bundle del frontend. Mantén los archivos `.env` locales fuera de Git.
 
 ## Scripts disponibles
 
@@ -116,4 +116,3 @@ La configuración de CI en el repositorio y los scripts/guías operativas no dem
 | [Documentación de pruebas](DOCS_PROYECTO/test_DOCUMENTACION/README.md) | Plan, ejecución y límites de QA |
 | [Cierre T4: pendientes manuales](DOCS_PROYECTO/sustentacion_DOCUMENTACION/00_CIERRE_T4_PENDIENTES_MANUALES.md) | Pendientes de evidencia, despliegue y aceptación |
 | [Estado para continuidad](.agents/workflows/ESTADO_ACTUAL.md) | Resumen fechado para el siguiente modelo |
-

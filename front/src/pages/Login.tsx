@@ -90,10 +90,15 @@ function Login() {
     setCargando(true);
 
     try {
-      const respuesta = await api.post("/auth/login", {
-        correo: form.correo.trim(),
-        contrasena: form.contrasena,
-      });
+      const respuesta = await api.post(
+        "/auth/login",
+        {
+          correo: form.correo.trim(),
+          contrasena: form.contrasena,
+        },
+        // La API puede tardar en despertar después de un periodo de inactividad.
+        { timeout: 90_000 },
+      );
       const datos = respuesta.data.data;
 
       login(datos.usuario);
@@ -210,7 +215,7 @@ function Login() {
             <BotonEnvio
               guardando={cargando}
               texto="Iniciar sesión"
-              textoGuardando="Entrando..."
+              textoGuardando="Conectando con el servidor..."
               bloque
             />
           </form>

@@ -24,13 +24,7 @@ async function obtenerPorId(id_mascota, solicitante = null) {
 }
 
 async function crearConUsuario(datos, id_usuario) {
-  const { nombre, fecha_nacimiento, especie, genero, id_raza, foto_url } = datos;
-
-  // Validar raza
-  const raza = await razaModel.findById(id_raza);
-  if (!raza) {
-    throw AppError.notFound(`No existe la raza con id ${id_raza}`);
-  }
+  const { nombre, fecha_nacimiento, especie, genero, id_raza, raza_nombre, foto_url } = datos;
 
   // Validar especie
   const especiesPermitidas = ['perro', 'gato'];
@@ -44,15 +38,22 @@ async function crearConUsuario(datos, id_usuario) {
     throw AppError.badRequest(`El género debe ser: ${generosPermitidos.join(', ')}`);
   }
 
+  const raza = raza_nombre
+    ? await razaModel.findOrCreateByName(raza_nombre)
+    : await razaModel.findById(id_raza);
+  if (!raza) {
+    throw AppError.notFound(`No existe la raza con id ${id_raza}`);
+  }
+
   try {
     return await mascotaModel.crearConUsuario({
       nombre,
       fecha_nacimiento,
       especie,
       genero,
-      id_raza,
+      id_raza: raza.id_raza,
       foto_url: foto_url || null,
-      id_usuario
+      id_usuario,
     });
   } catch (error) {
     if (error?.code === 'MASCOTAS_LIMITE_ALCANZADO') {

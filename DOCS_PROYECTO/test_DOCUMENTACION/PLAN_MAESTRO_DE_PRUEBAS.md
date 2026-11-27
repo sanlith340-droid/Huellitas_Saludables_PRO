@@ -4,8 +4,8 @@
 
 | Control | Información |
 |---|---|
-| Versión | 1.2 |
-| Fecha de actualización | 25 de noviembre de 2026 |
+| Versión | 1.3 |
+| Fecha de actualización | 27 de noviembre de 2026 |
 | Estado | **Borrador listo para revisión y aprobación del equipo**; no es certificación ni acta de aceptación. |
 | Área | Backend y frontend |
 | Prioridad / estimación | P0 / XL (clasificación recibida en la solicitud) |
@@ -78,9 +78,9 @@ No se excluyen del plan los módulos funcionales base listados en la sección 2.
 | EX-01 | Canales externos de RF009 | Email transaccional, SMS, push o proveedor externo para avisos de citas/disponibilidad. | RF009 está implementado y solicitado como notificación persistente in-app; no hay requerimiento de proveedor/canal externo aprobado. | Media; no bloquea el alcance in-app. Reabrir si el negocio lo exige. |
 | EX-02 | Módulo estructurado de vacunas | Inventario, calendario, recordatorios y esquema independiente de vacunación. | No se confirma un módulo/modelo de vacunación en el esquema; una nota clínica no equivale a dicho módulo. | Media; registrar como solicitud de alcance si se requiere. |
 | EX-03 | Rol/panel independiente de cuidador | Inicio de sesión, permisos y operaciones propias de un rol de cuidador separado de `usuario`. | El modelo de responsables/copropietarios no demuestra un rol autónomo ni criterios de aceptación para este. | Media; decidir antes de diseñar casos de aceptación específicos. |
-| EX-04 | Pruebas de carga/estrés en producción | Pruebas con concurrencia alta, duración prolongada o agotamiento de capacidad en entorno real. | No hay perfil de carga, topología, umbrales ni ventana de prueba aprobados; además no se encontró despliegue productivo. | Alta; solo se planifica en ambiente aislado tras aprobación. |
+| EX-04 | Pruebas de carga/estrés en producción | Pruebas con concurrencia alta, duración prolongada o agotamiento de capacidad en entorno real. | No hay perfil de carga, umbrales ni ventana aprobados. El despliegue de Render acreditado no autoriza pruebas de carga ni uso de producción. | Alta; solo se planifica en ambiente aislado tras aprobación. |
 | EX-05 | Pentest/certificación independiente | Evaluación externa formal, explotación controlada y certificación normativa. | Requiere autorización, alcance, proveedor y protocolo específicos; las pruebas unitarias no lo sustituyen. | Alta; permanece como riesgo hasta decisión/contratación. |
-| EX-06 | Entrega SMTP real de recuperación | Envío desde proveedor/cuenta de correo productiva. | No se ha configurado ni aprobado proveedor de producción; se puede probar el flujo con SMTP local controlado. | Media; el flujo funcional sí se prueba con simulación/SMTP de test. |
+| EX-06 | Entrega SMTP real de recuperación | Envío desde proveedor/cuenta de correo productiva. | Esta ronda fue local y no probó SMTP real ni el consumo del enlace en un buzón. La evidencia previa de envío en Render no reemplaza esa validación de extremo a extremo. | Media; registrar por separado el envío previo y la recepción/consumo pendientes. |
 | EX-07 | Navegadores y plataformas adicionales | Safari, Edge, sistemas móviles nativos y versiones no acordadas. | El alcance inicial de esta solicitud señala Chrome y Firefox; no se recibió matriz adicional de soporte. | Baja/media; documentar matriz futura; no asumir compatibilidad universal. |
 | EX-08 | Certificación integral de accesibilidad | Auditoría WCAG completa con tecnologías asistivas/usuarios especializados. | No hay protocolo, nivel objetivo ni participantes aprobados. Se mantienen verificaciones básicas de teclado, etiquetas, foco y movimiento reducido. | Media; no declarar conformidad WCAG en esta entrega. |
 | EX-09 | Función no implementada o requisito sin criterio verificable | Ejemplos: auditoría persistida completa (RF015), si no está disponible en el build; actualización de mascota no encontrada; otros flujos no localizados. | No se puede probar como aprobado un comportamiento que no existe o no tiene criterio acordado. | Alta si afecta privacidad/seguridad; en otros casos media. Registrar defecto o decisión, no descartar sin aprobación. |
@@ -93,7 +93,7 @@ Se conservarán como casos de regresión todos los flujos críticos tras un camb
 
 ### 2.4 Casos excluidos
 
-Los casos EX-01 a EX-10 en la hoja `Exclusiones` de la matriz describen explícitamente: canales externos de RF009; módulo estructurado de vacunas; rol independiente de cuidador; carga/estrés en producción; pentest/certificación externa; entrega SMTP real; navegadores/plataformas adicionales; certificación completa de accesibilidad; pruebas de producción/despliegue sin URL confirmada; y reconstrucción de los 140 casos manuales originales sin fuente. Cada exclusión indica función, razón, criticidad y condición para reabrirse.
+Los casos EX-01 a EX-10 en la hoja `Exclusiones` de la matriz describen explícitamente: canales externos de RF009; módulo estructurado de vacunas; rol independiente de cuidador; carga/estrés en producción; pentest/certificación externa; entrega SMTP real; navegadores/plataformas adicionales; certificación completa de accesibilidad; pruebas invasivas en producción sin autorización/protocolo; y reconstrucción de los 140 casos manuales originales sin fuente. Cada exclusión indica función, razón, criticidad y condición para reabrirse.
 
 Los 140 casos manuales reportados sin fuente identificada, IDs, pasos, datos ni resultados no se reconstruyen ni se declaran ejecutados. Se solicita al equipo fuente original para incorporarlos sin perder trazabilidad. Los casos GWT propuestos en la RTM son candidatos, no aprobaciones ni ejecuciones.
 
@@ -249,11 +249,13 @@ La asignación individual de un caso debe quedar en la columna `Responsable` de 
 
 ## 8. Estado de calidad y limitaciones conocidas
 
-El informe de verificación local más reciente, fechado **25/11/2026**, documenta: `npm test` backend **410/410 pruebas aprobadas en 31 archivos**; build frontend correcto (`tsc -b` + Vite); lint frontend **0 errores/0 advertencias** y lint backend **0 errores/4 advertencias**. En ese pase **no se calculó cobertura**. Tampoco se ejecutaron E2E, carga, CI remoto, backup/restore ni aceptación; `npm ci` reportó **8 vulnerabilidades (4 moderadas y 4 altas)**, pendientes de triage. Véase el [informe actual de verificación](../sustentacion_DOCUMENTACION/D4_DOCUMENTACION_Y_CALIDAD/INFORME_FINAL_VERIFICACION_CALIDAD.md). Los porcentajes de cobertura y el ensayo de backup/restore citados en cortes anteriores son **históricos**, no resultados actuales. La edición de este plan no reejecutó la suite ni aprobó los casos nuevos de la matriz.
+La última ejecución local, fechada **27/11/2026**, ejecutó `npm run test:coverage` en 32 archivos: **416/417 pruebas aprobadas y 1 fallida**. El fallo está en `mascotas.test.js`: una prueba posterior recibe HTTP 409 al alcanzar el máximo de cinco mascotas tras altas anteriores; el caso de nombre de exactamente 200 caracteres pasó cuando se ejecutó aislado con una base recién sembrada. Se considera pendiente de corregir el aislamiento de los datos del test; no declarar la suite aprobada ni atribuir el fallo al formulario. La corrida no generó `coverage/index.html` ni `lcov.info`, por lo que no se informa porcentaje.
+
+En el mismo corte pasaron lint, type-check y build frontend, `npx prisma validate` y smoke HTTP local; backend lint terminó con 0 errores y 4 advertencias. Las migraciones y el seed se aplicaron exclusivamente a bases de prueba locales temporales, luego eliminadas. La [auditoría integral del 27/11](../auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-27_PRUEBA_INTEGRAL_LOCAL.md) contiene el paso a paso. El resultado anterior de **410/410 del 25/11** y las **8 vulnerabilidades (4 moderadas y 4 altas)** notificadas por `npm ci` son antecedentes históricos; estas últimas siguen pendientes de triage. No se ejecutaron E2E, carga, CI remoto, backup/restore ni aceptación formal.
 
 Limitaciones/decisiones que condicionan la ronda:
 
-- No se encontró URL/entorno productivo. El blueprint de despliegue no acredita publicación.
+- El despliegue en Render está acreditado en la auditoría del 26/11; esta ronda fue local y aislada y no accedió ni modificó la base productiva.
 - En el cierre se reportó Docker no disponible; no afirmar Compose validado en esa ronda.
 - No se encontró suite automatizada frontend/E2E ni matriz formal de compatibilidad.
 - La entrega reporta 140 casos manuales pendientes, pero los IDs/detalles originales no fueron suministrados. Esta matriz nueva es planificación complementaria, no reemplazo de esos casos.
@@ -261,7 +263,7 @@ Limitaciones/decisiones que condicionan la ronda:
 - **DEC-02:** RN39/RN40 y la forma de error/respuesta observada requieren decisión; no fijar asserts del contrato en contradicción.
 - **DEC-03:** requisitos operativos para cuidador separado, edición de mascota y auditoría completa RF015 requieren confirmación frente a capacidades del build.
 - **DEC-04:** revisar las vulnerabilidades transitivas reportadas y acordar priorización; este PMP no las da por corregidas.
-- Cifras de pruebas de fechas anteriores (334, 336, 388, 389) corresponden a cortes diferentes; el pase actual documentado es 410/410 en 31 archivos el 25/11. No mezclarlas ni sumarlas. Los resultados de cobertura anteriores y la verificación anterior de backup/restore tampoco sustituyen las pendientes del pase actual.
+- Cifras de pruebas de fechas anteriores (334, 336, 388, 389 y 410) corresponden a cortes diferentes; el pase actual documentado es 416/417 en 32 archivos el 27/11. No mezclarlas ni sumarlas. Los resultados de cobertura anteriores y la verificación anterior de backup/restore tampoco sustituyen las pendientes del pase actual.
 
 ### 8.1 Riesgos de la ronda y tratamiento
 
@@ -271,10 +273,10 @@ Limitaciones/decisiones que condicionan la ronda:
 | R-02 | RF012/US-12 y RN28 discrepan sobre lectura clínica; oráculo inválido o privacidad comprometida. | Alta / Crítico | Mantener HC-04/SYS-02 bloqueados hasta decisión firmada y controles backend cotejados. | Equipo completo |
 | R-03 | Contrato RN39/RN40 difiere de rutas/Swagger; asserts falsos o errores mal interpretados. | Media / Alta | Acordar esquema/status/body y versionar la decisión antes de fijar expectativas. | Sara + Jorge |
 | R-04 | 140 casos manuales originales no disponibles; riesgo de perder trazabilidad al reconstruirlos. | Alta / Media | Solicitar fuente original; preservar historial y no sustituirla con los casos planificados nuevos. | Equipo completo |
-| R-05 | Sin E2E frontend, despliegue productivo confirmado o Docker verificado; evidencia integrada limitada. | Alta / Alta | Etiquetar verificaciones pendientes/bloqueadas; no inferirlas desde build o backend. | Santiago + Jorge |
+| R-05 | Sin E2E frontend ni Docker verificado; la evidencia integrada de esta ronda local es limitada aunque Render se haya verificado en una ronda separada. | Alta / Alta | Etiquetar verificaciones pendientes/bloqueadas; no inferirlas desde build o backend. | Santiago + Jorge |
 | R-06 | Perfil y umbrales de carga no aprobados; resultado no comparable o impacto en datos/servicio. | Alta / Alta | Mantener PERF-01/02 bloqueados y ejecutar solo en ambiente aislado con límites/paro aprobados. | Jorge |
 | R-07 | Requisito de cuidador, edición de mascota o auditoría RF015 no coincide con capacidad del build. | Media / Alta | Inspección de rutas/UI y decisión de alcance; registrar brecha, no declarar aprobado. | Equipo completo |
-| R-08 | El baseline histórico (410 pruebas de 410 reportadas) se confunde con ejecución de la nueva matriz. | Media / Alta | Mantener fecha/fuente; identificar todos los casos nuevos como no ejecutados hasta corrida real. | Sara + Jorge |
+| R-08 | La suite actual tiene 1 fallo por dependencia de orden/datos en `mascotas.test.js`; puede confundirse con un defecto de producto o declararse verde por error. | Media / Alta | Mantener 416/417 como resultado; corregir el aislamiento del test con autorización y volver a correr la suite; no afirmar cobertura ni certificación. | Sara + Jorge |
 
 ## 9. Entregables y criterio de finalización de esta tarea
 
@@ -288,4 +290,5 @@ La versión final del PMP para certificar requiere revisión/aprobación del equ
 |---|---|---|---|
 | 1.0 | 13/11/2026 | Borrador inicial de la estrategia de pruebas; cifras históricas y brechas. | Reemplazada por esta revisión. |
 | 1.1 | 25/11/2026 | Alinea alcance y responsables con la tarea T4; actualiza baseline documental al informe de 410 pruebas de 410 del 25/11; incorpora matriz trazable, configuración/seguridad de datos, exclusiones, criterios, orden, conflictos y advertencia explícita de que no hay aprobación/ejecución nueva. | Reemplazada. |
-| 1.2 | 25/11/2026 | Incorpora adaptación metodológica a ISO/IEC/IEEE 29119-3:2013(E), preparación de datos/ambiente, resultados/bitácora/incidentes, suspensión/reanudación, estimación relativa y registro de riesgos. | **Borrador para revisión/aprobación; sin conformidad declarada.** |
+| 1.2 | 25/11/2026 | Incorpora adaptación metodológica a ISO/IEC/IEEE 29119-3:2013(E), preparación de datos/ambiente, resultados/bitácora/incidentes, suspensión/reanudación, estimación relativa y registro de riesgos. | Reemplazada. |
+| 1.3 | 27/11/2026 | Registra la corrida local 416/417 y su causa probable por aislamiento/orden, el pase aislado del caso de 200 caracteres, los checks frontend/Prisma/smoke y las brechas vigentes; actualiza el estado de Render previamente acreditado. | **Borrador para revisión/aprobación; sin conformidad declarada.** |

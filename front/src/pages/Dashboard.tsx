@@ -8,6 +8,7 @@ import LoadingState from "../components/feedback/LoadingState";
 import EmptyState from "../components/feedback/EmptyState";
 import { SpinnerHuella } from "../components/feedback/BotonEnvio";
 import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
+import { etiquetaEspecie } from "../utils/especies";
 
 function formatearFecha(fechaISO) {
   if (!fechaISO) return "";
@@ -162,7 +163,7 @@ function DashboardUsuario({ usuario }) {
                 <div>
                   <div className="list-item__title">{mascota.mascota}</div>
                   <div className="list-item__meta">
-                    {mascota.especie}
+                    {etiquetaEspecie(mascota.especie)}
                     {mascota.raza ? ` · ${mascota.raza}` : ""}
                   </div>
                 </div>

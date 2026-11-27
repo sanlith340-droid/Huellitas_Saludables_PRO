@@ -17,6 +17,11 @@ const options = {
     ],
     components: {
       securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
         apiKey: {
           type: 'apiKey',
           in: 'header',
@@ -1053,15 +1058,31 @@ const options = {
       // ============================================================
       // MASCOTAS
       // ============================================================
+      '/api/razas/catalogo': {
+        get: {
+          summary: 'Listar razas para una especie',
+          tags: ['Razas'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: 'especie',
+              in: 'query',
+              required: true,
+              schema: { type: 'string', enum: ['perro', 'gato'] },
+            },
+          ],
+          responses: {
+            200: { description: 'Catálogo ordenado, con origen api o respaldo' },
+            400: { description: 'Especie no válida' },
+            401: { description: 'JWT ausente o inválido' },
+          },
+        },
+      },
       '/api/mascotas': {
         get: {
           summary: 'Listar todas las mascotas',
           tags: ['Mascotas'],
-          security: [{ apiKey: [] }],
-          parameters: [
-            { $ref: '#/components/parameters/UserId' },
-            { $ref: '#/components/parameters/UserRole' },
-          ],
+          security: [{ bearerAuth: [] }],
           responses: {
             200: {
               description: 'Mascotas listadas correctamente',
@@ -1086,24 +1107,25 @@ const options = {
           summary: 'Registrar una nueva mascota',
           tags: ['Mascotas'],
           description: 'Crea una mascota y la asigna automáticamente al usuario autenticado (rol usuario o admin)',
-          security: [{ apiKey: [] }],
-          parameters: [
-            { $ref: '#/components/parameters/UserId' },
-            { $ref: '#/components/parameters/UserRole' },
-          ],
+          security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
-                  required: ['nombre', 'fecha_nacimiento', 'especie', 'genero', 'id_raza'],
+                  required: ['nombre', 'fecha_nacimiento', 'especie', 'genero'],
+                  oneOf: [
+                    { required: ['id_raza'] },
+                    { required: ['raza_nombre'] },
+                  ],
                   properties: {
                     nombre: { type: 'string', example: 'Firulais' },
                     fecha_nacimiento: { type: 'string', format: 'date', example: '2023-05-15' },
                     especie: { type: 'string', enum: ['perro', 'gato'], example: 'perro' },
                     genero: { type: 'string', enum: ['macho', 'hembra'], example: 'macho' },
                     id_raza: { type: 'integer', example: 1 },
+                    raza_nombre: { type: 'string', maxLength: 200, example: 'Labrador Retriever' },
                     foto_url: { type: 'string', format: 'uri', nullable: true, description: 'URL HTTPS pública opcional de la fotografía.' }
                   }
                 }
@@ -1127,7 +1149,7 @@ const options = {
               }
             },
             400: { description: 'Datos inválidos' },
-            401: { description: 'Faltan headers de autenticación' },
+            401: { description: 'JWT ausente o inválido' },
             403: { description: 'Solo usuarios pueden registrar mascotas' },
             404: { description: 'Raza no encontrada' },
             409: { description: 'Conflicto (mascota duplicada)' }

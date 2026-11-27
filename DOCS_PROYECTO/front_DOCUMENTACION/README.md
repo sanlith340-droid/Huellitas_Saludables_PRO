@@ -43,6 +43,7 @@ La tabla siguiente refleja `AppRoutes.tsx` (no una propuesta de navegación):
 
 ## Funcionalidades de interfaz documentadas
 
+- **Registro de mascotas:** el selector muestra **Caninos** y **Felinos** y carga razas dinámicas ordenadas por especie. Si el proveedor no está disponible, ofrece el catálogo local y permite continuar; **Otros** abre el campo «Especifica la raza de tu mascota». Cambiar de especie limpia la raza anterior. El formulario guarda el nombre de raza recibido o personalizado y mantiene el reinicio de campos que ya ocurre tras un alta exitosa.
 - **Límite de mascotas:** hasta cinco por usuario; la sexta se rechaza en backend con `409` y `MASCOTAS_LIMITE_ALCANZADO`. El frontend presenta el estado ilustrado descrito en [Límite de mascotas](LIMITE_MASCOTAS.md).
 - **Historias del propietario:** `HistoriaClinicaMascota` ofrece consulta de solo lectura por mascota y filtro por año/mes disponibles. El backend comprueba propiedad y devuelve un 404 genérico para mascotas ajenas. Detalle en [Historia clínica del propietario](HISTORIA_CLINICA_PROPIETARIO.md).
 - **Retroalimentación visual:** escenas/esqueletos de carga, vacíos con acción, errores con reintento y guardado; el mapa vigente está en [Estados de interfaz](../ESTADOS_DE_INTERFAZ.md).

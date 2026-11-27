@@ -24,12 +24,13 @@ Públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro`, `PO
 | `GET` | `/api/auth/test` | JWT | Endpoint de diagnóstico del módulo auth. |
 | `GET` | `/api/mascotas` | JWT | Lista mascotas. El rol `usuario` solo recibe mascotas asociadas a su cuenta; en ese resultado no se devuelven otros propietarios. |
 | `GET` | `/api/mascotas/{id}` | JWT | Busca por ID. Para `usuario`, solo su mascota; una ajena o inexistente responde `404` genérico. Otros roles autenticados no tienen un filtro adicional en esta ruta. |
-| `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota asociada al usuario autenticado; aplica máximo de cinco mascotas por usuario y devuelve `409` con `MASCOTAS_LIMITE_ALCANZADO` al excederlo. |
+| `POST` | `/api/mascotas` | `usuario`, `admin` | Registra una mascota asociada al usuario autenticado; acepta exactamente uno de `id_raza` (compatibilidad) o `raza_nombre` (catálogo dinámico/personalizado); aplica máximo de cinco mascotas por usuario y devuelve `409` con `MASCOTAS_LIMITE_ALCANZADO` al excederlo. |
 | `GET` | `/api/usuarios/especialistas` | JWT | Lista especialistas. |
 | `GET` | `/api/usuarios/personal` | `admin` | Lista personal sin contraseñas, con `citas_asociadas` y `puede_eliminar`. |
 | `GET` | `/api/usuarios/{documento}` | JWT | Busca usuario por identificador. La ruta no tiene un filtro de acceso por propietario; aplicar minimización de datos al definir su uso. |
 | `DELETE` | `/api/usuarios/{id}` | `admin` | Elimina solo cuentas de especialista o recepcionista; `403` para otros roles de cuenta, `404` si no existe y `409` si tiene citas asociadas. Al eliminar un especialista se eliminan sus horarios; los JWT de la cuenta eliminada dejan de autenticar. |
 | `GET` | `/api/razas` | JWT | Lista razas. |
+| `GET` | `/api/razas/catalogo?especie=perro\|gato` | JWT | Devuelve las razas de una especie, ordenadas y sin duplicados. El backend consulta API Ninjas con `API_NINJAS_KEY` fuera del frontend y usa un catálogo local si no hay clave o el proveedor falla. La respuesta incluye `origen: "api"` o `"respaldo"`. |
 | `GET` | `/api/disponibilidad` | JWT | Lista horarios con filtros y paginación según el esquema de consulta. |
 | `GET` | `/api/disponibilidad/especialista/{id_usuario}` | JWT | Lista horarios del especialista; admite filtros. |
 | `GET` | `/api/disponibilidad/{id}` | JWT | Busca una franja. |
@@ -54,6 +55,8 @@ Públicas: `GET /health`, `POST /api/auth/login`, `POST /api/auth/registro`, `PO
 | `PUT` | `/api/historia/{id}` | `especialista` | Actualiza historia solo si pertenece al especialista autenticado. |
 
 Los valores entre llaves se reemplazan por el dato real, por ejemplo `/api/mascotas/12`. En particular, la autenticación JWT no equivale a permiso sobre todos los recursos: las reglas por propietario y especialista se vuelven a verificar en el backend.
+
+El contrato conserva `especie: "perro" | "gato"` para compatibilidad de datos; la interfaz presenta esas especies como **Caninos** y **Felinos**. La nueva alta puede enviar `raza_nombre` con el nombre mostrado o escrito en «Otros»; el backend reutiliza un nombre existente o lo incorpora al catálogo `Raza`. Los clientes anteriores pueden seguir enviando `id_raza`.
 
 ## Errores y límites
 

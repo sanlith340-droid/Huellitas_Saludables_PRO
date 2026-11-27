@@ -11,6 +11,7 @@ import app from '../../app/app.js';
 import { getToken } from '../helpers/auth.helper.js';
 import { resetDatabase } from '../setup/dbHelper.js';
 import { MASCOTAS } from '../fixtures/index.js';
+import { limpiarCache } from '../../app/services/raza.service.js';
 
 describe('Mascotas - /api/mascotas', () => {
   // Variables para guardar los tokens que usaremos
@@ -23,6 +24,31 @@ describe('Mascotas - /api/mascotas', () => {
     tokenUsuario      = await getToken('usuario');      // Login como usuario
     tokenEspecialista = await getToken('especialista'); // Login como especialista
     tokenAdmin        = await getToken('admin');        // Login como admin
+  });
+
+  it('GET /api/razas/catalogo entrega respaldo por especie y exige autenticación', async () => {
+    const apiKeyOriginal = process.env.API_NINJAS_KEY;
+    process.env.API_NINJAS_KEY = '';
+    limpiarCache();
+    try {
+      const res = await request(app)
+        .get('/api/razas/catalogo?especie=perro')
+        .set('Authorization', `Bearer ${tokenUsuario}`);
+      expect(res.status).toBe(200);
+      expect(res.body.data).toMatchObject({ especie: 'perro', origen: 'respaldo' });
+      expect(res.body.data.razas).toContain('Labrador Retriever');
+
+      const sinToken = await request(app).get('/api/razas/catalogo?especie=perro');
+      expect(sinToken.status).toBe(401);
+      const especieInvalida = await request(app)
+        .get('/api/razas/catalogo?especie=ave')
+        .set('Authorization', `Bearer ${tokenUsuario}`);
+      expect(especieInvalida.status).toBe(400);
+    } finally {
+      if (apiKeyOriginal === undefined) delete process.env.API_NINJAS_KEY;
+      else process.env.API_NINJAS_KEY = apiKeyOriginal;
+      limpiarCache();
+    }
   });
 
   // ============================================================
@@ -113,6 +139,17 @@ describe('Mascotas - /api/mascotas', () => {
       expect(res.body.data.mascota).toMatch(/^Firulais_/);
     });
 
+    it('guarda una raza recibida por nombre aunque no exista aún en el catálogo', async () => {
+      const razaNombre = `Raza personalizada ${Date.now()}`;
+      const res = await request(app)
+        .post('/api/mascotas')
+        .set('Authorization', `Bearer ${tokenUsuario}`)
+        .send({ ...bodyValido(), nombre: `Mascota_${Date.now()}`, raza_nombre: razaNombre, id_raza: undefined });
+
+      expect(res.status).toBe(201);
+      expect(res.body.data.raza.nombre).toBe(razaNombre);
+    });
+
     // TEST POSITIVO: admin también puede crear
     it('admin también puede crear (201)', async () => {
       const res = await request(app)
@@ -183,7 +220,7 @@ describe('Mascotas - /api/mascotas', () => {
     });
 
     // TEST PARAMETRIZADO: faltando cada campo
-    it.each(['nombre', 'fecha_nacimiento', 'especie', 'genero', 'id_raza'])(
+    it.each(['nombre', 'fecha_nacimiento', 'especie', 'genero'])(
       'sin %s devuelve 400',
       async (campoFaltante) => {
         const body = bodyValido();
@@ -197,6 +234,16 @@ describe('Mascotas - /api/mascotas', () => {
         expect(res.status).toBe(400);
       }
     );
+
+    it('sin id_raza ni raza_nombre devuelve 400', async () => {
+      const body = bodyValido();
+      delete body.id_raza;
+      const res = await request(app)
+        .post('/api/mascotas')
+        .set('Authorization', `Bearer ${tokenUsuario}`)
+        .send(body);
+      expect(res.status).toBe(400);
+    });
 
     it('rechaza la sexta mascota con un mensaje de límite (409)', async () => {
       const lista = await request(app)

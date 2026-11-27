@@ -12,13 +12,13 @@ Guía operativa prospectiva de la suite automatizada existente. Para conocer el 
 - La suite contiene pruebas backend unitarias y de integración; entre las áreas con archivos de prueba figuran autenticación/rate limit, permisos y propiedad de mascotas/citas, citas, historias clínicas, notificaciones y controles SQL. La presencia de esos archivos no prueba por sí sola que cada escenario pase.
 - Frontend: no se encontró framework/suite automatizada de componentes ni E2E en `front/`; no hay configuración Playwright/Cypress en los paquetes revisados.
 
-La bitácora [`BITACORA_VALIDACION_FORMULARIOS.md`](../back_DOCUMENTACION/BITACORA_VALIDACION_FORMULARIOS.md) y los informes anteriores registraron cifras de cortes previos (incluidos 334/334 en 23 archivos); son antecedentes históricos y no describen el pase actual. El resultado actual debe leerse en el informe [verificación de calidad](../sustentacion_DOCUMENTACION/D4_DOCUMENTACION_Y_CALIDAD/INFORME_FINAL_VERIFICACION_CALIDAD.md), no inferirse del número de archivos presentes.
+La bitácora [`BITACORA_VALIDACION_FORMULARIOS.md`](../back_DOCUMENTACION/BITACORA_VALIDACION_FORMULARIOS.md) y los informes anteriores registraron cifras históricas (incluidos 334/334 en 23 archivos); no describen el pase actual. El resultado vigente se encuentra en la [auditoría integral local](../auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-27_PRUEBA_INTEGRAL_LOCAL.md) y la [bitácora QA](BITACORA_QA_LOCAL_2026-11-27.md); no debe inferirse del número de archivos presentes.
 
 ## Estado de la última ejecución consignada
 
-El informe local del 25/11/2026 registra: backend **410/410 en 31 archivos**; build frontend correcto; lint frontend **0 errores/0 advertencias**; lint backend **0 errores/4 advertencias**. En ese pase **no se calculó cobertura**. Tampoco se ejecutaron E2E, carga, CI remoto, backup/restore ni aceptación. `npm ci` reportó **8 vulnerabilidades (4 moderadas y 4 altas)**. Estos datos provienen de los informes/logs actuales; no se repitieron como parte de esta edición documental y no convierten los casos del PMP en casos ejecutados.
+La última ejecución local se realizó el **27/11/2026** y está documentada en la [auditoría integral local](../auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-27_PRUEBA_INTEGRAL_LOCAL.md). `npm run test:coverage` ejecutó 32 archivos: **416/417 pruebas pasaron y 1 falló** en `mascotas.test.js`. El caso de nombre de exactamente 200 caracteres recibió HTTP 409 en la suite porque pruebas anteriores llenaron las cinco plazas del mismo usuario; al ejecutarlo solo sobre una base recién sembrada, pasó (1 aprobado, 23 omitidos). Es un problema de aislamiento/orden del test pendiente de corregir; la suite **no está completamente aprobada**.
 
-El comando de cobertura existe (`npm run test:coverage`) y Vitest está configurado con proveedor V8 y reportes `text`, `html` y `lcov`; debe correrse en una ronda futura aprobada para obtener una medición vigente. No presentar porcentajes de cobertura de cortes anteriores como resultado actual.
+En la misma ronda pasaron lint frontend, comprobación TypeScript, build frontend y `npx prisma validate`; backend lint terminó con 0 errores y 4 advertencias. El smoke local comprobó `/health` (200), `/api-docs/` (200), catálogo sin token (401), preflight CORS (204), Vite `/` (200) y `/login` (200). La cobertura se solicitó, pero la corrida fallida no generó `back/coverage/index.html` ni `lcov.info`; no se informa porcentaje vigente. No se hicieron interacciones reales en navegador, pruebas E2E, CI remoto, Docker Compose, consulta real a API Ninjas ni envío SMTP real. Las cifras 410/410 del 25/11 y las 8 vulnerabilidades (4 moderadas y 4 altas) de `npm ci` son antecedentes históricos, no resultados nuevos de esta ronda.
 
 ## Opción A: PostgreSQL temporal con Docker Compose
 
@@ -102,3 +102,6 @@ Al terminar, registrar commit/versión, fecha, comando, ambiente, base usada, re
 - **Setup rechaza `DB_NAME_TEST`:** debe terminar en `_test`, usar solo letras/números/guion bajo y ser diferente de `DB_NAME`.
 - **Migración/seed falla:** revisar las migraciones y el estado de la BD de prueba; no apuntar a otra base para “probar si funciona”.
 - **Pruebas intermitentes:** considerar que la configuración desactiva paralelismo entre archivos porque comparten una base.
+
+
+> **Actualización 27/11/2026:** La cifra vigente de la ejecución local es 416/417 en 32 archivos; el informe completo, el diagnóstico del test y las limitaciones están en la [auditoría integral local](../auditorias_de_cambios_y_pruebas/AUDITORIA_2026-11-27_PRUEBA_INTEGRAL_LOCAL.md). La cifra 410/410 del 25/11 permanece solo como antecedente histórico.

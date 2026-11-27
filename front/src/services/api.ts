@@ -19,8 +19,8 @@ const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
 const api = axios.create({
   baseURL,
-  // Si el backend no responde, la petición no se queda colgada para siempre:
-  // a los 20 s se corta y la pantalla muestra un error con botón de reintento.
+  // Tiempo límite general de las peticiones; login puede ampliarlo para permitir
+  // que un backend gratuito despierte después de estar inactivo.
   timeout: 20000,
 });
 

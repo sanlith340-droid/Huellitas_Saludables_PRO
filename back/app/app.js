@@ -10,6 +10,7 @@ import swaggerUi from 'swagger-ui-express';
 
 import swaggerSpec from './config/swagger.js';
 import apiRoutes from './routes/index.js';
+import { obtenerOrigenesCorsPermitidos } from './config/corsOrigins.js';
 
 import { identifyUser } from './middlewares/identifyUser.js';
 import auditLog from './middlewares/auditLog.js';
@@ -19,10 +20,7 @@ import { ok } from './utils/response.js';
 import AppError from './utils/AppError.js';
 import asyncHandler from './utils/asyncHandler.js';
 
-const origenesPermitidos = (process.env.CORS_ORIGIN || '')
-  .split(',')
-  .map((origen) => origen.trim())
-  .filter(Boolean);
+const origenesPermitidos = obtenerOrigenesCorsPermitidos();
 
 const app = express();
 

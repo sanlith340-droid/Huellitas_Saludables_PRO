@@ -8,6 +8,7 @@ import EmptyState from "./feedback/EmptyState";
 import HistoriaClinicaMascota from "./HistoriaClinicaMascota";
 import { mensajeDeError, tituloDeError, varianteDeError } from "../utils/erroresApi";
 import mascotaReferencia from "../assets/huellitas-mascota-web.jpg";
+import { etiquetaEspecie } from "../utils/especies";
 import "../styles/mascotas.css";
 
 type Mascota = {
@@ -101,7 +102,7 @@ function ListaMascotas() {
                   </div>
                   <div className="mascota-card__body">
                     <h3 className="mascota-card__name">{mascota.mascota}</h3>
-                    <p className="mascota-card__meta">{mascota.especie} <span aria-hidden="true">·</span> {mascota.genero}</p>
+                    <p className="mascota-card__meta">{etiquetaEspecie(mascota.especie)} <span aria-hidden="true">·</span> {mascota.genero}</p>
                     <p className="mascota-card__breed"><span>Raza</span>{mascota.raza || "Sin especificar"}</p>
                   </div>
                   <div className="mascota-card__actions">

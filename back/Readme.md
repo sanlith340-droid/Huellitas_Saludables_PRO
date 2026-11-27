@@ -10,7 +10,9 @@ Usa Node.js 22 o posterior y PostgreSQL compatible con el proyecto (Docker Compo
 npm ci
 ```
 
-En esta copia no existe `back/.env.example`; crea `.env` localmente con `DATABASE_URL` o `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET`. No subas `.env`, secretos ni contraseñas. Para probar, crea `.env.test` manualmente con `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME_TEST` y `JWT_SECRET`; la base indicada debe terminar en `_test` y diferir de `DB_NAME` porque el setup la recrea. No se encontró `.env.test.example` en este checkout.
+Usa `back/.env.example` como referencia para las variables opcionales. Crea `.env` localmente con `DATABASE_URL` o `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` y `JWT_SECRET`; no subas `.env`, secretos ni contraseñas. Para probar, crea `.env.test` manualmente con `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME_TEST` y `JWT_SECRET`; la base indicada debe terminar en `_test` y diferir de `DB_NAME` porque el setup la recrea.
+
+`API_NINJAS_KEY` es opcional y solo se lee en el backend para obtener razas desde API Ninjas. Configúrala como variable secreta del entorno servidor o en el `.env` local (Docker Compose la pasa únicamente al contenedor backend). Si no está definida o el proveedor falla, se utiliza un catálogo local por especie; el formulario sigue permitiendo registrar una raza mediante «Otros». No la declares como variable `VITE_*` ni la incluyas en el frontend.
 
 El `postinstall` ejecuta `prisma generate`; también puedes llamar `npm run prisma:generate` o `npx prisma validate`.
 

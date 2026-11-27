@@ -8,7 +8,7 @@ Guía para iniciar frontend, API y PostgreSQL en el checkout actual. La fuente d
 - **Desarrollo sin Docker:** Node.js 22, npm y PostgreSQL 16.
 - **Pruebas backend:** usa una base aislada y sigue las advertencias de [Ejecución de pruebas](test_DOCUMENTACION/EJECUCION.md); no uses una base que quieras conservar.
 
-Este checkout no contiene `.env.docker.example`, `back/.env.example` ni `front/.env.example`. No ejecutes los comandos `cp` de guías antiguas que mencionen esas plantillas. Crea archivos `.env` locales manualmente con valores propios, no los incluyas en Git y no reutilices credenciales reales compartidas.
+Este checkout incluye `back/.env.example` con `API_NINJAS_KEY` opcional, pero no contiene `.env.docker.example` ni `front/.env.example`. Para Docker Compose, agrega `API_NINJAS_KEY=<clave-opcional>` al `.env` de la raíz; Compose la entrega únicamente al backend. Para iniciar el backend local sin Docker, copia `back/.env.example` a `back/.env` y configura la clave solo si deseas cargar catálogos en vivo; sin ella se usan razas locales de respaldo. Mantén los `.env` fuera de Git y no reutilices credenciales compartidas.
 
 ## Opción A: Docker Compose
 
@@ -54,7 +54,7 @@ Instala/activa PostgreSQL 16 y crea una base local dedicada. No uses producción
 
 ### 2. Backend
 
-Desde `back/`, instala las dependencias y crea un `back/.env` local con la conexión PostgreSQL y el secreto de JWT propios. La API utiliza `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` y `CORS_ORIGIN`; para Vite local incluye `http://localhost:5173` en `CORS_ORIGIN`.
+Desde `back/`, instala las dependencias y crea un `back/.env` local con la conexión PostgreSQL y el secreto de JWT propios. La API utiliza `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` y `CORS_ORIGIN`. En desarrollo, la API permite por defecto `localhost:5173` (Vite) y los puertos locales de Docker Compose; en producción no agrega orígenes locales y `CORS_ORIGIN` debe enumerar explícitamente el frontend autorizado.
 
 ```bash
 cd back
